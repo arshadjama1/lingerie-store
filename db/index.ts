@@ -1,27 +1,28 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import "server-only";
+
+import { serverEnv } from "@/config/env.server";
 
 import * as schema from "./schema";
 
-declare global {
-  var __db_conn: postgres.Sql | undefined;
-}
-
-const conn =
-  global.__db_conn ??
-  postgres(process.env.DATABASE_URL!, {
-    prepare: false, // Required: Supabase pgBouncer (port 6543) doesn't support prepared statements
-    max: 10,
-    idle_timeout: 20,
-    connect_timeout: 10,
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  global.__db_conn = conn;
-}
-
-export const db = drizzle(conn, {
-  schema,
+// ── Application client (pooled) ───────────────────────────────────────
+const pooledSql = postgres(serverEnv.DATABASE_URL, {
+  prepare: false, // required for Supabase PgBouncer transaction mode
+  max: 1, // correct for Vercel serverless (single-request invocations)
 });
+
+export const db = drizzle(pooledSql, { schema });
+
+// ── Direct client (migrations + scripts only) ─────────────────────────
+let _dbDirect: ReturnType<typeof drizzle> | undefined;
+
+export function getDirectDb(): ReturnType<typeof drizzle<typeof schema>> {
+  if (!_dbDirect) {
+    const directSql = postgres(serverEnv.DATABASE_DIRECT_URL, { max: 1 });
+    _dbDirect = drizzle(directSql, { schema });
+  }
+  return _dbDirect as ReturnType<typeof drizzle<typeof schema>>;
+}
 
 export * from "./schema";

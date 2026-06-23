@@ -8,6 +8,13 @@
       "when": 1782057733478,
       "tag": "0000_initial_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782211219640,
+      "tag": "0001_functions_fts_rls",
+      "breakpoints": false
     }
   ]
 }
