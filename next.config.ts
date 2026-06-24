@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import path from "path";
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -15,6 +17,18 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ["image/webp"],
+  },
+
+  turbopack: {
+    resolveAlias: { "@/db": "./db/index.ts" },
+  },
+
+  webpack(config) {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@/db": path.resolve(__dirname, "db/index.ts"),
+    };
+    return config;
   },
 
   async headers() {
