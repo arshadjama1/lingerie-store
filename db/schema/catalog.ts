@@ -65,7 +65,10 @@ export const products = pgTable(
     categoryPath: varchar("category_path", { length: 500 }).notNull(),
     brandId: text("brand_id").references(() => brands.id),
     hsnCode: varchar("hsn_code", { length: 10 }),
-    attributes: jsonb("attributes").default({}).notNull(),
+    attributes: jsonb("attributes")
+      .$type<Record<string, string>>()
+      .default({})
+      .notNull(),
     tags: text("tags").array().default([]).notNull(),
     isActive: boolean("is_active").default(true).notNull(),
     isFeatured: boolean("is_featured").default(false).notNull(),

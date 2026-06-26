@@ -15,6 +15,11 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        pathname: "/**",
+      },
     ],
     formats: ["image/webp"],
   },
@@ -42,15 +47,6 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "geolocation=(), microphone=(), camera=()",
-          },
-        ],
-      },
-      {
-        source: "/_next/static/(.*)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
           },
         ],
       },
