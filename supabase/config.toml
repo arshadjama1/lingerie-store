@@ -1,0 +1,17 @@
+# Supabase CLI local development configuration
+# https://supabase.com/docs/guides/local-development/cli/config
+
+[api]
+port = 54321
+
+[auth]
+# Whitelist callback URLs for magic link redirects
+additional_redirect_urls = [
+  "http://localhost:3000/auth/callback",
+  "http://127.0.0.1:3000/auth/callback"
+]
+enable_signup = true
+
+# Phone OTP (SMS) is disabled locally — no SMS provider configured.
+# Configure MSG91 or Twilio credentials in .env.local to enable phone login.
+# Test phone OTP against a deployed Supabase cloud project or staging environment.
