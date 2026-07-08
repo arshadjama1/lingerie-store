@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -27,34 +27,33 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Always use getUser() — not getSession(). getSession() reads the cookie
-  // without server-side validation. getUser() validates with Supabase servers.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { pathname } = request.nextUrl;
 
-  const isProtectedCustomerRoute =
-    pathname.startsWith("/account") || pathname.startsWith("/checkout");
-
-  if (isProtectedCustomerRoute && !user) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirectTo", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (
+    !user &&
+    (pathname.startsWith("/account") || pathname.startsWith("/checkout"))
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
+    return NextResponse.redirect(url);
   }
 
   if (pathname.startsWith("/admin")) {
     if (!user) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("redirectTo", pathname);
-      return NextResponse.redirect(loginUrl);
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
     }
-
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
-
     if (!profile || !["admin", "staff"].includes(profile.role)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
@@ -64,7 +63,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|public/).*)"],
 };
