@@ -1,27 +1,30 @@
 @import "tailwindcss";
 
-/* ── Design tokens ──────────────────────────────────────────────────── */
+/* ── Design tokens — Clovia Fuchsia + Zivame Pink fusion ───────────── */
 :root {
-  /* Palette — warm champagne/cream editorial */
-  --background: #fafaf8; /* page background */
-  --surface: #f5f0eb; /* card backgrounds, sidebar */
-  --surface-raised: #ffffff; /* modals, dropdowns */
-  --foreground: #1a1614; /* primary text */
-  --foreground-muted: #6b6560; /* secondary text, metadata */
-  --foreground-subtle: #a09890; /* placeholders, disabled */
-  --border: #e5ddd5; /* dividers, input borders */
-  --border-focus: #c9a87c; /* focus rings */
+  /* Palette */
+  --background: #ffffff;
+  --surface: #fff5f8;
+  --surface-raised: #ffffff;
+  --foreground: #1a1a1a;
+  --foreground-muted: #666666;
+  --foreground-subtle: #999999;
+  --border: #f0dde5;
+  --border-focus: #c83c7e;
 
-  /* Accent — champagne gold */
-  --accent: #c9a87c;
-  --accent-dark: #8b6e4a; /* hover/active state */
-  --accent-fg: #ffffff; /* text on accent */
-  --accent-subtle: #f7f0e6; /* light accent wash for badges */
+  /* Accent — Clovia Fuchsia + deep plum */
+  --accent: #c83c7e;
+  --accent-dark: #9e1f5c;
+  --accent-plum: #3d0a20;
+  --accent-coral: #ff6a70;
+  --accent-fg: #ffffff;
+  --accent-subtle: #fde8f2;
+  --accent-gold: #d4af37;
 
   /* Semantic */
-  --destructive: #dc2626;
-  --success: #16a34a;
-  --warning: #d97706;
+  --destructive: #e53935;
+  --success: #2e7d32;
+  --warning: #f57c00;
 }
 
 @theme inline {
@@ -30,20 +33,22 @@
   --color-surface-raised: var(--surface-raised);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
-  --color-foreground-subtle: var(--color-foreground-subtle);
+  --color-foreground-subtle: var(--foreground-subtle);
   --color-border: var(--border);
-  --color-border-focus: var(--color-border-focus);
+  --color-border-focus: var(--border-focus);
   --color-accent: var(--accent);
   --color-accent-dark: var(--accent-dark);
+  --color-accent-plum: var(--accent-plum);
   --color-accent-fg: var(--accent-fg);
   --color-accent-subtle: var(--accent-subtle);
+  --color-accent-gold: var(--accent-gold);
   --color-destructive: var(--destructive);
   --color-success: var(--success);
 
   /* Typography */
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    var(--font-poppins), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
@@ -67,41 +72,141 @@ body {
   min-height: 100%;
 }
 
-/* ── Editorial headings use serif ────────────────────────────────────── */
+/* ── Headings ───────────────────────────────────────────────────────── */
 h1,
 h2,
+h3,
+h4 {
+  font-family: var(--font-sans);
+}
+
 .font-serif {
   font-family: var(--font-serif);
 }
 
-/* ── Focus visible ring — accent gold ─────────────────────────────── */
+/* ── Focus visible ring — accent pink ─────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--border-focus);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-/* ── Reduced motion ─────────────────────────────────────────────────── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
+/* ── Scrollbars & Utilities ────────────────────────────────────────── */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* ── Scrollbar — subtle on desktop ─────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #fdf5f7;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: #f0c5d3;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground-subtle);
+  background: var(--accent);
+}
+
+/* Glassmorphism utility */
+.glass-header {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.glass-dark {
+  background: rgba(45, 10, 30, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ── Shimmer & Glow Effects ────────────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer-badge {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+/* ── Floating Elevate Shadow ───────────────────────────────────────── */
+.shadow-floating {
+  box-shadow:
+    0 14px 34px -10px rgba(200, 60, 126, 0.15),
+    0 6px 16px -6px rgba(0, 0, 0, 0.04);
+}
+.shadow-floating-lg {
+  box-shadow:
+    0 24px 48px -12px rgba(61, 10, 32, 0.22),
+    0 8px 24px -8px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Gradient Text ─────────────────────────────────────────────────── */
+.gradient-text-pink {
+  background: linear-gradient(135deg, #d93b7a 0%, #3d0a20 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-gold {
+  background: linear-gradient(135deg, #f3a683 0%, #d4af37 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Marquee (Clovia-style ticker) ──────────────────────────────────── */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ── Pulse glow for CTA buttons ─────────────────────────────────────── */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 60, 126, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(200, 60, 126, 0);
+  }
+}
+.pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+/* ── Star rating fill ────────────────────────────────────────────────── */
+.star-filled {
+  color: #fbbf24;
+}
+.star-empty {
+  color: #e5e7eb;
 }
