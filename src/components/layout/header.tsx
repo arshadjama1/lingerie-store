@@ -15,171 +15,11 @@ import {
 
 import { cn } from "@/lib/utils";
 
-// ── Mega-menu data ──────────────────────────────────────────────────
-const NAV_MEGA: Record<
-  string,
-  { groups: { title: string; items: { label: string; href: string }[] }[] }
-> = {
-  Bras: {
-    groups: [
-      {
-        title: "By Type",
-        items: [
-          { label: "T-Shirt Bra", href: "/bras" },
-          { label: "Push-Up Bra", href: "/bras" },
-          { label: "Sports Bra", href: "/bras" },
-          { label: "Bralette", href: "/bras" },
-          { label: "Strapless", href: "/bras" },
-          { label: "Backless Bra", href: "/bras" },
-          { label: "Full Figure", href: "/bras" },
-        ],
-      },
-      {
-        title: "By Padding",
-        items: [
-          { label: "Non-Padded", href: "/bras" },
-          { label: "Padded", href: "/bras" },
-          { label: "Lightly Padded", href: "/bras" },
-          { label: "Non-Wire", href: "/bras" },
-          { label: "Underwire", href: "/bras" },
-        ],
-      },
-      {
-        title: "By Fabric",
-        items: [
-          { label: "Cotton", href: "/bras" },
-          { label: "Lace", href: "/bras" },
-          { label: "Seamless", href: "/bras" },
-          { label: "Satin", href: "/bras" },
-        ],
-      },
-      {
-        title: "Special Offers",
-        items: [
-          { label: "4 Bras @ ₹899", href: "/sale" },
-          { label: "3 Bras @ ₹1099", href: "/sale" },
-          { label: "2 Bras @ ₹1199", href: "/sale" },
-        ],
-      },
-    ],
-  },
-  Panties: {
-    groups: [
-      {
-        title: "By Type",
-        items: [
-          { label: "Hipsters", href: "/panties" },
-          { label: "Bikini", href: "/panties" },
-          { label: "Thongs", href: "/panties" },
-          { label: "Boyshorts", href: "/panties" },
-          { label: "High Waist", href: "/panties" },
-          { label: "Low Waist", href: "/panties" },
-        ],
-      },
-      {
-        title: "By Fabric",
-        items: [
-          { label: "Cotton", href: "/panties" },
-          { label: "Lace", href: "/panties" },
-          { label: "Modal", href: "/panties" },
-          { label: "Seamless", href: "/panties" },
-        ],
-      },
-      {
-        title: "Solution",
-        items: [
-          { label: "Bridal", href: "/panties" },
-          { label: "Maternity", href: "/panties" },
-          { label: "Tummy Tucker", href: "/panties" },
-        ],
-      },
-      {
-        title: "Special Offers",
-        items: [
-          { label: "4 Panties @ ₹599", href: "/sale" },
-          { label: "3 Panties @ ₹599", href: "/sale" },
-          { label: "3 Panties @ ₹999", href: "/sale" },
-        ],
-      },
-    ],
-  },
-  Nightwear: {
-    groups: [
-      {
-        title: "By Type",
-        items: [
-          { label: "Night Suits", href: "/nightwear" },
-          { label: "Nighties", href: "/nightwear" },
-          { label: "Babydolls", href: "/nightwear" },
-          { label: "Top & Pyjama Set", href: "/nightwear" },
-          { label: "Top & Shorts Set", href: "/nightwear" },
-          { label: "Nighty & Robe", href: "/nightwear" },
-        ],
-      },
-      {
-        title: "By Fabric",
-        items: [
-          { label: "Cotton", href: "/nightwear" },
-          { label: "Satin", href: "/nightwear" },
-          { label: "Lace", href: "/nightwear" },
-          { label: "Rayon", href: "/nightwear" },
-        ],
-      },
-    ],
-  },
-  Shapewear: {
-    groups: [
-      {
-        title: "By Type",
-        items: [
-          { label: "Tummy Tucker", href: "/shapewear" },
-          { label: "Saree Shapewear", href: "/shapewear" },
-          { label: "Thigh Shaper", href: "/shapewear" },
-          { label: "Bodysuits", href: "/shapewear" },
-        ],
-      },
-    ],
-  },
-  Activewear: {
-    groups: [
-      {
-        title: "Tops",
-        items: [
-          { label: "Sports Bra", href: "/activewear" },
-          { label: "High Impact", href: "/activewear" },
-          { label: "Crop Tops", href: "/activewear" },
-          { label: "Active T-Shirts", href: "/activewear" },
-        ],
-      },
-      {
-        title: "Bottoms",
-        items: [
-          { label: "Tights & Pants", href: "/activewear" },
-          { label: "Active Shorts", href: "/activewear" },
-          { label: "Cycling Shorts", href: "/activewear" },
-          { label: "Co-ords", href: "/activewear" },
-        ],
-      },
-    ],
-  },
-};
-
-const COMBO_DEALS = [
-  { label: "4 Bras @₹899", href: "/sale" },
-  { label: "3 Bras @₹1099", href: "/sale" },
-  { label: "4 Panties @₹599", href: "/sale" },
-  { label: "Lingerie Sets", href: "/lingerie-sets" },
-];
-
-const MARQUEE_ITEMS = [
-  "Free Returns on All Orders",
-  "100% Privacy Guaranteed",
-  "Cash on Delivery Available",
-  "Free Shipping Above ₹999",
-  "5 Lakh+ Happy Customers",
-  "Discreet Packaging, Always",
-  "15-Day Easy Exchange Policy",
-];
+import {
+  COMBO_QUICK_LINKS,
+  MARQUEE_ANNOUNCEMENTS,
+  NAV_MEGA_GROUPS,
+} from "./data/navigationData";
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -200,15 +40,17 @@ export function Header() {
       {/* ── TIER 1: Animated Marquee Trust Strip ─────────────────────── */}
       <div className="overflow-hidden bg-[#3d0a20] py-1.5 text-[11px] font-medium tracking-wide text-white">
         <div className="flex w-max animate-[marquee_30s_linear_infinite] items-center gap-0">
-          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
-            <span
-              key={i}
-              className="flex items-center gap-3 px-6 whitespace-nowrap"
-            >
-              <span className="inline-block h-1 w-1 rounded-full bg-pink-400" />
-              {item}
-            </span>
-          ))}
+          {[...MARQUEE_ANNOUNCEMENTS, ...MARQUEE_ANNOUNCEMENTS].map(
+            (item, i) => (
+              <span
+                key={i}
+                className="flex items-center gap-3 px-6 whitespace-nowrap"
+              >
+                <span className="inline-block h-1 w-1 rounded-full bg-pink-400" />
+                {item}
+              </span>
+            )
+          )}
         </div>
       </div>
 
@@ -218,7 +60,7 @@ export function Header() {
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Mobile hamburger */}
             <button
-              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:text-[var(--accent)] lg:hidden"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md text-gray-700 transition-colors hover:text-[var(--accent)] lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
@@ -307,7 +149,7 @@ export function Header() {
           >
             {/* Category links with mega-menus */}
             <div className="flex flex-shrink-0 items-center gap-0.5">
-              {Object.keys(NAV_MEGA).map((cat) => (
+              {Object.keys(NAV_MEGA_GROUPS).map((cat) => (
                 <div
                   key={cat}
                   onMouseEnter={() => handleMenuEnter(cat)}
@@ -333,14 +175,14 @@ export function Header() {
                   </Link>
 
                   {/* Mega Dropdown */}
-                  {activeMenu === cat && NAV_MEGA[cat] && (
+                  {activeMenu === cat && NAV_MEGA_GROUPS[cat] && (
                     <div
                       className="absolute top-full left-0 z-50 mt-0 min-w-[600px] rounded-b-none border border-gray-100 bg-white shadow-2xl xl:left-1/2 xl:min-w-[640px] xl:-translate-x-1/2"
                       onMouseEnter={() => handleMenuEnter(cat)}
                       onMouseLeave={handleMenuLeave}
                     >
                       <div className="flex gap-0 p-6">
-                        {NAV_MEGA[cat].groups.map((group, gi) => (
+                        {NAV_MEGA_GROUPS[cat].groups.map((group, gi) => (
                           <div
                             key={gi}
                             className="min-w-[130px] flex-1 border-r border-gray-100 pr-4 last:border-r-0 last:pr-0"
@@ -373,9 +215,9 @@ export function Header() {
             {/* Separator */}
             <span className="mx-1 h-4 w-px flex-shrink-0 bg-gray-200" />
 
-            {/* Clovia-style combo deal quick links */}
+            {/* Quick deal offer links */}
             <div className="flex flex-shrink-0 items-center gap-0.5">
-              {COMBO_DEALS.map((deal) => (
+              {COMBO_QUICK_LINKS.map((deal) => (
                 <Link
                   key={deal.label}
                   href={deal.href}
@@ -415,7 +257,7 @@ export function Header() {
                 LINGE<span className="text-[var(--accent)]">.</span>
               </Link>
               <button
-                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-500 transition-colors hover:text-black"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors hover:text-black"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
               >
@@ -438,7 +280,7 @@ export function Header() {
             <nav className="flex-1 px-4 py-4">
               <ul className="space-y-0.5">
                 {[
-                  ...Object.keys(NAV_MEGA),
+                  ...Object.keys(NAV_MEGA_GROUPS),
                   "Lingerie Sets",
                   "Sale & Offers",
                 ].map((cat) => (
@@ -462,10 +304,10 @@ export function Header() {
               {/* Mobile combo deals */}
               <div className="mt-6 border-t border-gray-100 pt-4">
                 <p className="mb-3 px-4 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
-                  🔥 Super Saver Combos
+                  Super Saver Combos
                 </p>
                 <div className="flex flex-wrap gap-2 px-2">
-                  {COMBO_DEALS.map((deal) => (
+                  {COMBO_QUICK_LINKS.map((deal) => (
                     <Link
                       key={deal.label}
                       href={deal.href}

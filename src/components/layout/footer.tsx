@@ -9,35 +9,7 @@ import {
   Truck,
 } from "lucide-react";
 
-const FOOTER_LINKS = {
-  "Shop By Category": [
-    { label: "Bras", href: "/bras" },
-    { label: "Panties", href: "/panties" },
-    { label: "Nightwear & Sleepwear", href: "/nightwear" },
-    { label: "Shapewear & Body Sculpting", href: "/shapewear" },
-    { label: "Activewear & Yoga Tops", href: "/activewear" },
-    { label: "Bridal Lingerie Sets", href: "/lingerie-sets" },
-  ],
-  "Fit & Care": [
-    { label: "FitCode™ Calculator", href: "/size-guide" },
-    { label: "Bra Size Chart", href: "/size-guide" },
-    { label: "Lingerie Care Guide", href: "/care-guide" },
-    { label: "Find Your Style Quiz", href: "/quiz" },
-  ],
-  "Customer Support": [
-    { label: "Track Your Order", href: "/account/orders" },
-    { label: "Shipping & Delivery Policy", href: "/shipping" },
-    { label: "15-Day Easy Returns", href: "/returns" },
-    { label: "Contact Customer Care", href: "/contact" },
-    { label: "FAQs", href: "/faqs" },
-  ],
-  "About Linge": [
-    { label: "Our Story & Mission", href: "/about" },
-    { label: "Store Locator", href: "/stores" },
-    { label: "Privacy & Data Policy", href: "/legal/privacy" },
-    { label: "Terms of Service", href: "/legal/terms" },
-  ],
-};
+import { FOOTER_LINK_GROUPS } from "./data/navigationData";
 
 export function Footer() {
   return (
@@ -94,7 +66,7 @@ export function Footer() {
           </div>
 
           {/* Link Groups */}
-          {Object.entries(FOOTER_LINKS).map(([group, links]) => (
+          {Object.entries(FOOTER_LINK_GROUPS).map(([group, links]) => (
             <div key={group}>
               <h4 className="mb-4 border-b border-pink-700/60 pb-2 text-xs font-black tracking-widest text-white uppercase">
                 {group}
