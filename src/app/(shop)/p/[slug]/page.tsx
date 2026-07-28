@@ -28,7 +28,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = product.metaTitle || `${product.name} | Amara Lingerie`;
+  const title = product.metaTitle || `${product.name} | LINGE Storefront`;
   const description = product.metaDesc || product.description || "";
   const imageUrls = product.images.map((img) => img.url);
 
@@ -104,95 +104,100 @@ export default async function ProductPage({ params }: ProductPageProps) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* JSON-LD for rich snippets */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <main className="bg-white pb-16">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* JSON-LD for rich snippets */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
 
-      <Breadcrumb items={breadcrumbs} className="mb-6" />
+        <Breadcrumb items={breadcrumbs} className="mb-6" />
 
-      {/* Product top fold client island */}
-      <ProductActions product={product} />
+        {/* Product Top Fold Interactive Island */}
+        <ProductActions product={product} />
 
-      {/* Product bottom fold details (RSC, zero JS weight) */}
-      <div
-        className="mt-16 border-t pt-10"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-3">
-          {/* Main Description */}
-          <div className="lg:col-span-2">
-            <h2 className="mb-4 font-serif text-xl text-[var(--foreground)]">
-              Product Description
-            </h2>
-            <div className="space-y-4 text-sm leading-relaxed text-[var(--foreground-muted)]">
-              {product.description ? (
-                product.description
-                  .split("\n\n")
-                  .map((para, index) => <p key={index}>{para}</p>)
-              ) : (
-                <p>No description available for this product.</p>
+        {/* Product Bottom Fold Details */}
+        <div className="mt-16 border-t border-gray-100 pt-10">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            {/* Main Description Box */}
+            <div className="space-y-4 rounded-none border border-gray-100 bg-white p-6 shadow-xs sm:p-8 lg:col-span-2">
+              <h2 className="font-serif text-xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-2xl">
+                Product Details & Fabric Care
+              </h2>
+              <div className="space-y-4 text-xs leading-relaxed font-light text-gray-700 sm:text-sm">
+                {product.description ? (
+                  product.description
+                    .split("\n\n")
+                    .map((para, index) => <p key={index}>{para}</p>)
+                ) : (
+                  <p>
+                    Designed for all-day skin comfort with premium breathable
+                    fabric, shape retention, and precision support.
+                  </p>
+                )}
+              </div>
+
+              {product.hsnCode && (
+                <p className="mt-6 border-t border-gray-100 pt-2 font-mono text-xs text-gray-400">
+                  * HSN Code: {product.hsnCode} (tax inclusive pricing)
+                </p>
               )}
             </div>
 
-            {product.hsnCode && (
-              <p className="mt-6 text-xs text-[var(--foreground-subtle)]">
-                * HSN Code: {product.hsnCode} (tax inclusive pricing)
-              </p>
-            )}
-          </div>
-
-          {/* Specifications list */}
-          <div className="rounded bg-[var(--surface)] p-6">
-            <h2 className="mb-4 text-sm font-semibold tracking-widest text-[var(--foreground)] uppercase">
-              Specifications
-            </h2>
-            {Object.keys(product.attributes || {}).length === 0 ? (
-              <p className="text-xs text-[var(--foreground-subtle)]">
-                No specific details listed.
-              </p>
-            ) : (
-              <dl className="space-y-3 text-xs">
-                {Object.entries(product.attributes || {}).map(([key, val]) => (
-                  <div
-                    key={key}
-                    className="flex justify-between border-b pb-2"
-                    style={{ borderColor: "var(--border)" }}
-                  >
-                    <dt className="font-medium text-[var(--foreground-muted)] capitalize">
-                      {key.replace(/_/g, " ")}
-                    </dt>
-                    <dd className="text-right font-semibold text-[var(--foreground)]">
-                      {val}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
+            {/* Specifications Box */}
+            <div className="rounded-none border border-pink-100 bg-[var(--surface)] p-6 shadow-xs">
+              <h2 className="mb-4 text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+                Product Specifications
+              </h2>
+              {Object.keys(product.attributes || {}).length === 0 ? (
+                <p className="text-xs font-medium text-gray-500">
+                  Standard size fit & breathable fabric construction.
+                </p>
+              ) : (
+                <dl className="space-y-3 text-xs">
+                  {Object.entries(product.attributes || {}).map(
+                    ([key, val]) => (
+                      <div
+                        key={key}
+                        className="flex justify-between border-b border-gray-200/60 pb-2"
+                      >
+                        <dt className="font-medium text-gray-600 capitalize">
+                          {key.replace(/_/g, " ")}
+                        </dt>
+                        <dd className="text-right font-bold text-gray-900">
+                          {val}
+                        </dd>
+                      </div>
+                    )
+                  )}
+                </dl>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Related Products Section */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16 border-t border-gray-100 pt-10">
+            <div className="mb-6">
+              <span className="mb-1 inline-block rounded-none bg-[var(--accent-subtle)] px-3 py-1 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase shadow-xs">
+                YOU MIGHT ALSO LIKE
+              </span>
+              <h2 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-3xl">
+                Recommended Pairings
+              </h2>
+            </div>
+            <Suspense
+              fallback={
+                <div className="h-96 w-full animate-pulse rounded-none bg-[var(--surface)]" />
+              }
+            >
+              <ProductGrid products={relatedProducts} priorityCount={0} />
+            </Suspense>
+          </div>
+        )}
       </div>
-
-      {/* Related Products Section */}
-      {relatedProducts.length > 0 && (
-        <div
-          className="mt-16 border-t pt-10"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <h2 className="mb-6 font-serif text-2xl tracking-tight text-[var(--foreground)]">
-            You Might Also Like
-          </h2>
-          <Suspense
-            fallback={
-              <div className="h-96 w-full animate-pulse rounded bg-[var(--surface)]" />
-            }
-          >
-            <ProductGrid products={relatedProducts} priorityCount={0} />
-          </Suspense>
-        </div>
-      )}
-    </div>
+    </main>
   );
 }

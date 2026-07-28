@@ -64,8 +64,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${category.name} | Amara Lingerie`,
-    description: `Browse our elegant selection of ${category.name.toLowerCase()}. Handcrafted with signature support and rich lace accents.`,
+    title: `${category.name} | LINGE Storefront`,
+    description: `Browse our elegant selection of ${category.name.toLowerCase()}. Handcrafted with signature support, luxury fabrics, and precision fit.`,
   };
 }
 
@@ -101,8 +101,6 @@ export default async function CategoryPage({
       : [resolvedSearchParams.brand]
     : undefined;
 
-  // We support one brand slug at a time in getCatalogProducts or arrays in the DB query?
-  // Let's pass the first brand from array or handle arrays.
   const brandSlug = brands && brands.length > 0 ? brands[0] : undefined;
 
   const priceMin = resolvedSearchParams.priceMin
@@ -160,80 +158,81 @@ export default async function CategoryPage({
   const breadcrumbs = [{ label: "Home", href: "/" }, { label: category.name }];
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <Breadcrumb items={breadcrumbs} className="mb-6" />
+    <main className="bg-white pb-16">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <Breadcrumb items={breadcrumbs} className="mb-4" />
 
-      {/* Hero Header */}
-      <div
-        className="mb-8 border-b pb-6"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <h1 className="font-serif text-3xl tracking-tight text-[var(--foreground)] sm:text-4xl">
-          {category.name}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-[var(--foreground-muted)]">
-          Explore our range of {category.name.toLowerCase()}. Meticulously
-          tailored for shape, silhouette, and absolute comfort.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-        {/* Filter Sidebar - Desktop side-by-side, mobile full width */}
-        <div className="lg:col-span-1">
-          <Suspense
-            fallback={
-              <div className="h-96 w-full animate-pulse rounded bg-[var(--surface)]" />
-            }
-          >
-            <FilterSidebar
-              sizes={filterData.sizes}
-              colors={filterData.colors}
-              brands={filterData.brands}
-              priceRange={filterData.priceRange}
-            />
-          </Suspense>
+        {/* Category Hero Banner */}
+        <div className="mb-8 rounded-none bg-gradient-to-r from-[#3d0a20] via-[#5c1032] to-[#7b1842] p-8 text-white shadow-md sm:p-10">
+          <span className="mb-2 inline-block rounded-none bg-[var(--accent)] px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase shadow-xs">
+            COLLECTION SHOWCASE
+          </span>
+          <h1 className="font-serif text-3xl font-black tracking-tight text-white uppercase sm:text-5xl">
+            {category.name}
+          </h1>
+          <p className="mt-2 max-w-2xl text-xs leading-relaxed font-light text-pink-100 sm:text-sm">
+            Explore our curated selection of {category.name.toLowerCase()}.
+            Meticulously tailored for shape, silhouette, skin-soft comfort, and
+            signature confidence.
+          </p>
         </div>
 
-        {/* Catalog List display */}
-        <div className="lg:col-span-3">
-          <div
-            className="mb-8 flex items-center justify-between border-b pb-4"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <span className="text-xs font-semibold tracking-wider text-[var(--foreground-muted)] uppercase">
-              {productData.total} products
-            </span>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-4">
+          {/* Filter Sidebar */}
+          <div className="lg:col-span-1">
+            <Suspense
+              fallback={
+                <div className="h-96 w-full animate-pulse rounded-none border border-gray-100 bg-[var(--surface)]" />
+              }
+            >
+              <FilterSidebar
+                sizes={filterData.sizes}
+                colors={filterData.colors}
+                brands={filterData.brands}
+                priceRange={filterData.priceRange}
+              />
+            </Suspense>
           </div>
 
-          {productData.products.length === 0 ? (
-            <EmptyState
-              title="No products found"
-              description="Try clearing some filters or searching for something else."
-              action={{ label: "Clear all filters", href: `/${slug}` }}
-            />
-          ) : (
-            <div className="space-y-10">
-              <Suspense
-                fallback={
-                  <div className="h-96 w-full animate-pulse rounded bg-[var(--surface)]" />
-                }
-              >
-                <ProductGrid
-                  products={productData.products}
-                  priorityCount={4}
-                />
-              </Suspense>
-
-              <Pagination
-                currentPage={page}
-                totalPages={productData.totalPages}
-                buildUrl={buildPageUrl}
-                className="border-t pt-6"
-              />
+          {/* Catalog List Display */}
+          <div className="lg:col-span-3">
+            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-3">
+              <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+                {productData.total}{" "}
+                {productData.total === 1 ? "Product" : "Products"} Available
+              </span>
             </div>
-          )}
+
+            {productData.products.length === 0 ? (
+              <EmptyState
+                title="No products found"
+                description="Try clearing some filters or searching for something else."
+                action={{ label: "Clear all filters", href: `/${slug}` }}
+              />
+            ) : (
+              <div className="space-y-10">
+                <Suspense
+                  fallback={
+                    <div className="h-96 w-full animate-pulse rounded-none bg-[var(--surface)]" />
+                  }
+                >
+                  <ProductGrid
+                    products={productData.products}
+                    priorityCount={4}
+                  />
+                </Suspense>
+
+                <Pagination
+                  currentPage={page}
+                  totalPages={productData.totalPages}
+                  buildUrl={buildPageUrl}
+                  className="border-t border-gray-100 pt-8"
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

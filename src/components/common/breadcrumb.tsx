@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import { ChevronRight } from "lucide-react";
 
@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
   label: string;
-  href?: string; // omit for the current (last) item
+  href?: string;
 }
 
 interface BreadcrumbProps {
@@ -36,27 +36,25 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
       />
       <nav
         aria-label="Breadcrumb"
-        className={cn("flex items-center", className)}
+        className={cn("flex items-center py-2", className)}
       >
-        <ol className="flex flex-wrap items-center gap-1">
+        <ol className="flex flex-wrap items-center gap-1.5 text-xs">
           {items.map((item, index) => {
             const isLast = index === items.length - 1;
 
             return (
-              <li key={index} className="flex items-center gap-1">
+              <li key={index} className="flex items-center gap-1.5">
                 {index > 0 && (
                   <ChevronRight
-                    className="text-foreground-subtle h-3.5 w-3.5 shrink-0"
+                    className="h-3 w-3 shrink-0 text-gray-400"
                     aria-hidden="true"
                   />
                 )}
                 {isLast || !item.href ? (
                   <span
                     className={cn(
-                      "text-xs",
-                      isLast
-                        ? "text-foreground font-medium"
-                        : "text-foreground-muted"
+                      "text-[11px] font-bold tracking-wider uppercase",
+                      isLast ? "text-[var(--accent-plum)]" : "text-gray-500"
                     )}
                     aria-current={isLast ? "page" : undefined}
                   >
@@ -65,7 +63,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
                 ) : (
                   <Link
                     href={item.href}
-                    className="text-foreground-muted hover:text-foreground text-xs transition-colors"
+                    className="text-[11px] font-medium tracking-wider text-gray-500 uppercase transition-colors hover:text-[var(--accent)]"
                   >
                     {item.label}
                   </Link>
