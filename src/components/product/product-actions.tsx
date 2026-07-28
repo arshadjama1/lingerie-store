@@ -3,7 +3,17 @@
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 
-import { ChevronLeft, ChevronRight, Heart, ShoppingBag } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Lock,
+  RefreshCw,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+} from "lucide-react";
 
 import { cn, formatPrice } from "@/lib/utils";
 
@@ -35,7 +45,6 @@ export function ProductActions({ product }: ProductActionsProps) {
         sizesSet.add(v.size);
       }
     }
-    // Simple sort for sizes or keep database sort order
     return Array.from(sizesSet);
   }, [product.variants]);
 
@@ -72,9 +81,8 @@ export function ProductActions({ product }: ProductActionsProps) {
     );
   }, [product.variants, selectedColor, selectedSize]);
 
-  // Get gallery images. Fallback to product images if variant images are empty.
+  // Get gallery images
   const galleryImages = useMemo(() => {
-    // If a variant is selected or color is selected, fetch associated images
     if (selectedColor) {
       const activeColorImages = colorVariants.flatMap((v) => v.images);
       if (activeColorImages.length > 0) {
@@ -112,7 +120,6 @@ export function ProductActions({ product }: ProductActionsProps) {
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
     setMainImageIndex(0);
-    // If current selected size is not in stock for new color, clear size selection
     const nextColorVariants = product.variants.filter((v) => v.color === color);
     const hasSize = nextColorVariants.some(
       (v) => v.size === selectedSize && v.available > 0
@@ -131,11 +138,11 @@ export function ProductActions({ product }: ProductActionsProps) {
     selectedVariant.available <= 3;
 
   return (
-    <div className="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-2">
       {/* 1. Gallery Column */}
       <div className="flex flex-col gap-4">
         {/* Main Image Slider */}
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded bg-[var(--surface)]">
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-none border border-gray-100 bg-[var(--surface)] shadow-md">
           {galleryImages[mainImageIndex] && (
             <Image
               src={galleryImages[mainImageIndex].url}
@@ -151,14 +158,14 @@ export function ProductActions({ product }: ProductActionsProps) {
             <>
               <button
                 onClick={prevImage}
-                className="absolute top-1/2 left-4 -translate-y-1/2 rounded-full bg-white/80 p-2 text-[var(--foreground)] shadow-md transition hover:bg-white"
+                className="absolute top-1/2 left-4 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2.5 text-gray-800 shadow-md transition hover:bg-white"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
                 onClick={nextImage}
-                className="absolute top-1/2 right-4 -translate-y-1/2 rounded-full bg-white/80 p-2 text-[var(--foreground)] shadow-md transition hover:bg-white"
+                className="absolute top-1/2 right-4 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2.5 text-gray-800 shadow-md transition hover:bg-white"
                 aria-label="Next image"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -169,16 +176,16 @@ export function ProductActions({ product }: ProductActionsProps) {
 
         {/* Thumbnail Strip */}
         {galleryImages.length > 1 && (
-          <div className="flex scrollbar-thin gap-2.5 overflow-x-auto pb-2">
+          <div className="flex scrollbar-thin gap-3 overflow-x-auto pb-2">
             {galleryImages.map((img, idx) => (
               <button
                 key={img.id}
                 onClick={() => setMainImageIndex(idx)}
                 className={cn(
-                  "relative aspect-[3/4] w-20 flex-shrink-0 overflow-hidden rounded border bg-[var(--surface)] transition",
+                  "relative aspect-[3/4] w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-none border bg-[var(--surface)] transition",
                   mainImageIndex === idx
-                    ? "border-[var(--accent)] ring-1 ring-[var(--accent)]"
-                    : "border-[var(--border)]"
+                    ? "border-[var(--accent)] shadow-md ring-2 ring-[var(--accent)]"
+                    : "border-gray-200 opacity-70 hover:opacity-100"
                 )}
               >
                 <Image
@@ -196,20 +203,20 @@ export function ProductActions({ product }: ProductActionsProps) {
 
       {/* 2. Interactive Selection Column */}
       <div className="flex flex-col gap-6">
-        {/* Editorial Title & Pricing */}
+        {/* Title & Pricing Header */}
         <div>
           {product.brand && (
-            <span className="text-xs font-semibold tracking-widest text-[var(--foreground-muted)] uppercase">
+            <p className="text-xs font-black tracking-widest text-[var(--accent-dark)] uppercase">
               {product.brand.name}
-            </span>
+            </p>
           )}
-          <h1 className="mt-1 font-serif text-2xl tracking-tight text-[var(--foreground)] sm:text-3xl">
+          <h1 className="mt-1 font-serif text-2xl leading-tight font-black text-gray-900 sm:text-4xl">
             {product.name}
           </h1>
 
-          {/* Pricing treatment */}
+          {/* Pricing */}
           <div className="mt-4 flex items-baseline gap-3">
-            <span className="text-2xl font-semibold text-[var(--foreground)]">
+            <span className="text-2xl font-black text-gray-900 sm:text-3xl">
               {formatPrice(
                 selectedVariant
                   ? selectedVariant.price
@@ -219,17 +226,17 @@ export function ProductActions({ product }: ProductActionsProps) {
             {selectedVariant &&
               Number(selectedVariant.mrp) > Number(selectedVariant.price) && (
                 <>
-                  <span className="text-base text-[var(--foreground-subtle)] line-through">
+                  <span className="text-base font-medium text-gray-400 line-through">
                     {formatPrice(selectedVariant.mrp)}
                   </span>
-                  <span className="rounded bg-[var(--accent-subtle)] px-2 py-0.5 text-xs font-semibold text-[var(--accent-dark)]">
+                  <span className="rounded-none bg-[var(--accent)] px-2.5 py-0.5 text-xs font-black tracking-wider text-white uppercase shadow-xs">
                     {Math.round(
                       ((Number(selectedVariant.mrp) -
                         Number(selectedVariant.price)) /
                         Number(selectedVariant.mrp)) *
                         100
                     )}
-                    % off
+                    % OFF
                   </span>
                 </>
               )}
@@ -239,8 +246,9 @@ export function ProductActions({ product }: ProductActionsProps) {
         {/* Color Swatch Picker */}
         {colorMap.length > 0 && (
           <div className="flex flex-col gap-2.5">
-            <span className="text-xs font-semibold tracking-widest text-[var(--foreground-muted)] uppercase">
-              Color: {selectedColor}
+            <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+              Color:{" "}
+              <span className="font-bold text-gray-900">{selectedColor}</span>
             </span>
             <div className="flex flex-wrap gap-3">
               {colorMap.map((color) => {
@@ -250,25 +258,23 @@ export function ProductActions({ product }: ProductActionsProps) {
                     key={color.name}
                     onClick={() => handleColorSelect(color.name)}
                     className={cn(
-                      "group relative flex items-center justify-center rounded-full border transition",
+                      "group relative flex cursor-pointer items-center justify-center rounded-full border p-0.5 transition",
                       isSelected
-                        ? "border-[var(--accent)] ring-1 ring-[var(--accent)]"
-                        : "border-[var(--border)]"
+                        ? "border-[var(--accent)] ring-2 ring-[var(--accent)]"
+                        : "border-gray-200 hover:border-gray-400"
                     )}
                     aria-label={`Select Color ${color.name}`}
                   >
-                    <span className="block rounded-full p-0.5">
-                      {color.hex ? (
-                        <span
-                          className="block h-7 w-7 rounded-full border border-black/10 shadow-inner"
-                          style={{ backgroundColor: color.hex }}
-                        />
-                      ) : (
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface)] text-[10px] font-semibold uppercase">
-                          {color.name.substring(0, 2)}
-                        </span>
-                      )}
-                    </span>
+                    {color.hex ? (
+                      <span
+                        className="block h-7 w-7 rounded-full border border-black/10 shadow-inner"
+                        style={{ backgroundColor: color.hex }}
+                      />
+                    ) : (
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--surface)] text-[10px] font-black text-gray-800 uppercase">
+                        {color.name.substring(0, 2)}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -280,11 +286,11 @@ export function ProductActions({ product }: ProductActionsProps) {
         {allSizes.length > 0 && (
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold tracking-widest text-[var(--foreground-muted)] uppercase">
-                Size
+              <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+                Select Size
               </span>
-              <button className="text-xs font-medium text-[var(--accent-dark)] hover:underline">
-                Size Guide
+              <button className="flex items-center gap-1 text-xs font-bold tracking-wider text-[var(--accent)] uppercase hover:underline">
+                <Sparkles className="h-3.5 w-3.5" /> Size Guide & FitCode™
               </button>
             </div>
             <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6">
@@ -297,16 +303,15 @@ export function ProductActions({ product }: ProductActionsProps) {
                     onClick={() => isAvailable && setSelectedSize(size)}
                     disabled={!isAvailable}
                     className={cn(
-                      "relative flex h-11 items-center justify-center rounded border text-sm font-medium transition",
+                      "relative flex h-11 cursor-pointer items-center justify-center rounded-none border text-xs font-black shadow-xs transition-all",
                       isSelected
-                        ? "border-[var(--accent)] bg-[var(--accent-subtle)] font-semibold text-[var(--accent-dark)]"
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-md"
                         : isAvailable
-                          ? "border-[var(--border)] text-[var(--foreground)] hover:border-[var(--foreground)]"
-                          : "cursor-not-allowed border-[var(--border)] bg-gray-50/50 text-[var(--foreground-subtle)]"
+                          ? "border-gray-200 bg-white text-gray-900 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                          : "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 opacity-50"
                     )}
                   >
                     {size}
-                    {/* Diagonal strikethrough for out of stock */}
                     {!isAvailable && (
                       <svg
                         className="absolute inset-0 h-full w-full stroke-gray-300"
@@ -322,59 +327,80 @@ export function ProductActions({ product }: ProductActionsProps) {
           </div>
         )}
 
-        {/* Stock status warnings & availability alerts */}
+        {/* Stock alerts */}
         <div>
           {isLowStock && (
-            <p className="text-xs font-semibold text-[var(--destructive)]">
-              ⚠️ Only {selectedVariant?.available} left — order soon
+            <p className="rounded-none border border-amber-200 bg-amber-50 p-2.5 text-xs font-bold text-amber-600">
+              ⚠️ Only {selectedVariant?.available} left in stock — order soon!
             </p>
           )}
           {isOutOfStock && (
-            <p className="text-xs font-semibold text-[var(--destructive)]">
-              ❌ This variant is currently out of stock
+            <p className="rounded-none border border-rose-200 bg-rose-50 p-2.5 text-xs font-bold text-rose-600">
+              ❌ This size & color combination is currently out of stock.
             </p>
           )}
         </div>
 
         {/* Add to Bag and Wishlist Controls */}
-        <div className="flex gap-4">
+        <div className="flex gap-3 pt-2">
           <button
             disabled={!selectedSize || isOutOfStock}
             className={cn(
-              "flex flex-1 items-center justify-center gap-2 rounded py-3 text-sm font-semibold tracking-wider uppercase shadow-sm transition",
+              "flex flex-1 items-center justify-center gap-2 rounded-none py-4 text-xs font-black tracking-wider uppercase shadow-md transition-all",
               selectedSize && !isOutOfStock
-                ? "cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)]"
-                : "cursor-not-allowed bg-gray-200 text-[var(--foreground-subtle)]"
+                ? "cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)] hover:shadow-lg"
+                : "cursor-not-allowed border border-gray-300 bg-gray-200 text-gray-400"
             )}
             onClick={() => {
-              // Add to Cart logic wired in cart milestone
-              alert(`Added SKU ${selectedVariant?.sku} to cart (Simulated)`);
+              alert(
+                `Added SKU ${selectedVariant?.sku || product.name} to cart`
+              );
             }}
           >
             <ShoppingBag className="h-4 w-4" />
             {isOutOfStock
               ? "Out of Stock"
               : !selectedSize
-                ? "Select Size"
+                ? "Select a Size First"
                 : "Add to Bag"}
           </button>
 
           <button
-            className="flex items-center justify-center rounded border border-[var(--border)] p-3 text-[var(--foreground)] transition hover:bg-[var(--surface)]"
+            className="flex cursor-pointer items-center justify-center rounded-none border border-gray-200 p-4 text-gray-700 shadow-xs transition-colors hover:border-[var(--accent)] hover:bg-pink-50 hover:text-[var(--accent)]"
             aria-label="Add to wishlist"
           >
             <Heart className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Trust Labels */}
-        <div
-          className="space-y-2 border-t pt-4 text-xs text-[var(--foreground-muted)]"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <p>🚚 Free standard delivery in India on orders over ₹999.</p>
-          <p>🔄 Free returns and exchanges within 14 days.</p>
-          <p>🎁 Gift wrap packaging option available during checkout.</p>
+        {/* High-Contrast Trust Badges Box */}
+        <div className="mt-2 space-y-2.5 rounded-none border border-pink-100 bg-[var(--surface)] p-4 text-xs text-gray-700">
+          <div className="flex items-center gap-2.5 font-medium">
+            <Truck className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+            <span>
+              <strong>Free Express Shipping</strong> in India on orders above
+              ₹999
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 font-medium">
+            <RefreshCw className="h-4 w-4 shrink-0 text-sky-600" />
+            <span>
+              <strong>15-Day Hassle-Free Returns</strong> & size exchange
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 font-medium">
+            <Lock className="h-4 w-4 shrink-0 text-emerald-600" />
+            <span>
+              <strong>100% Discreet Packaging</strong> in plain unmarked boxes
+            </span>
+          </div>
+          <div className="flex items-center gap-2.5 font-medium">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-pink-600" />
+            <span>
+              <strong>Guaranteed Fit Precision</strong> engineered for skin
+              comfort
+            </span>
+          </div>
         </div>
       </div>
     </div>

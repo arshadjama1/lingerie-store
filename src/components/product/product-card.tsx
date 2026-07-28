@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+
+import { Heart } from "lucide-react";
 
 import { calcDiscount, cn, formatPrice } from "@/lib/utils";
 
@@ -22,97 +26,72 @@ export function ProductCard({
   const hasDiscount = discount > 0;
 
   return (
-    <article className={cn("group flex flex-col", className)}>
+    <article
+      className={cn(
+        "group hover:shadow-floating-lg relative flex flex-col overflow-hidden rounded-none border border-gray-100 bg-white transition-all hover:border-pink-200",
+        className
+      )}
+    >
       <Link
         href={`/p/${product.slug}`}
-        className="focus-visible:ring-accent block focus-visible:rounded-sm focus-visible:ring-2 focus-visible:outline-none"
+        className="block focus-visible:rounded-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none"
         tabIndex={0}
         aria-label={`${product.name}${product.brandName ? ` by ${product.brandName}` : ""} — ${formatPrice(product.minPrice)}`}
       >
         {/* Image container */}
-        <div
-          className="relative mb-3 overflow-hidden rounded-sm"
-          style={{ background: "var(--surface)" }}
-        >
-          {/* Aspect ratio — 3:4 portrait, standard for apparel */}
-          <div className="aspect-[3/4]">
-            {product.primaryImage ? (
-              <Image
-                src={product.primaryImage.url}
-                alt={product.primaryImage.alt ?? product.name}
-                fill
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                className="object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
-                priority={priority}
-              />
-            ) : (
-              // Placeholder when no image is uploaded yet
-              <div className="flex h-full w-full items-center justify-center">
-                <svg
-                  className="text-foreground-subtle h-12 w-12"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                  aria-hidden="true"
-                >
-                  <rect
-                    x="6"
-                    y="6"
-                    width="36"
-                    height="36"
-                    rx="2"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="18"
-                    cy="18"
-                    r="4"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                  <path
-                    d="M6 32 L16 22 L24 30 L32 20 L42 32"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
+        <div className="relative aspect-[3/4] overflow-hidden rounded-none bg-[var(--surface)]">
+          {product.primaryImage ? (
+            <Image
+              src={product.primaryImage.url}
+              alt={product.primaryImage.alt ?? product.name}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-500 will-change-transform group-hover:scale-105"
+              priority={priority}
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+              No Image
+            </div>
+          )}
+
+          {/* Wishlist Button Overlay */}
+          <button
+            className="absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-md backdrop-blur-xs transition-all hover:bg-white hover:text-[var(--accent)]"
+            aria-label="Add to wishlist"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            <Heart className="h-4 w-4" />
+          </button>
 
           {/* Badges — top left */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
             {hasDiscount && (
-              <span
-                className="rounded px-2 py-0.5 text-xs font-semibold tracking-wide"
-                style={{
-                  background: "var(--accent)",
-                  color: "var(--accent-fg)",
-                }}
-              >
-                {discount}% off
+              <span className="rounded-none bg-[var(--accent)] px-2.5 py-0.5 text-[10px] font-black tracking-wider text-white uppercase shadow-xs">
+                {discount}% OFF
               </span>
             )}
             {!product.isInStock && (
-              <span className="rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
-                Sold out
+              <span className="rounded-none bg-black/80 px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase">
+                Sold Out
               </span>
             )}
           </div>
         </div>
 
         {/* Info */}
-        <div className="flex flex-col gap-1 px-0.5">
+        <div className="flex flex-1 flex-col gap-1 p-3.5">
           {/* Brand */}
           {product.brandName && (
-            <p className="text-foreground-muted text-xs font-medium tracking-widest uppercase">
+            <p className="text-[10px] font-black tracking-widest text-[var(--accent-dark)] uppercase">
               {product.brandName}
             </p>
           )}
 
-          {/* Product name — serif, restrained line clamp */}
-          <h3 className="text-foreground line-clamp-2 font-serif text-sm leading-snug sm:text-base">
+          {/* Product name */}
+          <h3 className="line-clamp-2 text-xs leading-snug font-bold text-gray-900 transition-colors group-hover:text-[var(--accent)] sm:text-sm">
             {product.name}
           </h3>
 
@@ -126,19 +105,14 @@ export function ProductCard({
             />
           )}
 
-          {/* Price — the signature treatment */}
+          {/* Price */}
           <div className="mt-1.5 flex items-baseline gap-2">
-            {/* Current price — large, primary */}
-            <span className="text-foreground text-base font-semibold sm:text-lg">
+            <span className="text-sm font-black text-gray-900 sm:text-base">
               {formatPrice(product.minPrice)}
             </span>
 
-            {/* MRP — struck through, muted */}
             {hasDiscount && (
-              <span
-                className="text-foreground-subtle text-sm"
-                style={{ textDecoration: "line-through" }}
-              >
+              <span className="text-xs font-medium text-gray-400 line-through">
                 {formatPrice(product.minMrp)}
               </span>
             )}

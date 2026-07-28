@@ -33,19 +33,16 @@ export function VerifyForm() {
   }, [phone, router]);
 
   const handleChange = (index: number, value: string) => {
-    // Only accept numeric inputs
     if (value && !/^\d$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
-    // Auto-advance cursor to next input block
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-submit when all 6 digits are populated
     if (newOtp.every((digit) => digit !== "")) {
       triggerVerification(newOtp.join(""));
     }
@@ -57,13 +54,11 @@ export function VerifyForm() {
   ) => {
     if (e.key === "Backspace") {
       if (!otp[index] && index > 0) {
-        // Go back and clear previous box
         const newOtp = [...otp];
         newOtp[index - 1] = "";
         setOtp(newOtp);
         inputRefs.current[index - 1]?.focus();
       } else {
-        // Clear current box
         const newOtp = [...otp];
         newOtp[index] = "";
         setOtp(newOtp);
@@ -79,10 +74,7 @@ export function VerifyForm() {
 
     const newOtp = pastedData.split("");
     setOtp(newOtp);
-
-    // Focus the last input block
     inputRefs.current[5]?.focus();
-
     triggerVerification(pastedData);
   };
 
@@ -102,7 +94,6 @@ export function VerifyForm() {
           throw new Error(data.error || "Verification failed");
         }
 
-        // Successfully verified, route user to redirect target
         router.replace(redirect);
       } catch (err) {
         const errMsg =
@@ -110,7 +101,6 @@ export function VerifyForm() {
             ? err.message
             : "Invalid code. Please try again.";
         setError(errMsg);
-        // Reset code inputs on error to allow user to retry cleanly
         setOtp(Array(6).fill(""));
         inputRefs.current[0]?.focus();
       }
@@ -144,31 +134,25 @@ export function VerifyForm() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Title */}
       <div className="text-center">
-        <h1 className="text-foreground font-serif text-2xl tracking-tight">
+        <h1 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase">
           Security Check
         </h1>
-        <p className="text-foreground-muted mt-1.5 text-xs leading-relaxed">
-          We sent a 6-digit code to the number <br />
-          <strong className="text-foreground">{phone}</strong>
+        <p className="mt-1.5 text-xs leading-relaxed font-light text-gray-500">
+          Enter the 6-digit verification code sent to <br />
+          <strong className="font-bold text-gray-900">+91 {phone}</strong>
         </p>
       </div>
 
       {error && (
-        <div
-          className="flex items-center gap-2 rounded-sm border p-3 text-xs"
-          style={{
-            background: "rgba(220, 38, 38, 0.05)",
-            borderColor: "rgba(220, 38, 38, 0.2)",
-            color: "var(--destructive)",
-          }}
-        >
+        <div className="flex items-center gap-2 rounded-none border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
-      {/* 6-box input container */}
+      {/* 6-box OTP digits */}
       <div className="flex justify-between gap-2">
         {otp.map((digit, index) => (
           <input
@@ -184,25 +168,16 @@ export function VerifyForm() {
               inputRefs.current[index] = el;
             }}
             disabled={isPending}
-            className="h-12 w-11 rounded-sm border text-center font-serif text-lg font-semibold transition-all focus:border-(--border-focus) focus:outline-hidden disabled:opacity-50"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--surface-raised)",
-              color: "var(--foreground)",
-            }}
+            className="h-13 w-12 rounded-none border border-gray-200 bg-white text-center font-serif text-xl font-black text-gray-900 shadow-xs focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:opacity-50"
           />
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-4 text-center">
+      <div className="flex flex-col items-center gap-3 text-center">
         <button
           onClick={handleResend}
           disabled={cooldown > 0}
-          className="text-xs font-semibold hover:underline disabled:opacity-60 disabled:hover:no-underline"
-          style={{
-            color:
-              cooldown > 0 ? "var(--foreground-subtle)" : "var(--accent-dark)",
-          }}
+          className="cursor-pointer text-xs font-bold tracking-wider text-[var(--accent)] uppercase hover:underline disabled:opacity-50 disabled:hover:no-underline"
         >
           {cooldown > 0
             ? `Resend code in ${cooldown}s`
@@ -210,24 +185,16 @@ export function VerifyForm() {
         </button>
 
         {isPending && (
-          <div className="text-foreground-muted flex items-center gap-2 text-xs">
-            <div
-              className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-t-transparent"
-              style={{ borderColor: "var(--accent)" }}
-            />
-            Verifying secure token...
+          <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+            Verifying token...
           </div>
         )}
       </div>
 
-      <div
-        className="flex items-center justify-center gap-1.5 border-t pt-4 text-[10px]"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <ShieldCheck className="h-3.5 w-3.5 text-(--foreground-subtle)" />
-        <span className="text-foreground-muted">
-          Secure end-to-end encryption
-        </span>
+      <div className="flex items-center justify-center gap-2 rounded-none border border-pink-100 bg-pink-50/70 p-3 text-[11px] font-medium text-gray-700">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+        <span>256-Bit End-to-End SSL Encrypted Security</span>
       </div>
     </div>
   );

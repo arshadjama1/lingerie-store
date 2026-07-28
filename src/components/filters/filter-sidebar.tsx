@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 
-import { X } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 
 import { buildQueryString, cn } from "@/lib/utils";
 
@@ -48,7 +48,7 @@ export function FilterSidebar({
     currentPriceMin !== null ||
     currentPriceMax !== null;
 
-  // Generic toggle helper — adds or removes a value from a multi-select param
+  // Generic toggle helper
   const toggle = useCallback(
     (param: string, value: string) => {
       const current = searchParams.getAll(param);
@@ -56,7 +56,6 @@ export function FilterSidebar({
         ? current.filter((v) => v !== value)
         : [...current, value];
 
-      // Rebuild the full query string from current params, replacing the toggled one
       const params: Record<string, string | string[] | undefined> = {};
       for (const key of ["sort", "priceMin", "priceMax"]) {
         const v = searchParams.get(key);
@@ -66,7 +65,7 @@ export function FilterSidebar({
         const vals = key === param ? next : searchParams.getAll(key);
         if (vals.length) params[key] = vals;
       }
-      params.page = undefined; // reset to page 1 on filter change
+      params.page = undefined;
 
       router.push(`${pathname}${buildQueryString(params)}`, { scroll: false });
     },
@@ -111,30 +110,35 @@ export function FilterSidebar({
   }, [pathname, router]);
 
   return (
-    <aside className={cn("flex flex-col gap-6", className)}>
+    <aside
+      className={cn(
+        "flex flex-col gap-6 rounded-none border border-gray-100 bg-white p-5 shadow-sm",
+        className
+      )}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-foreground text-sm font-semibold tracking-widest uppercase">
-          Filters
+      <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <h2 className="font-serif text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+          Refine Selection
         </h2>
         {hasActiveFilters && (
           <button
             onClick={clearAll}
-            className="text-foreground-muted hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+            className="flex cursor-pointer items-center gap-1 text-xs font-bold text-[var(--accent)] transition-colors hover:underline"
           >
-            <X className="h-3 w-3" />
-            Clear all
+            <RotateCcw className="h-3 w-3" />
+            Reset
           </button>
         )}
       </div>
 
       {/* Sort */}
       <FilterSection title="Sort by">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {SORT_OPTIONS.map((opt) => (
             <label
               key={opt.value}
-              className="flex cursor-pointer items-center gap-2.5"
+              className="group flex cursor-pointer items-center gap-2.5"
             >
               <input
                 type="radio"
@@ -142,16 +146,18 @@ export function FilterSidebar({
                 value={opt.value}
                 checked={selectedSort === opt.value}
                 onChange={() => setSort(opt.value)}
-                className="h-4 w-4 accent-[var(--accent)]"
+                className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
               />
-              <span className="text-foreground-muted text-sm">{opt.label}</span>
+              <span className="text-xs font-medium text-gray-700 transition-colors group-hover:text-[var(--accent)]">
+                {opt.label}
+              </span>
             </label>
           ))}
         </div>
       </FilterSection>
 
       {/* Price range */}
-      <FilterSection title="Price range">
+      <FilterSection title="Price range (₹)">
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -167,14 +173,10 @@ export function FilterSidebar({
                   currentPriceMax ? parseInt(currentPriceMax) : undefined
                 );
             }}
-            className="text-foreground w-full rounded border px-3 py-1.5 text-sm"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--surface-raised)",
-            }}
+            className="w-full rounded-none border border-gray-200 bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-gray-900 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
             aria-label="Minimum price"
           />
-          <span className="text-foreground-muted shrink-0 text-sm">to</span>
+          <span className="shrink-0 text-xs font-bold text-gray-400">—</span>
           <input
             type="number"
             placeholder={String(priceRange.max)}
@@ -189,11 +191,7 @@ export function FilterSidebar({
                   val
                 );
             }}
-            className="text-foreground w-full rounded border px-3 py-1.5 text-sm"
-            style={{
-              borderColor: "var(--border)",
-              background: "var(--surface-raised)",
-            }}
+            className="w-full rounded-none border border-gray-200 bg-[var(--surface)] px-3 py-1.5 text-xs font-semibold text-gray-900 focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
             aria-label="Maximum price"
           />
         </div>
@@ -202,7 +200,7 @@ export function FilterSidebar({
       {/* Sizes */}
       {sizes.length > 0 && (
         <FilterSection title="Size">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {sizes.map((size) => {
               const active = selectedSizes.includes(size);
               return (
@@ -210,10 +208,10 @@ export function FilterSidebar({
                   key={size}
                   onClick={() => toggle("size", size)}
                   className={cn(
-                    "rounded border px-3 py-1 text-xs font-medium transition-colors",
+                    "cursor-pointer rounded-none border px-3 py-1.5 text-xs font-bold transition-all",
                     active
-                      ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                      : "border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--accent-dark)]"
+                      ? "border-[var(--accent)] bg-[var(--accent)] text-white shadow-xs"
+                      : "border-gray-200 bg-white text-gray-700 hover:border-[var(--accent)] hover:text-[var(--accent)]"
                   )}
                   aria-pressed={active}
                 >
@@ -228,7 +226,7 @@ export function FilterSidebar({
       {/* Colors */}
       {colors.length > 0 && (
         <FilterSection title="Colour">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {colors.map(({ name, hex }) => {
               const active = selectedColors.includes(name);
               return (
@@ -239,20 +237,20 @@ export function FilterSidebar({
                   aria-pressed={active}
                   aria-label={name}
                   className={cn(
-                    "flex items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors",
+                    "flex cursor-pointer items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold transition-all",
                     active
-                      ? "border-[var(--accent)]"
-                      : "border-[var(--border)] hover:border-[var(--foreground-muted)]"
+                      ? "border-[var(--accent)] bg-pink-50 text-[var(--accent)]"
+                      : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                   )}
                 >
                   {hex && (
                     <span
-                      className="h-3.5 w-3.5 rounded-full border border-black/10"
+                      className="h-3 w-3 flex-shrink-0 rounded-full border border-black/10"
                       style={{ background: hex }}
                       aria-hidden="true"
                     />
                   )}
-                  <span className="text-foreground-muted">{name}</span>
+                  <span>{name}</span>
                 </button>
               );
             })}
@@ -263,21 +261,21 @@ export function FilterSidebar({
       {/* Brands */}
       {brands.length > 0 && (
         <FilterSection title="Brand">
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {brands.map((brand) => {
               const active = selectedBrands.includes(brand.slug);
               return (
                 <label
                   key={brand.slug}
-                  className="flex cursor-pointer items-center gap-2.5"
+                  className="group flex cursor-pointer items-center gap-2.5"
                 >
                   <input
                     type="checkbox"
                     checked={active}
                     onChange={() => toggle("brand", brand.slug)}
-                    className="h-4 w-4 rounded accent-[var(--accent)]"
+                    className="h-4 w-4 cursor-pointer rounded-none accent-[var(--accent)]"
                   />
-                  <span className="text-foreground-muted text-sm">
+                  <span className="text-xs font-medium text-gray-700 transition-colors group-hover:text-[var(--accent)]">
                     {brand.name}
                   </span>
                 </label>
@@ -298,8 +296,8 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-2.5">
-      <h3 className="text-foreground text-xs font-semibold tracking-widest uppercase">
+    <div className="flex flex-col gap-2.5 border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+      <h3 className="text-[10px] font-black tracking-widest text-gray-900 uppercase">
         {title}
       </h3>
       {children}
