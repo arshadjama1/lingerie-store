@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
-  title: "Sign in — Amara Lingerie",
+  title: "Sign In | LINGE Storefront",
   description:
-    "Sign in to your Amara account using your phone number or email.",
+    "Sign in to your LINGE account using your mobile phone number or email address.",
 };
 
 export default function LoginPage() {
@@ -13,10 +13,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex h-64 items-center justify-center">
-          <div
-            className="h-8 w-8 animate-spin rounded-full border-2 border-t-transparent"
-            style={{ borderColor: "var(--accent)" }}
-          />
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
         </div>
       }
     >
