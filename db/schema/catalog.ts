@@ -220,3 +220,10 @@ export const inventoryRelations = relations(inventory, ({ one }) => ({
     references: [productVariants.id],
   }),
 }));
+
+export type Category = typeof categories.$inferSelect;
+export type Brand = typeof brands.$inferSelect;
+export type Product = typeof products.$inferSelect;
+export type ProductVariant = typeof productVariants.$inferSelect;
+export type ProductImage = typeof productImages.$inferSelect;
+export type Inventory = typeof inventory.$inferSelect;
