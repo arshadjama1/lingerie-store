@@ -25,6 +25,23 @@ export async function GET(request: Request) {
     phone: data.user.phone,
   });
 
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("cart_session")?.value;
+
+  if (sessionCookie) {
+    const { mergeGuestCartToUser } = await import("@/modules/cart");
+    await mergeGuestCartToUser(sessionCookie, data.user.id).catch((err) =>
+      console.error("[auth/callback] Cart merge failed:", err)
+    );
+  }
+
   const redirectUrl = next.startsWith("/") ? `${origin}${next}` : origin;
-  return NextResponse.redirect(redirectUrl);
+  const response = NextResponse.redirect(redirectUrl);
+
+  if (sessionCookie) {
+    response.cookies.delete("cart_session");
+  }
+
+  return response;
 }

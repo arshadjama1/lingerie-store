@@ -52,7 +52,26 @@ export async function POST(req: Request) {
     email: data.user.email,
   });
 
-  return Response.json({
+  const { cookies } = await import("next/headers");
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("cart_session")?.value;
+
+  if (sessionCookie) {
+    const { mergeGuestCartToUser } = await import("@/modules/cart");
+    await mergeGuestCartToUser(sessionCookie, data.user.id).catch((err) =>
+      console.error("[verify-otp] Cart merge failed:", err)
+    );
+  }
+
+  const response = Response.json({
     user: { id: data.user.id, phone: data.user.phone, email: data.user.email },
   });
+
+  if (sessionCookie) {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    cookieStore.delete("cart_session");
+  }
+
+  return response;
 }
