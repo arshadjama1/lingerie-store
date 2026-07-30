@@ -3,6 +3,7 @@
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 
+import { useCartStore } from "@/stores/useCartStore";
 import {
   ChevronLeft,
   ChevronRight,
@@ -47,6 +48,8 @@ export function ProductActions({ product }: ProductActionsProps) {
     }
     return Array.from(sizesSet);
   }, [product.variants]);
+
+  const { addItem, isLoading: isCartLoading } = useCartStore();
 
   // Initial states
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
@@ -344,25 +347,29 @@ export function ProductActions({ product }: ProductActionsProps) {
         {/* Add to Bag and Wishlist Controls */}
         <div className="flex gap-3 pt-2">
           <button
-            disabled={!selectedSize || isOutOfStock}
+            disabled={
+              !selectedSize || isOutOfStock || isCartLoading || !selectedVariant
+            }
             className={cn(
               "flex flex-1 items-center justify-center gap-2 rounded-none py-4 text-xs font-black tracking-wider uppercase shadow-md transition-all",
-              selectedSize && !isOutOfStock
+              selectedSize && !isOutOfStock && !isCartLoading && selectedVariant
                 ? "cursor-pointer bg-[var(--accent)] text-white hover:bg-[var(--accent-dark)] hover:shadow-lg"
                 : "cursor-not-allowed border border-gray-300 bg-gray-200 text-gray-400"
             )}
             onClick={() => {
-              alert(
-                `Added SKU ${selectedVariant?.sku || product.name} to cart`
-              );
+              if (selectedVariant) {
+                addItem(selectedVariant.id, 1);
+              }
             }}
           >
             <ShoppingBag className="h-4 w-4" />
-            {isOutOfStock
-              ? "Out of Stock"
-              : !selectedSize
-                ? "Select a Size First"
-                : "Add to Bag"}
+            {isCartLoading
+              ? "Adding..."
+              : isOutOfStock
+                ? "Out of Stock"
+                : !selectedSize
+                  ? "Select a Size First"
+                  : "Add to Bag"}
           </button>
 
           <button
