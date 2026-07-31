@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 
+import { useCartStore } from "@/stores/useCartStore";
 import {
   ChevronDown,
   Heart,
@@ -15,6 +16,8 @@ import {
 
 import { cn } from "@/lib/utils";
 
+import { CartDrawer } from "@/components/cart/cart-drawer";
+
 import {
   COMBO_QUICK_LINKS,
   MARQUEE_ANNOUNCEMENTS,
@@ -26,6 +29,9 @@ export function Header() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { cart, openCart } = useCartStore();
+  const itemCount = cart?.itemCount || 0;
 
   const handleMenuEnter = (name: string) => {
     if (menuTimeout.current) clearTimeout(menuTimeout.current);
@@ -125,16 +131,18 @@ export function Header() {
                 <Heart className="h-5 w-5" />
               </Link>
 
-              <Link
-                href="/cart"
+              <button
+                onClick={openCart}
                 className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
                 aria-label="Cart"
               >
                 <ShoppingBag className="h-5 w-5" />
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] leading-none font-bold text-white">
-                  0
-                </span>
-              </Link>
+                {itemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] leading-none font-bold text-white">
+                    {itemCount > 99 ? "99+" : itemCount}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -323,6 +331,9 @@ export function Header() {
           </div>
         </div>
       )}
+
+      {/* Cart Drawer Overlay */}
+      <CartDrawer />
     </header>
   );
 }
