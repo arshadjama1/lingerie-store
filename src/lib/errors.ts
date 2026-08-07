@@ -40,12 +40,14 @@ export class ConflictError extends AppError {
 }
 
 export class InsufficientStockError extends AppError {
-  constructor(variantId: string) {
-    super(
-      `Insufficient stock for variant ${variantId}`,
-      409,
-      "INSUFFICIENT_STOCK"
-    );
+  constructor(messageOrVariantId: string) {
+    const message =
+      messageOrVariantId.startsWith("Insufficient") ||
+      messageOrVariantId.includes("available") ||
+      messageOrVariantId.includes("stock")
+        ? messageOrVariantId
+        : `Insufficient stock for variant ${messageOrVariantId}`;
+    super(message, 409, "INSUFFICIENT_STOCK");
   }
 }
 
