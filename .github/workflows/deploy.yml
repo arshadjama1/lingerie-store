@@ -27,11 +27,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify Netlify Secrets
+        env:
+          SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -z "$AUTH_TOKEN" ]; then
+            echo "::error::NETLIFY_AUTH_TOKEN is missing or empty in GitHub Secrets!"
+            echo "Please ensure NETLIFY_AUTH_TOKEN is added under Settings -> Secrets and variables -> Actions -> Repository secrets (NOT Environment secrets or Variables)."
+            exit 1
+          fi
+          if [ -z "$SITE_ID" ]; then
+            echo "::error::NETLIFY_SITE_ID is missing or empty in GitHub Secrets!"
+            echo "Please ensure NETLIFY_SITE_ID is added under Settings -> Secrets and variables -> Actions -> Repository secrets."
+            exit 1
+          fi
+          echo "✅ Netlify credentials found in GitHub Secrets."
+
       - name: Deploy to Netlify
         # All app env vars are stored in the Netlify dashboard.
         # netlify-cli fetches and injects them automatically during build.
-        # GitHub Secrets only holds the two credentials needed to authenticate.
-        run: npx netlify-cli deploy --build --prod
+        run: npx netlify-cli deploy --prod --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
