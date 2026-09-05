@@ -4,6 +4,51 @@ import type { NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+  const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
+  const bypassSecret = process.env.PRELAUNCH_BYPASS_KEY || "linge2026";
+
+  // 1. Team bypass handler: ?preview=exit to exit, ?preview=<secret> to unlock store
+  if (searchParams.get("preview") === "exit") {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("preview");
+    const redirectRes = NextResponse.redirect(url);
+    redirectRes.cookies.delete("linge_preview_access");
+    return redirectRes;
+  }
+
+  if (searchParams.get("preview") === bypassSecret) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("preview");
+    const redirectRes = NextResponse.redirect(url);
+    redirectRes.cookies.set("linge_preview_access", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      httpOnly: false,
+      sameSite: "lax",
+    });
+    return redirectRes;
+  }
+
+  const hasBypass =
+    request.cookies.get("linge_preview_access")?.value === "true";
+
+  // 2. Pre-launch restriction for public visitors
+  if (isPrelaunch && !hasBypass) {
+    const isWhitelisted =
+      pathname.startsWith("/api") ||
+      pathname.startsWith("/auth") ||
+      pathname.startsWith("/admin") ||
+      pathname === "/coming-soon";
+
+    if (!isWhitelisted) {
+      if (pathname === "/") {
+        return NextResponse.rewrite(new URL("/coming-soon", request.url));
+      }
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -30,7 +75,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  const { pathname } = request.nextUrl;
 
   if (
     !user &&
