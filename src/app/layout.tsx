@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 
+import { TeamPreviewIndicator } from "@/components/common/TeamPreviewIndicator";
+
 import "./globals.css";
 
 const poppins = Poppins({
@@ -33,7 +35,10 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased ${poppins.variable} ${playfair.variable}`}
     >
-      <body className="flex min-h-full flex-col font-sans">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">
+        {children}
+        <TeamPreviewIndicator />
+      </body>
     </html>
   );
 }
