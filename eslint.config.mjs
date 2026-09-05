@@ -7,6 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       ".next/**",
+      ".netlify/**",
       "node_modules/**",
       "db/migrations/**",
       "*.config.{js,mjs,ts}",
