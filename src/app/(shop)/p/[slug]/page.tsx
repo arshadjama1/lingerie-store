@@ -28,7 +28,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = product.metaTitle || `${product.name} | LINGE Storefront`;
+  const title = product.metaTitle || `${product.name} | Surekh Storefront`;
   const description = product.metaDesc || product.description || "";
   const imageUrls = product.images.map((img) => img.url);
 

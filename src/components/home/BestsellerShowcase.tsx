@@ -130,7 +130,7 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
 
                 <div className="flex flex-1 flex-col p-4">
                   <p className="text-[10px] font-black tracking-widest text-[var(--accent-dark)] uppercase">
-                    {product.brandName || "LINGE"}
+                    {product.brandName || "Surekh"}
                   </p>
                   <Link
                     href={`/p/${product.slug}`}

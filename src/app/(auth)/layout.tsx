@@ -13,7 +13,7 @@ export default function AuthLayout({
         href="/"
         className="mb-8 font-serif text-3xl font-black tracking-widest text-[#3d0a20] transition-opacity hover:opacity-90"
       >
-        LINGE<span className="text-[var(--accent)]">.</span>
+        Surekh<span className="text-[var(--accent)]">.</span>
       </Link>
 
       {/* Main Sharp Card */}

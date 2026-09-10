@@ -93,7 +93,7 @@ export function Header() {
               href="/"
               className="absolute left-1/2 hidden -translate-x-1/2 font-serif text-3xl font-black tracking-widest text-[#3d0a20] transition-opacity hover:opacity-90 lg:block"
             >
-              LINGE
+              Surekh
               <span className="text-[var(--accent)]">.</span>
             </Link>
 
@@ -102,7 +102,7 @@ export function Header() {
               href="/"
               className="font-serif text-2xl font-black tracking-widest text-[#3d0a20] lg:hidden"
             >
-              LINGE<span className="text-[var(--accent)]">.</span>
+              Surekh<span className="text-[var(--accent)]">.</span>
             </Link>
 
             {/* Right Action Icons */}
@@ -262,7 +262,7 @@ export function Header() {
                 href="/"
                 className="font-serif text-xl font-black text-[#3d0a20]"
               >
-                LINGE<span className="text-[var(--accent)]">.</span>
+                Surekh<span className="text-[var(--accent)]">.</span>
               </Link>
               <button
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors hover:text-black"

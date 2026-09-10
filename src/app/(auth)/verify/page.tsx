@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { VerifyForm } from "./verify-form";
 
 export const metadata = {
-  title: "Security Verification | LINGE Storefront",
+  title: "Security Verification | Surekh Storefront",
   description:
     "Verify your phone number with the 6-digit OTP code sent to your mobile device.",
 };

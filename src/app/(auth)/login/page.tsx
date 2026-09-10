@@ -3,9 +3,9 @@ import { Suspense } from "react";
 import { LoginForm } from "./login-form";
 
 export const metadata = {
-  title: "Sign In | LINGE Storefront",
+  title: "Sign In | Surekh Storefront",
   description:
-    "Sign in to your LINGE account using your mobile phone number or email address.",
+    "Sign in to your Surekh account using your mobile phone number or email address.",
 };
 
 export default function LoginPage() {

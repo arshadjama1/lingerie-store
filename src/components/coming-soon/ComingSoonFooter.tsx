@@ -26,7 +26,7 @@ export function ComingSoonFooter() {
           {/* Brand & Mission */}
           <div className="text-center md:text-left">
             <div className="font-serif text-xl font-bold tracking-[0.2em] text-white">
-              LINGE<span className="text-[#c83c7e]">.</span>
+              Surekh<span className="text-[#c83c7e]">.</span>
             </div>
             <p className="mt-1 max-w-sm text-xs text-rose-200/60">
               Sculpted intimacy, French laces, and certified mulberry silks.
@@ -37,11 +37,11 @@ export function ComingSoonFooter() {
           {/* Concierge & Socials */}
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-rose-100/70">
             <a
-              href="mailto:concierge@linge.luxury"
+              href="mailto:concierge@surekh.luxury"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 transition-colors hover:border-[#d4af37]/50 hover:text-[#d4af37]"
             >
               <Mail className="h-3.5 w-3.5" />
-              <span>concierge@linge.luxury</span>
+              <span>concierge@surekh.luxury</span>
             </a>
 
             <a
@@ -51,7 +51,7 @@ export function ComingSoonFooter() {
               className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 transition-colors hover:border-[#d4af37]/50 hover:text-[#d4af37]"
             >
               <InstagramIcon className="h-3.5 w-3.5" />
-              <span>@linge.intimates</span>
+              <span>@surekh.intimates</span>
             </a>
 
             <a
@@ -68,7 +68,7 @@ export function ComingSoonFooter() {
 
         <div className="mt-8 flex flex-col items-center justify-between gap-2 border-t border-white/5 pt-6 text-[11px] text-rose-200/40 sm:flex-row">
           <span>
-            © 2026 LINGE. All rights reserved. Discreet packaging guaranteed.
+            © 2026 Surekh. All rights reserved. Discreet packaging guaranteed.
           </span>
           <span>Confidentiality & Privacy First</span>
         </div>

@@ -66,7 +66,7 @@ export function PaymentStep({ session }: PaymentStepProps) {
         key: data.keyId,
         amount: data.amount,
         currency: data.currency,
-        name: "LINGE.",
+        name: "Surekh.",
         description: `Order Checkout (${session.lineItems.length} items)`,
         order_id: data.razorpayOrderId,
         prefill: {

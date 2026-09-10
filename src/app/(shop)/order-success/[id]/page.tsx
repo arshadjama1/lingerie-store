@@ -59,7 +59,7 @@ export default async function OrderSuccessPage({
             Order Confirmed!
           </h1>
           <p className="mt-1 text-sm text-neutral-600">
-            Thank you for shopping with LINGE. Your order has been placed.
+            Thank you for shopping with Surekh. Your order has been placed.
           </p>
 
           <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-neutral-100 px-4 py-2 font-mono text-sm font-semibold text-neutral-800">
