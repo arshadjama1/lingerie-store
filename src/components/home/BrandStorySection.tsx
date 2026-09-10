@@ -36,7 +36,7 @@ export function BrandStorySection() {
             </h2>
           </div>
           <p className="text-sm leading-relaxed font-light text-gray-600">
-            LINGE combines joyful fashion ethos with fit precision. Every piece
+            Surekh combines joyful fashion ethos with fit precision. Every piece
             is designed for Indian body types, ensuring 100% skin comfort, shape
             retention, and unmatched confidence.
           </p>

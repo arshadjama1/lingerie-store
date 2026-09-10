@@ -1,12 +1,9 @@
 import Image from "next/image";
 
-import { Clock, Gift, Shield, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
-import { BrandPillars } from "./BrandPillars";
-import { ComingSoonFooter } from "./ComingSoonFooter";
 import { ComingSoonHeader } from "./ComingSoonHeader";
 import { CountdownTimer } from "./CountdownTimer";
-import { SneakPeekGrid } from "./SneakPeekGrid";
 
 export function ComingSoonPage() {
   return (
@@ -16,7 +13,7 @@ export function ComingSoonPage() {
       <div className="pointer-events-none absolute inset-0 z-0">
         <Image
           src="/images/home/hero_slide_1.jpg"
-          alt="Linge Luxury Intimates Preview"
+          alt="Surekh Luxury Intimates Preview"
           fill
           priority
           className="object-cover object-top opacity-20 contrast-125 filter"
@@ -59,32 +56,7 @@ export function ComingSoonPage() {
           <div className="mt-10 w-full sm:mt-12">
             <CountdownTimer />
           </div>
-
-          {/* Three Key Inaugural Privileges */}
-          <div className="mt-12 grid w-full max-w-3xl grid-cols-1 gap-3 text-xs text-rose-200/80 sm:mt-14 sm:grid-cols-3 sm:gap-4">
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 backdrop-blur-sm">
-              <Clock className="h-4 w-4 text-[#d4af37]" />
-              <span>24-Hour VIP Headstart</span>
-            </div>
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 backdrop-blur-sm">
-              <Gift className="h-4 w-4 text-[#d4af37]" />
-              <span>Complimentary Silk Sleep Mask</span>
-            </div>
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-white/5 bg-white/[0.03] px-3 py-2.5 backdrop-blur-sm">
-              <Shield className="h-4 w-4 text-[#d4af37]" />
-              <span>Discreet Tamper-Proof Delivery</span>
-            </div>
-          </div>
         </main>
-
-        {/* ── SNEAK PEEK SHOWCASE ───────────────────────────────────────── */}
-        <SneakPeekGrid />
-
-        {/* ── BRAND PILLARS ────────────────────────────────────────────── */}
-        <BrandPillars />
-
-        {/* ── LUXURY FOOTER ────────────────────────────────────────────── */}
-        <ComingSoonFooter />
       </div>
     </div>
   );

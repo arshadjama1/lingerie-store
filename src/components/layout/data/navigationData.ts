@@ -189,7 +189,7 @@ export const FOOTER_LINK_GROUPS = {
     { label: "Contact Customer Care", href: "/contact" },
     { label: "FAQs", href: "/faqs" },
   ],
-  "About Linge": [
+  "About Surekh": [
     { label: "Our Story & Mission", href: "/about" },
     { label: "Store Locator", href: "/stores" },
     { label: "Privacy & Data Policy", href: "/legal/privacy" },

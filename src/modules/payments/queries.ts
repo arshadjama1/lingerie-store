@@ -20,7 +20,7 @@ import { verifyPaymentSignature } from "./razorpay";
 
 export function generateOrderNumber(): string {
   const hashSegment = createId().slice(0, 6).toUpperCase();
-  return `LINGE-${hashSegment}`;
+  return `SUREKH-${hashSegment}`;
 }
 
 interface ProcessPaymentSuccessInput {

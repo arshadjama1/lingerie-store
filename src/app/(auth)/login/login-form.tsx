@@ -107,7 +107,7 @@ export function LoginForm() {
       {/* Title */}
       <div className="text-center">
         <h1 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase">
-          Welcome to LINGE
+          Welcome to Surekh
         </h1>
         <p className="mt-1 text-xs font-light text-gray-500">
           Sign in for express checkout, order tracking & exclusive perks

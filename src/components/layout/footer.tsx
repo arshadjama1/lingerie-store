@@ -19,7 +19,7 @@ export function Footer() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
           <div className="space-y-1 text-center md:text-left">
             <h3 className="font-serif text-xl font-black tracking-tight text-white sm:text-2xl">
-              Join the Linge Insider Club
+              Join the Surekh Insider Club
             </h3>
             <p className="text-xs font-normal text-pink-100">
               Get secret sale updates, exclusive coupon codes, and fit tips
@@ -52,7 +52,7 @@ export function Footer() {
               href="/"
               className="flex items-center gap-1 font-serif text-2xl font-black tracking-widest text-white"
             >
-              <span>LINGE</span>
+              <span>Surekh</span>
               <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
             </Link>
             <p className="text-xs leading-relaxed font-normal text-pink-100/90">
@@ -90,7 +90,7 @@ export function Footer() {
         {/* Bottom Trust & Copyright */}
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-pink-900/60 pt-8 text-xs font-medium text-pink-200/90 sm:flex-row">
           <p>
-            © {new Date().getFullYear()} Linge Retail Pvt Ltd. All rights
+            © {new Date().getFullYear()} Surekh Retail Pvt Ltd. All rights
             reserved.
           </p>
 

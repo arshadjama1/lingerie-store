@@ -20,7 +20,7 @@ export function ComingSoonHeader() {
               href="/"
               className="font-serif text-3xl font-bold tracking-[0.25em] text-white transition-opacity hover:opacity-90 sm:text-4xl"
             >
-              LINGE<span className="text-[#c83c7e]">.</span>
+              Surekh<span className="text-[#c83c7e]">.</span>
             </Link>
             <span className="mt-0.5 text-[9px] font-medium tracking-[0.35em] text-[#d4af37] uppercase">
               HAUTE INTIMATES

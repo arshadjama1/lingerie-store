@@ -81,7 +81,7 @@ export default function CheckoutPage() {
           </Link>
           <div className="flex items-center gap-2 text-lg font-bold text-rose-600">
             <ShoppingBag className="h-5 w-5" />
-            <span>LINGE. Checkout</span>
+            <span>Surekh. Checkout</span>
           </div>
         </div>
 

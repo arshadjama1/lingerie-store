@@ -20,7 +20,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Zivame-Style Premium Lingerie Store",
+  title: "Surekh | Premium Lingerie & Intimate Apparel",
   description:
     "Shop Bras, Panties, Nightwear, Activewear & Shapewear with perfect fit assurance.",
 };
