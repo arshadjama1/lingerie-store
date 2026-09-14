@@ -19,11 +19,42 @@ if (!databaseUrl) {
 const client = postgres(databaseUrl, { max: 1 });
 const db = drizzle(client, { schema });
 
-async function seed() {
-  console.log("🌱 Starting database seed...");
+// ─── Image base path (served from Next.js public/) ───────────────────────────
+const IMG = "/images/products";
 
-  // 1. Clear existing data
-  console.log("🧹 Cleaning up existing catalog tables...");
+// ─── Colour hex lookup ────────────────────────────────────────────────────────
+const COLOR_HEX: Record<string, string> = {
+  Black: "#1a1a1a",
+  "Navy Blue": "#1f3a52",
+  Cinder: "#6d6f72",
+  Maroon: "#800000",
+  Pink: "#f4a7b9",
+  Green: "#2d6a4f",
+  Olive: "#6b7c3a",
+  Skin: "#e8c49a",
+  White: "#ffffff",
+  Wine: "#722f37",
+  Aqua: "#00bcd4",
+};
+
+async function seed() {
+  console.log("🌱 Starting database seed with real client data...");
+
+  // ── 1. Clear ALL dependent data in correct FK order ─────────────────────────
+  console.log("🧹 Cleaning up existing data...");
+  // cart_items → checkout_sessions → carts
+  await db.delete(schema.cartItems);
+  await db.delete(schema.checkoutSessions);
+  await db.delete(schema.carts);
+  // wishlist, reviews
+  await db.delete(schema.wishlistItems);
+  await db.delete(schema.reviews);
+  // return_requests → order_items / order_status_history → orders
+  await db.delete(schema.returnRequests);
+  await db.delete(schema.orderItems);
+  await db.delete(schema.orderStatusHistory);
+  await db.delete(schema.orders);
+  // Now catalog tables
   await db.delete(schema.inventory);
   await db.delete(schema.productImages);
   await db.delete(schema.productVariants);
@@ -32,40 +63,20 @@ async function seed() {
   await db.delete(schema.brands);
   console.log("🧹 Cleanup complete.");
 
-  // 2. Seed Brands
-  console.log("🏷️ Seeding brands...");
-  const brandData = [
-    {
-      id: createId(),
-      name: "Lacy Secrets",
-      slug: "lacy-secrets",
-      description:
-        "Delicate lace design, premium construction, and absolute elegance for special moments.",
-      isActive: true,
-    },
-    {
-      id: createId(),
-      name: "Comfort Curve",
-      slug: "comfort-curve",
-      description:
-        "Everyday comfort redefined. Soft fabrics, wire-free designs, and seamless support.",
-      isActive: true,
-    },
-    {
-      id: createId(),
-      name: "Satin Seduction",
-      slug: "satin-seduction",
-      description:
-        "Luxurious silk and satin nightwear, loungewear, and premium bridal lingerie.",
-      isActive: true,
-    },
-  ];
+  // ── 2. Seed Brand ────────────────────────────────────────────────────────────
+  console.log("🏷️  Seeding brand...");
+  const brandId = createId();
+  await db.insert(schema.brands).values({
+    id: brandId,
+    name: "Surekh",
+    slug: "surekh",
+    description:
+      "Surekh — thoughtfully designed innerwear and loungewear crafted from premium bamboo, modal and seamless fabrics for everyday comfort.",
+    isActive: true,
+  });
+  console.log("✅ Brand seeded: Surekh");
 
-  await db.insert(schema.brands).values(brandData);
-  const seededBrands = await db.query.brands.findMany();
-  console.log(`✅ Seeded ${seededBrands.length} brands.`);
-
-  // 3. Seed Categories
+  // ── 3. Seed Categories ───────────────────────────────────────────────────────
   console.log("📁 Seeding categories...");
   const categoryData = [
     {
@@ -74,8 +85,7 @@ async function seed() {
       slug: "bras",
       path: "bras",
       parentId: null,
-      imageUrl:
-        "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=600",
+      imageUrl: `${IMG}/bamboo-bra-black.png`,
       isActive: true,
       sortOrder: 1,
     },
@@ -85,10 +95,19 @@ async function seed() {
       slug: "panties",
       path: "panties",
       parentId: null,
-      imageUrl:
-        "https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4?q=80&w=600",
+      imageUrl: `${IMG}/bamboo-undie-black.png`,
       isActive: true,
       sortOrder: 2,
+    },
+    {
+      id: createId(),
+      name: "Sets",
+      slug: "sets",
+      path: "sets",
+      parentId: null,
+      imageUrl: `${IMG}/lingerie-set-olive.png`,
+      isActive: true,
+      sortOrder: 3,
     },
     {
       id: createId(),
@@ -96,10 +115,9 @@ async function seed() {
       slug: "nightwear",
       path: "nightwear",
       parentId: null,
-      imageUrl:
-        "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600",
+      imageUrl: null,
       isActive: true,
-      sortOrder: 3,
+      sortOrder: 4,
     },
     {
       id: createId(),
@@ -107,10 +125,9 @@ async function seed() {
       slug: "shapewear",
       path: "shapewear",
       parentId: null,
-      imageUrl:
-        "https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?q=80&w=600",
+      imageUrl: null,
       isActive: true,
-      sortOrder: 4,
+      sortOrder: 5,
     },
     {
       id: createId(),
@@ -118,309 +135,646 @@ async function seed() {
       slug: "loungewear",
       path: "loungewear",
       parentId: null,
-      imageUrl:
-        "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=600",
+      imageUrl: `${IMG}/camisole-black.png`,
       isActive: true,
-      sortOrder: 5,
+      sortOrder: 6,
     },
   ];
 
   await db.insert(schema.categories).values(categoryData);
   const seededCategories = await db.query.categories.findMany();
+  const catBySlug = Object.fromEntries(
+    seededCategories.map((c) => [c.slug, c])
+  );
   console.log(`✅ Seeded ${seededCategories.length} categories.`);
 
-  // Setup sample product generation details
-  const designPatterns = [
-    "Classic",
-    "Floral Lace",
-    "Seamless",
-    "Plunge",
-    "Wireless",
-    "Push-Up",
-    "Satin Trim",
-    "High-Waist",
-    "Luxury",
-    "Mesh Detail",
-  ];
-  const fabrics = [
-    "90% Nylon, 10% Spandex",
-    "85% Polyamide, 15% Elastane",
-    "100% Mulberry Silk",
-    "95% Modal, 5% Elastane",
-    "92% Organic Cotton, 8% Elastane",
-  ];
-  const closures = [
-    "Hook and Eye",
-    "Pull-on",
-    "Side Zip",
-    "Tie back",
-    "Front Closure",
-  ];
-  const paddings = ["Padded", "Non-padded", "Lightly padded", "Removable pads"];
+  // ── 4. Product definitions ───────────────────────────────────────────────────
+  //
+  // Each entry describes one product card from the Excel sheet.
+  // `variants` is an array of { color, sizes[], price, mrp, images[] }
+  // `images`   are product-level images (not variant-specific)
+  //
+  interface VariantDef {
+    color: string;
+    sizes: string[];
+    price: number;
+    mrp: number;
+    images: { url: string; alt: string; isPrimary: boolean }[];
+  }
+  interface ProductDef {
+    name: string;
+    slug: string;
+    categorySlug: string;
+    description: string;
+    fabric: string | null;
+    tags: string[];
+    isFeatured: boolean;
+    isBestSeller: boolean;
+    variants: VariantDef[];
+    productImages: { url: string; alt: string; isPrimary: boolean }[];
+  }
 
-  const categoryProductTemplates: Record<
-    string,
-    { names: string[]; tags: string[]; defaultDesc: string }[]
-  > = {
-    bras: [
-      {
-        names: [
-          "Balconette Bra",
-          "T-Shirt Bra",
-          "Sports Bra",
-          "Strapless Bra",
-          "Bralette",
-          "Plunge Bra",
-          "Maternity Bra",
-          "Demi Bra",
-          "Wireless Bra",
-          "Corset Bra",
-        ],
-        tags: ["bra", "support", "everyday", "underwire"],
-        defaultDesc:
-          "A perfect blend of comfort and style. Features adjustable straps and hook-and-eye closure for custom fit.",
-      },
-    ],
-    panties: [
-      {
-        names: [
-          "Lace Thong",
-          "Seamless Briefs",
-          "Hipster Panty",
-          "Boy Shorts",
-          "High-Waisted Briefs",
-          "Bikini Panty",
-          "Brazilian Thong",
-          "Cheeky Panty",
-          "Tanga",
-          "G-String",
-        ],
-        tags: ["panty", "cotton", "lace", "seamless", "everyday"],
-        defaultDesc:
-          "Soft and breathable premium fabric construction. Fits snugly and stays invisible under tight garments.",
-      },
-    ],
-    nightwear: [
-      {
-        names: [
-          "Satin Chemise",
-          "Silk Pajama Set",
-          "Lace Nighty",
-          "Camisole Set",
-          "Velvet Robe",
-          "Babydoll Dress",
-          "Sleep Shirt",
-          "Cotton Nightdress",
-          "Bridal Robe Set",
-          "Slip Dress",
-        ],
-        tags: ["nightwear", "sleepwear", "satin", "silk", "lounge"],
-        defaultDesc:
-          "Elegant drape and luxurious feel. Designed for relaxed night sleep or lazy lounging Sundays.",
-      },
-    ],
-    shapewear: [
-      {
-        names: [
-          "Tummy Control Bodysuit",
-          "High-Waist Thigh Slimmer",
-          "Waist Clincher",
-          "Seamless Shaping Slip",
-          "Booty Lifter Shorts",
-          "Arm Shaper",
-          "Full Body Suit",
-          "Plunge Shaping Bodysuit",
-          "Thigh Control Panty",
-          "Camisole Shaper",
-        ],
-        tags: ["shapewear", "slimming", "tummy-control", "compression"],
-        defaultDesc:
-          "Medium-to-firm compression targeted zone shaping. Flat seams make it completely invisible under bodycon dresses.",
-      },
-    ],
-    loungewear: [
-      {
-        names: [
-          "Ribbed Knit Set",
-          "Oversized Hoodie Set",
-          "Fleece Joggers",
-          "Satin Loungewear Set",
-          "Knit Cardigan",
-          "Modal Pajamas",
-          "Terry Cloth Shorts",
-          "Soft Modal Jogger Set",
-          "Cashmere Blend Lounge Pants",
-          "Zip-Up Romper",
-        ],
-        tags: ["loungewear", "comfy", "casual", "indoor"],
-        defaultDesc:
-          "Ultrasoft fabric blend meant for cozy and comfortable indoor wear, home workouts, or quick errand runs.",
-      },
-    ],
-  };
+  const products: ProductDef[] = [
+    // ── Bamboo Fabric Undie ──────────────────────────────────────────────────
+    {
+      name: "Bamboo Fabric Undie",
+      slug: "bamboo-fabric-undie",
+      categorySlug: "panties",
+      description:
+        "Ultra-soft bamboo fabric undie that keeps you fresh and comfortable all day. Made from 95% bamboo and 5% elastane for a breathable, skin-friendly fit.",
+      fabric: "95% Bamboo, 5% Elastane",
+      tags: ["bamboo", "undie", "panty", "everyday", "best-seller"],
+      isFeatured: true,
+      isBestSeller: true,
+      productImages: [
+        {
+          url: `${IMG}/bamboo-undie-black.png`,
+          alt: "Bamboo Fabric Undie – Black Front",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/floral-undie-navy.png`,
+          alt: "Bamboo Fabric Undie – Navy Front",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/bamboo-undie-black.png`,
+              alt: "Bamboo Fabric Undie Black",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Navy Blue",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/floral-undie-navy.png`,
+              alt: "Bamboo Fabric Undie Navy Blue",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
 
-  const sizesMap: Record<string, string[]> = {
-    bras: ["32B", "34B", "36B", "32C", "34C", "36C", "38C"],
-    panties: ["S", "M", "L", "XL", "XXL"],
-    nightwear: ["S", "M", "L", "XL"],
-    shapewear: ["S", "M", "L", "XL", "XXL"],
-    loungewear: ["S", "M", "L", "XL"],
-  };
+    // ── Bamboo Fabric Bra ────────────────────────────────────────────────────
+    {
+      name: "Bamboo Fabric Bra",
+      slug: "bamboo-fabric-bra",
+      categorySlug: "bras",
+      description:
+        "Wire-free lounge bra crafted from silky-soft bamboo. Provides gentle support with a barely-there feel. Perfect for all-day wear.",
+      fabric: "95% Bamboo, 5% Elastane",
+      tags: ["bamboo", "bra", "lounge-bra", "wire-free", "best-seller"],
+      isFeatured: true,
+      isBestSeller: true,
+      productImages: [
+        {
+          url: `${IMG}/bamboo-bra-black.png`,
+          alt: "Bamboo Fabric Bra – Black Front",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/bamboo-bra-navy.png`,
+          alt: "Bamboo Fabric Bra – Navy Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/bamboo-bra-cinder.png`,
+          alt: "Bamboo Fabric Bra – Cinder Front",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 400,
+          mrp: 400,
+          images: [
+            {
+              url: `${IMG}/bamboo-bra-black.png`,
+              alt: "Bamboo Fabric Bra Black Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/bamboo-bra-black-back.png`,
+              alt: "Bamboo Fabric Bra Black Back",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Navy Blue",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 400,
+          mrp: 400,
+          images: [
+            {
+              url: `${IMG}/bamboo-bra-navy.png`,
+              alt: "Bamboo Fabric Bra Navy Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/bamboo-bra-navy-back.png`,
+              alt: "Bamboo Fabric Bra Navy Back",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Cinder",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 400,
+          mrp: 400,
+          images: [
+            {
+              url: `${IMG}/bamboo-bra-cinder.png`,
+              alt: "Bamboo Fabric Bra Cinder Front",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
 
-  const colors = [
-    { name: "Midnight Black", hex: "#0b0c10" },
-    { name: "Crimson Red", hex: "#990000" },
-    { name: "Dusty Rose", hex: "#dcae1d" },
-    { name: "Pure White", hex: "#ffffff" },
-    { name: "Satin Nude", hex: "#e5a88a" },
-    { name: "Navy Blue", hex: "#1f3a52" },
-    { name: "Emerald Green", hex: "#004b49" },
+    // ── Overlap Bralette with Hipster Set ────────────────────────────────────
+    {
+      name: "Overlap Bralette with Hipster Set",
+      slug: "overlap-bralette-hipster-set",
+      categorySlug: "sets",
+      description:
+        "Elegant overlap bralette paired with a matching hipster — a coordinated set made from silky modal for a luxurious feel.",
+      fabric: "95% Modal, 5% Elastane",
+      tags: ["bralette", "hipster", "set", "modal", "lingerie-set"],
+      isFeatured: true,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/mischief-lounge-bra-pink.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon",
+          isPrimary: true,
+        },
+      ],
+      variants: [
+        {
+          color: "Maroon",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/mischief-lounge-bra-pink.png`,
+              alt: "Overlap Bralette Hipster Set Maroon",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Mischief Lounge Bra ──────────────────────────────────────────────────
+    {
+      name: "Mischief Lounge Bra",
+      slug: "mischief-lounge-bra",
+      categorySlug: "bras",
+      description:
+        "Playfully designed lounge bra in soft modal. Great for a relaxed day at home or as a stylish layer under your favourite top.",
+      fabric: "95% Modal, 5% Elastane",
+      tags: ["lounge-bra", "modal", "bralette", "casual"],
+      isFeatured: false,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/mischief-lounge-bra-pink.png`,
+          alt: "Mischief Lounge Bra – Pink",
+          isPrimary: true,
+        },
+      ],
+      variants: [
+        {
+          color: "Pink",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/mischief-lounge-bra-pink.png`,
+              alt: "Mischief Lounge Bra Pink",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Pack of 3 Floral Undie ───────────────────────────────────────────────
+    {
+      name: "Pack of 3 Floral Undie",
+      slug: "pack-of-3-floral-undie",
+      categorySlug: "panties",
+      description:
+        "Get three floral-print undies in a single pack. Made from breathable modal with a comfortable high-leg cut. Great value for everyday wear.",
+      fabric: "95% Modal, 5% Elastane",
+      tags: ["floral", "undie", "pack", "modal", "high-leg"],
+      isFeatured: false,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/floral-undie-navy.png`,
+          alt: "Pack of 3 Floral Undie – Navy Blue",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/floral-undie-pink.png`,
+          alt: "Pack of 3 Floral Undie – Pink Back",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Navy Blue",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/floral-undie-navy.png`,
+              alt: "Pack of 3 Floral Undie Navy Blue",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Pink",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/floral-undie-pink.png`,
+              alt: "Pack of 3 Floral Undie Pink",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Green",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/floral-undie-navy.png`,
+              alt: "Pack of 3 Floral Undie Green",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Seamless Undie Pack of 3 ─────────────────────────────────────────────
+    {
+      name: "Seamless Undie Pack of 3",
+      slug: "seamless-undie-pack-of-3",
+      categorySlug: "panties",
+      description:
+        "Three seamless undies with invisible edges — no panty lines, no digging. Perfect under fitted clothing. Available in classic colours.",
+      fabric: "Imported Seamless Fabric",
+      tags: ["seamless", "undie", "pack", "no-show", "best-seller"],
+      isFeatured: true,
+      isBestSeller: true,
+      productImages: [
+        {
+          url: `${IMG}/seamless-undie-pack.png`,
+          alt: "Seamless Undie Pack of 3",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/seamless-undie-navy.png`,
+          alt: "Seamless Undie – Navy Blue Front",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["M", "L", "XL", "XXL", "3XL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/seamless-undie-pack.png`,
+              alt: "Seamless Undie Pack Black",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Navy Blue",
+          sizes: ["M", "L", "XL", "XXL", "3XL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/seamless-undie-navy.png`,
+              alt: "Seamless Undie Pack Navy Blue",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Maroon",
+          sizes: ["M", "L", "XL", "XXL", "3XL"],
+          price: 750,
+          mrp: 750,
+          images: [
+            {
+              url: `${IMG}/seamless-undie-pack.png`,
+              alt: "Seamless Undie Pack Maroon",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Luxuria Pad Lingerie Set ─────────────────────────────────────────────
+    {
+      name: "Luxuria Pad Lingerie Set",
+      slug: "luxuria-pad-lingerie-set",
+      categorySlug: "sets",
+      description:
+        "Premium padded lingerie set for a flattering silhouette. Olive comes in standard cup sizes; Maroon is available in a relaxed fit.",
+      fabric: null,
+      tags: ["lingerie-set", "padded", "luxury", "sets"],
+      isFeatured: false,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/lingerie-set-olive.png`,
+          alt: "Luxuria Pad Lingerie Set – Olive Front",
+          isPrimary: true,
+        },
+      ],
+      variants: [
+        {
+          color: "Olive",
+          sizes: ["32", "34", "36"],
+          price: 700,
+          mrp: 700,
+          images: [
+            {
+              url: `${IMG}/lingerie-set-olive.png`,
+              alt: "Luxuria Pad Lingerie Set Olive",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Maroon",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 650,
+          mrp: 650,
+          images: [
+            {
+              url: `${IMG}/lingerie-set-olive.png`,
+              alt: "Luxuria Pad Lingerie Set Maroon",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── Camisole ─────────────────────────────────────────────────────────────
+    {
+      name: "Camisole",
+      slug: "camisole",
+      categorySlug: "loungewear",
+      description:
+        "Lightweight, versatile camisole that can be worn on its own or layered. Available in five classic colours for every wardrobe.",
+      fabric: null,
+      tags: ["camisole", "lounge", "layer", "everyday"],
+      isFeatured: false,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/camisole-black.png`,
+          alt: "Camisole – Black",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/camisole-pink.png`,
+          alt: "Camisole – Pink",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["L", "XL", "2XL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/camisole-black.png`,
+              alt: "Camisole Black",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Pink",
+          sizes: ["L", "XL", "2XL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/camisole-pink.png`,
+              alt: "Camisole Pink",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Skin",
+          sizes: ["L", "XL", "2XL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/camisole-black.png`,
+              alt: "Camisole Skin",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "White",
+          sizes: ["L", "XL", "2XL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/camisole-black.png`,
+              alt: "Camisole White",
+              isPrimary: true,
+            },
+          ],
+        },
+        {
+          color: "Wine",
+          sizes: ["L", "XL", "2XL"],
+          price: 300,
+          mrp: 300,
+          images: [
+            {
+              url: `${IMG}/camisole-black.png`,
+              alt: "Camisole Wine",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
   ];
 
-  const unsplashCatalogImages = [
-    "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?q=80&w=600",
-    "https://images.unsplash.com/photo-1616150638538-ffb0679a3fc4?q=80&w=600",
-    "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=600",
-    "https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?q=80&w=600",
-    "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=600",
-    "https://images.unsplash.com/photo-1562572159-4ebcd318f4dd?q=80&w=600",
-    "https://images.unsplash.com/photo-1581599129568-e3315162762b?q=80&w=600",
-  ];
-
-  console.log("🛍️ Generating 100 products (20 per category)...");
+  // ── 5. Insert products, variants, inventory & images ─────────────────────────
+  console.log(`🛍️  Seeding ${products.length} real products...`);
   let skuCounter = 1000;
 
-  for (const cat of seededCategories) {
-    const templates =
-      categoryProductTemplates[cat.slug] || categoryProductTemplates["bras"];
-    const template = templates[0];
-    const sizes = sizesMap[cat.slug] || sizesMap["bras"];
+  for (const p of products) {
+    const cat = catBySlug[p.categorySlug];
+    if (!cat) {
+      console.error(`❌ Category not found: ${p.categorySlug}`);
+      continue;
+    }
 
-    // Generate 20 products for this category
-    for (let i = 0; i < 20; i++) {
-      const brand = seededBrands[i % seededBrands.length];
-      const designPattern = designPatterns[i % designPatterns.length];
-      const templateName = template.names[i % template.names.length];
+    const productId = createId();
 
-      const productName = `${designPattern} ${templateName}`;
-      const productSlug = `${productName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${i}-${cat.slug}`;
-      const productId = createId();
-
-      const attributes = {
-        fabric: fabrics[i % fabrics.length],
-        closure: closures[i % closures.length],
-        padding: paddings[i % paddings.length],
+    // Insert product
+    await db.insert(schema.products).values({
+      id: productId,
+      name: p.name,
+      slug: p.slug,
+      description: p.description,
+      categoryId: cat.id,
+      categoryPath: cat.path,
+      brandId: brandId,
+      hsnCode: "62121000",
+      attributes: {
+        ...(p.fabric ? { fabric: p.fabric } : {}),
         careInstructions:
           "Hand wash only in cold water. Do not bleach or iron.",
-      };
+      },
+      tags: [...p.tags, "surekh", ...(p.isBestSeller ? ["best-seller"] : [])],
+      isActive: true,
+      isFeatured: p.isFeatured,
+      soldCount: p.isBestSeller
+        ? Math.floor(Math.random() * 300) + 100
+        : Math.floor(Math.random() * 50) + 5,
+      ratingAvg: p.isBestSeller
+        ? (Math.random() * 0.5 + 4.3).toFixed(2)
+        : (Math.random() * 1.0 + 3.5).toFixed(2),
+      ratingCount: p.isBestSeller
+        ? Math.floor(Math.random() * 150) + 30
+        : Math.floor(Math.random() * 30) + 5,
+      metaTitle: `${p.name} | Surekh`,
+      metaDesc: `Buy ${p.name} online at Surekh.${p.fabric ? ` Made from ${p.fabric}.` : ""} Shop premium innerwear with fast delivery.`,
+    });
 
-      // Create product
-      await db.insert(schema.products).values({
-        id: productId,
-        name: productName,
-        slug: productSlug,
-        description: `${template.defaultDesc} Featuring ${designPattern.toLowerCase()} elements, made of premium raw material. Perfect fit and lasting quality.`,
-        categoryId: cat.id,
-        categoryPath: cat.path,
-        brandId: brand.id,
-        hsnCode: "62121000",
-        attributes: attributes,
-        tags: [...template.tags, designPattern.toLowerCase(), brand.slug],
-        isActive: true,
-        isFeatured: i < 3,
-        soldCount: Math.floor(Math.random() * 500) + 10,
-        ratingAvg: (Math.random() * 1.5 + 3.5).toFixed(2),
-        ratingCount: Math.floor(Math.random() * 80) + 5,
-        metaTitle: `${productName} | Shop Lingerie Online`,
-        metaDesc: `Buy the premium ${productName} online at the best prices. Features include: ${attributes.fabric}, ${attributes.padding}.`,
+    // Insert product-level images
+    let imgSortOrder = 1;
+    for (const img of p.productImages) {
+      await db.insert(schema.productImages).values({
+        id: createId(),
+        productId,
+        variantId: null,
+        url: img.url,
+        alt: img.alt,
+        isPrimary: img.isPrimary,
+        sortOrder: imgSortOrder++,
       });
+    }
 
-      // Create variants (different color & sizes)
-      const productColors = [
-        colors[i % colors.length],
-        colors[(i + 2) % colors.length],
-      ];
+    // Insert variants
+    let variantSortOrder = 0;
+    for (const v of p.variants) {
+      for (const size of v.sizes) {
+        skuCounter++;
+        const variantId = createId();
+        const colorSlug = v.color.toLowerCase().replace(/\s+/g, "-");
+        const sku = `SRK-${p.slug.substring(0, 6).toUpperCase().replace(/-/g, "")}-${colorSlug.substring(0, 3).toUpperCase()}-${size}-${skuCounter}`;
 
-      const productSizes = sizes.slice(0, 3);
+        await db.insert(schema.productVariants).values({
+          id: variantId,
+          productId,
+          sku,
+          size,
+          color: v.color,
+          colorHex: COLOR_HEX[v.color] ?? "#888888",
+          price: v.price.toFixed(2),
+          mrp: v.mrp.toFixed(2),
+          isActive: true,
+          sortOrder: variantSortOrder++,
+          weightGrams: 120,
+        });
 
-      let variantSortOrder = 0;
+        // Inventory
+        await db.insert(schema.inventory).values({
+          id: createId(),
+          variantId,
+          quantity: 50,
+          reservedQuantity: 0,
+          lowStockAlert: 5,
+        });
 
-      for (const color of productColors) {
-        for (const size of productSizes) {
-          const variantId = createId();
-          skuCounter++;
-          const sku = `LS-${cat.slug.substring(0, 2).toUpperCase()}-${skuCounter}`;
-
-          const baseMrp =
-            799 + i * 100 + (size === "S" || size === "32B" ? 0 : 50);
-          const discountPct = 0.1 + Math.random() * 0.2;
-          const basePrice = Math.floor(baseMrp * (1 - discountPct));
-
-          await db.insert(schema.productVariants).values({
-            id: variantId,
-            productId: productId,
-            sku: sku,
-            size: size,
-            color: color.name,
-            colorHex: color.hex,
-            price: basePrice.toFixed(2),
-            mrp: baseMrp.toFixed(2),
-            isActive: true,
-            sortOrder: variantSortOrder++,
-            weightGrams: 120 + size.length * 15,
-          });
-
-          // Create inventory for this variant
-          await db.insert(schema.inventory).values({
+        // Variant-level images
+        let vImgSort = 1;
+        for (const img of v.images) {
+          await db.insert(schema.productImages).values({
             id: createId(),
-            variantId: variantId,
-            quantity: Math.floor(Math.random() * 50) + 10,
-            reservedQuantity: 0,
-            lowStockAlert: 5,
+            productId,
+            variantId,
+            url: img.url,
+            alt: img.alt,
+            isPrimary: img.isPrimary,
+            sortOrder: vImgSort++,
           });
         }
       }
-
-      // Create Images
-      const primaryImgUrl =
-        unsplashCatalogImages[i % unsplashCatalogImages.length];
-      const secondaryImgUrl =
-        unsplashCatalogImages[(i + 3) % unsplashCatalogImages.length];
-
-      await db.insert(schema.productImages).values([
-        {
-          id: createId(),
-          productId: productId,
-          variantId: null,
-          url: primaryImgUrl,
-          alt: `${productName} Main View`,
-          isPrimary: true,
-          sortOrder: 1,
-        },
-        {
-          id: createId(),
-          productId: productId,
-          variantId: null,
-          url: secondaryImgUrl,
-          alt: `${productName} Detail View`,
-          isPrimary: false,
-          sortOrder: 2,
-        },
-      ]);
     }
+
+    console.log(`  ✅ ${p.name} — ${p.variants.length} colour(s)`);
   }
 
+  console.log("\n✅ Seed complete!");
+  console.log(`   • 1 brand (Surekh)`);
+  console.log(`   • ${seededCategories.length} categories`);
   console.log(
-    "✅ Seed generation complete. 100 products, variants, inventory, and images are successfully created."
+    `   • ${products.length} products with real data, images, variants & inventory`
   );
 }
 
 seed()
   .then(() => {
-    console.log("✨ Seed successfully complete!");
+    console.log("✨ Database seeded successfully!");
     process.exit(0);
   })
   .catch((err) => {
-    console.error("❌ Seed failed with errors:", err);
+    console.error("❌ Seed failed:", err);
     process.exit(1);
   });
