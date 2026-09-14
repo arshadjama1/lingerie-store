@@ -288,22 +288,20 @@ export function Header() {
             <nav className="flex-1 px-4 py-4">
               <ul className="space-y-0.5">
                 {[
-                  ...Object.keys(NAV_MEGA_GROUPS),
-                  "Lingerie Sets",
-                  "Sale & Offers",
+                  { label: "Bras", href: "/bras" },
+                  { label: "Panties", href: "/panties" },
+                  { label: "Sets", href: "/sets" },
+                  { label: "Loungewear", href: "/loungewear" },
+                  { label: "Nightwear", href: "/nightwear" },
+                  { label: "Shapewear", href: "/shapewear" },
                 ].map((cat) => (
-                  <li key={cat}>
+                  <li key={cat.label}>
                     <Link
-                      href={`/${cat.toLowerCase().replace(/ /g, "-")}`}
+                      href={cat.href}
                       className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
                       onClick={() => setMobileOpen(false)}
                     >
-                      <span>{cat}</span>
-                      {cat === "Sale & Offers" && (
-                        <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-black text-white uppercase">
-                          HOT
-                        </span>
-                      )}
+                      <span>{cat.label}</span>
                     </Link>
                   </li>
                 ))}
@@ -312,7 +310,7 @@ export function Header() {
               {/* Mobile combo deals */}
               <div className="mt-6 border-t border-gray-100 pt-4">
                 <p className="mb-3 px-4 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
-                  Super Saver Combos
+                  Quick Shop
                 </p>
                 <div className="flex flex-wrap gap-2 px-2">
                   {COMBO_QUICK_LINKS.map((deal) => (

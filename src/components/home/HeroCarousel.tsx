@@ -19,31 +19,32 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     id: 1,
-    badge: "SUMMER EDIT 2026",
-    title: "BEAUTIFUL FITS FOR EVERYDAY CONFIDENCE",
-    subtitle: "Up to 50% Off on Bestselling Cloud-Soft & T-Shirt Bras",
-    ctaText: "SHOP THE SALE",
+    badge: "BESTSELLER",
+    title: "BAMBOO SOFT. ALL-DAY COMFORT.",
+    subtitle:
+      "95% Bamboo — our softest fabric ever. Wire-free bras & undies from ₹300.",
+    ctaText: "SHOP BAMBOO RANGE",
     ctaLink: "/bras",
-    image: "/images/home/hero_slide_1.jpg",
+    image: "/images/products/bamboo-bra-black.png",
   },
   {
     id: 2,
-    badge: "LUXURY NIGHTWEAR",
-    title: "PURE SILK & SATIN ELEGANCE",
+    badge: "NO-SHOW PACK OF 3",
+    title: "SEAMLESS. INVISIBLE. EFFORTLESS.",
     subtitle:
-      "Indulge in silky soft sleepwear and robes tailored for ultimate comfort",
-    ctaText: "EXPLORE NIGHTWEAR",
-    ctaLink: "/nightwear",
-    image: "/images/home/hero_slide_2.jpg",
+      "Zero panty lines, zero compromise. Seamless Undie Pack of 3 at just ₹750.",
+    ctaText: "SHOP SEAMLESS UNDIES",
+    ctaLink: "/panties",
+    image: "/images/products/seamless-undie-pack.png",
   },
   {
     id: 3,
-    badge: "ACTIVEWEAR SPECIAL",
-    title: "HIGH-IMPACT COMFORT & MAXIMUM SUPPORT",
-    subtitle: "Designed to move with you — Buy 2 Get 20% Off Activewear",
-    ctaText: "SHOP ACTIVEWEAR",
-    ctaLink: "/activewear",
-    image: "/images/home/hero_slide_3.jpg",
+    badge: "CURATED SETS",
+    title: "COORDINATED LUXURY LINGERIE SETS",
+    subtitle: "Bralette + Hipster sets in premium Modal fabric. From ₹650.",
+    ctaText: "EXPLORE SETS",
+    ctaLink: "/sets",
+    image: "/images/products/lingerie-set-olive.png",
   },
 ];
 
@@ -90,7 +91,7 @@ export function HeroCarousel() {
                 alt={slide.title}
                 fill
                 priority={index === 0}
-                className="scale-105 transform object-cover object-center transition-transform duration-10000 ease-out"
+                className="scale-105 transform object-cover object-top transition-transform duration-10000 ease-out"
                 sizes="100vw"
               />
 

@@ -15,39 +15,39 @@ interface CategoryTile {
 const CATEGORY_TILES: CategoryTile[] = [
   {
     name: "Bras",
-    offer: "Up to 50% Off",
+    offer: "From ₹400",
     href: "/bras",
-    image: "/images/home/cat_bras.jpg",
+    image: "/images/products/bamboo-bra-black.png",
   },
   {
     name: "Panties",
-    offer: "Buy 3 @ ₹999",
+    offer: "Pack of 3 @ ₹750",
     href: "/panties",
-    image: "/images/home/cat_panties.jpg",
+    image: "/images/products/bamboo-undie-black.png",
+  },
+  {
+    name: "Sets",
+    offer: "From ₹650",
+    href: "/sets",
+    image: "/images/products/lingerie-set-olive.png",
+  },
+  {
+    name: "Loungewear",
+    offer: "Camisoles @ ₹300",
+    href: "/loungewear",
+    image: "/images/products/camisole-pink.png",
   },
   {
     name: "Nightwear",
-    offer: "Flat 40% Off",
+    offer: "Coming Soon",
     href: "/nightwear",
     image: "/images/home/cat_nightwear.jpg",
   },
   {
     name: "Shapewear",
-    offer: "Up to 60% Off",
+    offer: "Coming Soon",
     href: "/shapewear",
     image: "/images/home/cat_shapewear.jpg",
-  },
-  {
-    name: "Activewear",
-    offer: "Min 30% Off",
-    href: "/activewear",
-    image: "/images/home/cat_activewear.jpg",
-  },
-  {
-    name: "Lingerie Sets",
-    offer: "Exclusive Pairs",
-    href: "/lingerie-sets",
-    image: "/images/home/cat_bras.jpg",
   },
 ];
 
