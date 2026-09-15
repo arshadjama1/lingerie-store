@@ -4,17 +4,17 @@ export const MARQUEE_ANNOUNCEMENTS = [
   "100% Privacy Guaranteed",
   "Cash on Delivery Available",
   "Free Shipping Above ₹999",
-  "5 Lakh+ Happy Customers",
+  "Bamboo Fabric – Softest You'll Ever Wear",
   "Discreet Packaging, Always",
   "15-Day Easy Exchange Policy",
 ];
 
 // ── Header Quick Offer Links ──────────────────────────────────────────
 export const COMBO_QUICK_LINKS = [
-  { label: "4 Bras @₹899", href: "/sale" },
-  { label: "3 Bras @₹1099", href: "/sale" },
-  { label: "4 Panties @₹599", href: "/sale" },
-  { label: "Lingerie Sets", href: "/lingerie-sets" },
+  { label: "Seamless Pack of 3 @₹750", href: "/panties" },
+  { label: "Floral Pack of 3 @₹750", href: "/panties" },
+  { label: "Lingerie Sets", href: "/sets" },
+  { label: "Bamboo Bras", href: "/bras" },
 ];
 
 // ── Header Mega Menu Structure ────────────────────────────────────────
@@ -27,40 +27,25 @@ export const NAV_MEGA_GROUPS: Record<
       {
         title: "By Type",
         items: [
-          { label: "T-Shirt Bra", href: "/bras" },
-          { label: "Push-Up Bra", href: "/bras" },
-          { label: "Sports Bra", href: "/bras" },
-          { label: "Bralette", href: "/bras" },
-          { label: "Strapless", href: "/bras" },
-          { label: "Backless Bra", href: "/bras" },
-          { label: "Full Figure", href: "/bras" },
-        ],
-      },
-      {
-        title: "By Padding",
-        items: [
-          { label: "Non-Padded", href: "/bras" },
-          { label: "Padded", href: "/bras" },
-          { label: "Lightly Padded", href: "/bras" },
-          { label: "Non-Wire", href: "/bras" },
-          { label: "Underwire", href: "/bras" },
+          { label: "Bamboo Fabric Bra", href: "/bras" },
+          { label: "Mischief Lounge Bra", href: "/bras" },
+          { label: "Overlap Bralette", href: "/sets" },
         ],
       },
       {
         title: "By Fabric",
         items: [
-          { label: "Cotton", href: "/bras" },
-          { label: "Lace", href: "/bras" },
-          { label: "Seamless", href: "/bras" },
-          { label: "Satin", href: "/bras" },
+          { label: "Bamboo (95% Bamboo)", href: "/bras" },
+          { label: "Modal (95% Modal)", href: "/bras" },
         ],
       },
       {
-        title: "Special Offers",
+        title: "By Colour",
         items: [
-          { label: "4 Bras @ ₹899", href: "/sale" },
-          { label: "3 Bras @ ₹1099", href: "/sale" },
-          { label: "2 Bras @ ₹1199", href: "/sale" },
+          { label: "Black", href: "/bras" },
+          { label: "Navy Blue", href: "/bras" },
+          { label: "Cinder", href: "/bras" },
+          { label: "Pink", href: "/bras" },
         ],
       },
     ],
@@ -70,96 +55,56 @@ export const NAV_MEGA_GROUPS: Record<
       {
         title: "By Type",
         items: [
-          { label: "Hipsters", href: "/panties" },
-          { label: "Bikini", href: "/panties" },
-          { label: "Thongs", href: "/panties" },
-          { label: "Boyshorts", href: "/panties" },
-          { label: "High Waist", href: "/panties" },
-          { label: "Low Waist", href: "/panties" },
+          { label: "Bamboo Fabric Undie", href: "/panties" },
+          { label: "Seamless Undie Pack of 3", href: "/panties" },
+          { label: "Pack of 3 Floral Undie", href: "/panties" },
         ],
       },
       {
         title: "By Fabric",
         items: [
-          { label: "Cotton", href: "/panties" },
-          { label: "Lace", href: "/panties" },
+          { label: "Bamboo", href: "/panties" },
           { label: "Modal", href: "/panties" },
-          { label: "Seamless", href: "/panties" },
+          { label: "Seamless (Imported)", href: "/panties" },
         ],
       },
       {
-        title: "Solution",
+        title: "Value Packs",
         items: [
-          { label: "Bridal", href: "/panties" },
-          { label: "Maternity", href: "/panties" },
-          { label: "Tummy Tucker", href: "/panties" },
-        ],
-      },
-      {
-        title: "Special Offers",
-        items: [
-          { label: "4 Panties @ ₹599", href: "/sale" },
-          { label: "3 Panties @ ₹599", href: "/sale" },
-          { label: "3 Panties @ ₹999", href: "/sale" },
+          { label: "Floral Pack of 3 @ ₹750", href: "/panties" },
+          { label: "Seamless Pack of 3 @ ₹750", href: "/panties" },
         ],
       },
     ],
   },
-  Nightwear: {
+  Sets: {
     groups: [
       {
-        title: "By Type",
+        title: "Lingerie Sets",
         items: [
-          { label: "Night Suits", href: "/nightwear" },
-          { label: "Nighties", href: "/nightwear" },
-          { label: "Babydolls", href: "/nightwear" },
-          { label: "Top & Pyjama Set", href: "/nightwear" },
-          { label: "Top & Shorts Set", href: "/nightwear" },
-          { label: "Nighty & Robe", href: "/nightwear" },
+          { label: "Overlap Bralette with Hipster", href: "/sets" },
+          { label: "Luxuria Pad Lingerie Set", href: "/sets" },
         ],
       },
       {
-        title: "By Fabric",
+        title: "By Colour",
         items: [
-          { label: "Cotton", href: "/nightwear" },
-          { label: "Satin", href: "/nightwear" },
-          { label: "Lace", href: "/nightwear" },
-          { label: "Rayon", href: "/nightwear" },
+          { label: "Maroon", href: "/sets" },
+          { label: "Olive", href: "/sets" },
         ],
       },
     ],
   },
-  Shapewear: {
+  Loungewear: {
     groups: [
       {
-        title: "By Type",
+        title: "Camisoles",
         items: [
-          { label: "Tummy Tucker", href: "/shapewear" },
-          { label: "Saree Shapewear", href: "/shapewear" },
-          { label: "Thigh Shaper", href: "/shapewear" },
-          { label: "Bodysuits", href: "/shapewear" },
-        ],
-      },
-    ],
-  },
-  Activewear: {
-    groups: [
-      {
-        title: "Tops",
-        items: [
-          { label: "Sports Bra", href: "/activewear" },
-          { label: "High Impact", href: "/activewear" },
-          { label: "Crop Tops", href: "/activewear" },
-          { label: "Active T-Shirts", href: "/activewear" },
-        ],
-      },
-      {
-        title: "Bottoms",
-        items: [
-          { label: "Tights & Pants", href: "/activewear" },
-          { label: "Active Shorts", href: "/activewear" },
-          { label: "Cycling Shorts", href: "/activewear" },
-          { label: "Co-ords", href: "/activewear" },
+          { label: "Black", href: "/loungewear" },
+          { label: "Pink", href: "/loungewear" },
+          { label: "Skin", href: "/loungewear" },
+          { label: "White", href: "/loungewear" },
+          { label: "Wine", href: "/loungewear" },
         ],
       },
     ],
@@ -170,15 +115,14 @@ export const NAV_MEGA_GROUPS: Record<
 export const FOOTER_LINK_GROUPS = {
   "Shop By Category": [
     { label: "Bras", href: "/bras" },
-    { label: "Panties", href: "/panties" },
-    { label: "Nightwear & Sleepwear", href: "/nightwear" },
-    { label: "Shapewear & Body Sculpting", href: "/shapewear" },
-    { label: "Activewear & Yoga Tops", href: "/activewear" },
-    { label: "Bridal Lingerie Sets", href: "/lingerie-sets" },
+    { label: "Panties & Undies", href: "/panties" },
+    { label: "Lingerie Sets", href: "/sets" },
+    { label: "Loungewear & Camisoles", href: "/loungewear" },
+    { label: "Nightwear", href: "/nightwear" },
+    { label: "Shapewear", href: "/shapewear" },
   ],
   "Fit & Care": [
-    { label: "FitCode™ Calculator", href: "/size-guide" },
-    { label: "Bra Size Chart", href: "/size-guide" },
+    { label: "Size Guide", href: "/size-guide" },
     { label: "Lingerie Care Guide", href: "/care-guide" },
     { label: "Find Your Style Quiz", href: "/quiz" },
   ],
@@ -191,7 +135,6 @@ export const FOOTER_LINK_GROUPS = {
   ],
   "About Surekh": [
     { label: "Our Story & Mission", href: "/about" },
-    { label: "Store Locator", href: "/stores" },
     { label: "Privacy & Data Policy", href: "/legal/privacy" },
     { label: "Terms of Service", href: "/legal/terms" },
   ],

@@ -21,26 +21,24 @@ export interface ProductItem {
 }
 
 export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
-  const [activeTab, setActiveTab] = useState("ALL BESTSELLERS");
+  const [activeTab, setActiveTab] = useState("ALL");
 
   const filteredProducts = products.filter((p) => {
-    if (activeTab === "ALL BESTSELLERS") return true;
-    if (activeTab === "BRAS") return p.name.toLowerCase().includes("bra");
+    if (activeTab === "ALL") return true;
+    if (activeTab === "BRAS")
+      return (
+        p.name.toLowerCase().includes("bra") ||
+        p.name.toLowerCase().includes("bralette")
+      );
     if (activeTab === "PANTIES")
       return (
+        p.name.toLowerCase().includes("undie") ||
         p.name.toLowerCase().includes("panty") ||
-        p.name.toLowerCase().includes("brief")
+        p.name.toLowerCase().includes("seamless")
       );
-    if (activeTab === "NIGHTWEAR")
-      return (
-        p.name.toLowerCase().includes("night") ||
-        p.name.toLowerCase().includes("sleep")
-      );
-    if (activeTab === "ACTIVEWEAR")
-      return (
-        p.name.toLowerCase().includes("sport") ||
-        p.name.toLowerCase().includes("active")
-      );
+    if (activeTab === "SETS") return p.name.toLowerCase().includes("set");
+    if (activeTab === "LOUNGEWEAR")
+      return p.name.toLowerCase().includes("camisole");
     return true;
   });
 
