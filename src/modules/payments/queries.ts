@@ -15,6 +15,11 @@ import { NotFoundError } from "@/lib/errors";
 import { clearCart } from "@/modules/cart";
 import { getCheckoutSession } from "@/modules/checkout";
 import { deductInventory } from "@/modules/checkout/inventory";
+import {
+  sendOrderConfirmationEmail,
+  sendOrderConfirmationSMS,
+} from "@/modules/notifications";
+import { getOrderDetails } from "@/modules/orders";
 
 import { verifyPaymentSignature } from "./razorpay";
 
@@ -89,7 +94,7 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
   const hydratedSession = await getCheckoutSession(session.id, session.userId);
 
   // 4. Transaction: Order creation, payment record, inventory deduction, cart clearance
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const newOrderId = createId();
     const orderNum = generateOrderNumber();
 
@@ -169,4 +174,27 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
       orderNumber: newOrder.orderNumber,
     };
   });
+
+  // Fire-and-forget: fetch full order details then dispatch email + SMS.
+  // Notification failure must NEVER break the payment response — errors are
+  // logged but not re-thrown.
+  getOrderDetails(result.orderId, session.userId)
+    .then((details) =>
+      Promise.all([
+        sendOrderConfirmationEmail(details),
+        sendOrderConfirmationSMS(
+          details.shippingAddress.phone ?? "",
+          details.orderNumber,
+          Number(details.total)
+        ),
+      ])
+    )
+    .catch((err) =>
+      console.error(
+        "[notifications] order confirmation post-payment failed:",
+        err
+      )
+    );
+
+  return result;
 }

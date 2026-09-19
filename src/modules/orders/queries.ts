@@ -5,6 +5,7 @@ import {
   orderStatusHistory,
   orders,
   payments,
+  profiles,
   returnRequests,
 } from "@/db/schema";
 import { createId } from "@paralleldrive/cuid2";
@@ -98,10 +99,16 @@ export async function getOrderDetails(
     throw new NotFoundError("Order");
   }
 
-  // Fetch payment separately (1:1 relation on orderId)
-  const payment = await db.query.payments.findFirst({
-    where: eq(payments.orderId, orderId),
-  });
+  // Fetch payment and profile email in parallel (both are 1:1 reads)
+  const [payment, profile] = await Promise.all([
+    db.query.payments.findFirst({
+      where: eq(payments.orderId, orderId),
+    }),
+    db.query.profiles.findFirst({
+      where: eq(profiles.id, order.userId),
+      columns: { email: true },
+    }),
+  ]);
 
   const mappedItems: OrderItem[] = order.items.map((item) => ({
     id: item.id,
@@ -133,6 +140,7 @@ export async function getOrderDetails(
     id: order.id,
     orderNumber: order.orderNumber,
     status: order.status,
+    customerEmail: profile?.email ?? null,
     shippingAddress: order.shippingAddress as OrderDetails["shippingAddress"],
     subtotal: order.subtotal,
     discountAmount: order.discountAmount,
