@@ -45,6 +45,7 @@ export interface OrderDetails {
   id: string;
   orderNumber: string;
   status: OrderStatus;
+  customerEmail: string | null;
   shippingAddress: {
     fullName?: string;
     line1?: string;
