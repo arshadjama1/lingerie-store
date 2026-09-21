@@ -6,44 +6,24 @@ import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { assertAdmin } from "@/lib/admin-auth";
 import {
-  ForbiddenError,
   NotFoundError,
-  UnauthorizedError,
   ValidationError,
   withErrorHandling,
 } from "@/lib/errors";
-import { createClient } from "@/lib/supabase/server";
 
 import { getAdminOrderDetails } from "@/modules/admin/orders";
 import {
   sendOrderShippedEmail,
   sendOrderShippedSMS,
 } from "@/modules/notifications";
+import { VALID_TRANSITIONS } from "@/modules/orders";
 
 const bodySchema = z.object({
   awbNumber: z.string().min(1, "AWB number is required"),
   markAsShipped: z.boolean().optional().default(false),
 });
-
-async function assertAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new UnauthorizedError();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "staff"].includes(profile.role)) {
-    throw new ForbiddenError();
-  }
-  return user;
-}
 
 export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   const params = (ctx as { params: Promise<{ id: string }> })?.params;
@@ -64,6 +44,15 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   const now = new Date();
 
   if (markAsShipped && order.status !== "shipped") {
+    // Enforce state machine — can only mark as shipped from an allowed state
+    const allowed = VALID_TRANSITIONS[order.status] ?? [];
+    if (!allowed.includes("shipped")) {
+      throw new ValidationError(
+        `Cannot mark as shipped from status "${order.status}". ` +
+          `Allowed transitions: ${allowed.length ? allowed.join(", ") : "none"}`
+      );
+    }
+
     // Update AWB + status atomically
     await db.transaction(async (tx) => {
       await tx

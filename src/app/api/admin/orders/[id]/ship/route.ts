@@ -1,32 +1,10 @@
 import { NextResponse } from "next/server";
 
-import {
-  ForbiddenError,
-  UnauthorizedError,
-  withErrorHandling,
-} from "@/lib/errors";
-import { createClient } from "@/lib/supabase/server";
+import { assertAdmin } from "@/lib/admin-auth";
+import { withErrorHandling } from "@/lib/errors";
 
 import { getAdminOrderDetails } from "@/modules/admin/orders";
 import { createDtdcShipment } from "@/modules/shipping";
-
-async function assertAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new UnauthorizedError();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "staff"].includes(profile.role)) {
-    throw new ForbiddenError();
-  }
-}
 
 export const POST = withErrorHandling(async (_req: Request, ctx?: unknown) => {
   const params = (ctx as { params: Promise<{ id: string }> })?.params;

@@ -6,32 +6,19 @@ import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { assertAdmin } from "@/lib/admin-auth";
 import {
-  ForbiddenError,
   NotFoundError,
-  UnauthorizedError,
   ValidationError,
   withErrorHandling,
 } from "@/lib/errors";
-import { createClient } from "@/lib/supabase/server";
 
 import { getAdminOrderDetails } from "@/modules/admin/orders";
 import {
   sendOrderShippedEmail,
   sendOrderShippedSMS,
 } from "@/modules/notifications";
-import type { OrderStatus } from "@/modules/orders";
-
-// Legal status transition map
-const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["processing", "cancelled"],
-  processing: ["shipped", "cancelled"],
-  shipped: ["delivered"],
-  delivered: ["refunded"],
-  cancelled: [],
-  refunded: [],
-};
+import { VALID_TRANSITIONS } from "@/modules/orders";
 
 const bodySchema = z.object({
   status: z.enum([
@@ -45,26 +32,6 @@ const bodySchema = z.object({
   ]),
   note: z.string().optional(),
 });
-
-async function assertAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new UnauthorizedError();
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile || !["admin", "staff"].includes(profile.role)) {
-    throw new ForbiddenError();
-  }
-
-  return user;
-}
 
 export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   const params = (ctx as { params: Promise<{ id: string }> })?.params;

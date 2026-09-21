@@ -5,18 +5,8 @@ import { useState } from "react";
 
 import { toast } from "sonner";
 
+import { VALID_TRANSITIONS } from "@/modules/orders";
 import type { OrderStatus } from "@/modules/orders";
-
-// Legal status transition map (must match server-side)
-const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["processing", "cancelled"],
-  processing: ["shipped", "cancelled"],
-  shipped: ["delivered"],
-  delivered: ["refunded"],
-  cancelled: [],
-  refunded: [],
-};
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pending",
