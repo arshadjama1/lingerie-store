@@ -14,3 +14,5 @@ export type {
   OrderStatusHistoryEntry,
   ListOrdersResult,
 } from "./types";
+
+export { VALID_TRANSITIONS } from "./transitions";
