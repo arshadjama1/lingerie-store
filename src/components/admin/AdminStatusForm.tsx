@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { toast } from "sonner";
 
-import { VALID_TRANSITIONS } from "@/modules/orders";
-import type { OrderStatus } from "@/modules/orders";
+import { VALID_TRANSITIONS } from "@/modules/orders/transitions";
+import type { OrderStatus } from "@/modules/orders/types";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pending",
