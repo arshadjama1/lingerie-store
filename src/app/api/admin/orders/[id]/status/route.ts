@@ -105,17 +105,19 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   if (newStatus === "delivered") timestamps.deliveredAt = now;
   if (newStatus === "cancelled") timestamps.cancelledAt = now;
 
-  await db
-    .update(orders)
-    .set({ status: newStatus, ...timestamps })
-    .where(eq(orders.id, orderId));
+  await db.transaction(async (tx) => {
+    await tx
+      .update(orders)
+      .set({ status: newStatus, ...timestamps })
+      .where(eq(orders.id, orderId));
 
-  await db.insert(orderStatusHistory).values({
-    id: createId(),
-    orderId,
-    status: newStatus,
-    note: note ?? null,
-    changedBy: admin.id,
+    await tx.insert(orderStatusHistory).values({
+      id: createId(),
+      orderId,
+      status: newStatus,
+      note: note ?? null,
+      changedBy: admin.id,
+    });
   });
 
   // Fire-and-forget shipped notifications

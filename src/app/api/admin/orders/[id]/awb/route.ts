@@ -65,17 +65,19 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
 
   if (markAsShipped && order.status !== "shipped") {
     // Update AWB + status atomically
-    await db
-      .update(orders)
-      .set({ awbNumber, status: "shipped", shippedAt: now })
-      .where(eq(orders.id, orderId));
+    await db.transaction(async (tx) => {
+      await tx
+        .update(orders)
+        .set({ awbNumber, status: "shipped", shippedAt: now })
+        .where(eq(orders.id, orderId));
 
-    await db.insert(orderStatusHistory).values({
-      id: createId(),
-      orderId,
-      status: "shipped",
-      note: `Marked as shipped. AWB: ${awbNumber}`,
-      changedBy: admin.id,
+      await tx.insert(orderStatusHistory).values({
+        id: createId(),
+        orderId,
+        status: "shipped",
+        note: `Marked as shipped. AWB: ${awbNumber}`,
+        changedBy: admin.id,
+      });
     });
 
     // Fire-and-forget shipped notifications

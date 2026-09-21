@@ -31,12 +31,7 @@ export default async function AdminOrderDetailPage({
 }: AdminOrderDetailPageProps) {
   const { id } = await params;
 
-  let order;
-  try {
-    order = await getAdminOrderDetails(id);
-  } catch {
-    notFound();
-  }
+  const order = await getAdminOrderDetails(id).catch(() => notFound());
 
   const addr = order.shippingAddress;
 

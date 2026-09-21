@@ -111,12 +111,25 @@ CREATE TRIGGER reviews_rating_trigger
 
 -- ── 6. ROW-LEVEL SECURITY ─────────────────────────────────────────────
 
+-- Helper function to check admin/staff role without triggering RLS recursion on profiles
+CREATE OR REPLACE FUNCTION is_admin_or_staff()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'staff')
+  );
+$$;
+
 -- Profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users manage own profile" ON profiles;
 CREATE POLICY "Users manage own profile" ON profiles FOR ALL USING (auth.uid() = id);
 DROP POLICY IF EXISTS "Admins manage all profiles" ON profiles;
-CREATE POLICY "Admins manage all profiles" ON profiles FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage all profiles" ON profiles FOR ALL USING (is_admin_or_staff());
 
 -- Addresses
 ALTER TABLE addresses ENABLE ROW LEVEL SECURITY;
@@ -128,40 +141,40 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Categories are public when active" ON categories;
 CREATE POLICY "Categories are public when active" ON categories FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Admins manage categories" ON categories;
-CREATE POLICY "Admins manage categories" ON categories FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage categories" ON categories FOR ALL USING (is_admin_or_staff());
 
 -- Brands
 ALTER TABLE brands ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Brands are public when active" ON brands;
 CREATE POLICY "Brands are public when active" ON brands FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Admins manage brands" ON brands;
-CREATE POLICY "Admins manage brands" ON brands FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage brands" ON brands FOR ALL USING (is_admin_or_staff());
 
 -- Products
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Products are public when active" ON products;
 CREATE POLICY "Products are public when active" ON products FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Admins manage products" ON products;
-CREATE POLICY "Admins manage products" ON products FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage products" ON products FOR ALL USING (is_admin_or_staff());
 
 -- Product Variants
 ALTER TABLE product_variants ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Variants are public when active" ON product_variants;
 CREATE POLICY "Variants are public when active" ON product_variants FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Admins manage variants" ON product_variants;
-CREATE POLICY "Admins manage variants" ON product_variants FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage variants" ON product_variants FOR ALL USING (is_admin_or_staff());
 
 -- Product Images
 ALTER TABLE product_images ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Images are public" ON product_images;
 CREATE POLICY "Images are public" ON product_images FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Admins manage images" ON product_images;
-CREATE POLICY "Admins manage images" ON product_images FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage images" ON product_images FOR ALL USING (is_admin_or_staff());
 
 -- Inventory
 ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Admins manage inventory" ON inventory;
-CREATE POLICY "Admins manage inventory" ON inventory FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage inventory" ON inventory FOR ALL USING (is_admin_or_staff());
 
 -- Carts
 ALTER TABLE carts ENABLE ROW LEVEL SECURITY;
@@ -190,7 +203,7 @@ ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Coupons are public when active" ON coupons;
 CREATE POLICY "Coupons are public when active" ON coupons FOR SELECT USING (is_active = true);
 DROP POLICY IF EXISTS "Admins manage coupons" ON coupons;
-CREATE POLICY "Admins manage coupons" ON coupons FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage coupons" ON coupons FOR ALL USING (is_admin_or_staff());
 
 -- Coupon Usage
 ALTER TABLE coupon_usage ENABLE ROW LEVEL SECURITY;
@@ -218,7 +231,7 @@ CREATE POLICY "Users see own returns" ON return_requests FOR SELECT USING (auth.
 DROP POLICY IF EXISTS "Users create returns" ON return_requests;
 CREATE POLICY "Users create returns" ON return_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
 DROP POLICY IF EXISTS "Admins manage returns" ON return_requests;
-CREATE POLICY "Admins manage returns" ON return_requests FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage returns" ON return_requests FOR ALL USING (is_admin_or_staff());
 
 -- Orders
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
@@ -227,7 +240,12 @@ CREATE POLICY "Users see own orders" ON orders FOR SELECT USING (auth.uid() = us
 DROP POLICY IF EXISTS "Service role manages orders" ON orders;
 CREATE POLICY "Service role manages orders" ON orders FOR ALL USING (auth.role() = 'service_role');
 DROP POLICY IF EXISTS "Admins see all orders" ON orders;
-CREATE POLICY "Admins see all orders" ON orders FOR SELECT USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins see all orders" ON orders FOR SELECT USING (is_admin_or_staff());
+-- Admins need explicit UPDATE and INSERT for the session-scoped Drizzle client (non-service-role)
+DROP POLICY IF EXISTS "Admins update orders" ON orders;
+CREATE POLICY "Admins update orders" ON orders FOR UPDATE USING (is_admin_or_staff());
+DROP POLICY IF EXISTS "Admins insert orders" ON orders;
+CREATE POLICY "Admins insert orders" ON orders FOR INSERT WITH CHECK (is_admin_or_staff());
 
 -- Order Items
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
@@ -241,4 +259,14 @@ ALTER TABLE order_status_history ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Users see own order history" ON order_status_history;
 CREATE POLICY "Users see own order history" ON order_status_history FOR SELECT USING (EXISTS (SELECT 1 FROM orders o WHERE o.id = order_id AND o.user_id = auth.uid()));
 DROP POLICY IF EXISTS "Admins manage order history" ON order_status_history;
-CREATE POLICY "Admins manage order history" ON order_status_history FOR ALL USING (EXISTS (SELECT 1 FROM profiles p WHERE p.id = auth.uid() AND p.role IN ('admin', 'staff')));
+CREATE POLICY "Admins manage order history" ON order_status_history FOR ALL USING (is_admin_or_staff());
+
+-- ── 7. PRIVILEGES ────────────────────────────────────────────────────────
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
+
