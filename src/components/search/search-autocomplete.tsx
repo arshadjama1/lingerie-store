@@ -26,6 +26,7 @@ interface SearchAutocompleteProps {
   inputClassName?: string;
   onSelect?: () => void;
   autoFocus?: boolean;
+  isMobileOverlay?: boolean;
 }
 
 const TRENDING_SEARCHES = [
@@ -52,10 +53,11 @@ export function SearchAutocomplete({
   inputClassName,
   onSelect,
   autoFocus = false,
+  isMobileOverlay = false,
 }: SearchAutocompleteProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(isMobileOverlay);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number>(-1);
 
@@ -224,6 +226,10 @@ export function SearchAutocomplete({
         <input
           ref={inputRef}
           type="search"
+          inputMode="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck="false"
           role="combobox"
           aria-expanded={isOpen}
           aria-autocomplete="list"
@@ -235,7 +241,7 @@ export function SearchAutocomplete({
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           className={cn(
-            "w-full rounded-full border border-gray-200 bg-gray-50/90 py-2.5 pr-10 pl-10 text-xs transition-all placeholder:text-gray-400 focus:border-[var(--accent)] focus:bg-white focus:ring-1 focus:ring-[var(--accent)] focus:outline-none",
+            "w-full rounded-full border border-gray-200 bg-gray-50/90 py-2.5 pr-10 pl-10 text-base transition-all placeholder:text-gray-400 focus:border-[var(--accent)] focus:bg-white focus:ring-1 focus:ring-[var(--accent)] focus:outline-none sm:text-xs",
             isOpen && "border-[var(--accent)] shadow-xs",
             inputClassName
           )}
@@ -262,21 +268,33 @@ export function SearchAutocomplete({
                 });
                 inputRef.current?.focus();
               }}
-              className="flex h-5 w-5 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 active:scale-95"
               aria-label="Clear search"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           ) : null}
         </div>
       </div>
 
-      {/* ── Zivame-style Floating Autocomplete Dropdown ─────────── */}
+      {/* ── Zivame-style Floating / Mobile Overlay Autocomplete Dropdown ─────────── */}
       {isOpen && (
-        <div className="absolute top-full left-0 z-50 mt-1.5 w-full min-w-[300px] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl sm:min-w-[420px]">
+        <div
+          className={cn(
+            isMobileOverlay
+              ? "fixed inset-x-0 top-16 bottom-0 z-50 overflow-y-auto overscroll-contain bg-white pb-16"
+              : "absolute top-full left-0 z-50 mt-1.5 w-full max-w-lg min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl sm:min-w-[420px]"
+          )}
+        >
           {/* STATE A: User has typed a query */}
           {query.trim().length > 0 ? (
-            <div className="max-h-[440px] overflow-y-auto">
+            <div
+              className={cn(
+                isMobileOverlay
+                  ? "divide-y divide-gray-100"
+                  : "max-h-[440px] overflow-y-auto"
+              )}
+            >
               {/* 1. Scoped Category suggestions (Zivame top section) */}
               {suggestions.categories.length > 0 && (
                 <div className="py-1">
@@ -288,16 +306,16 @@ export function SearchAutocomplete({
                         type="button"
                         onClick={() => navigateTo(cat.href)}
                         className={cn(
-                          "flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-left text-xs transition-colors sm:text-sm",
+                          "flex min-h-[46px] w-full cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition-colors sm:text-xs",
                           isSelected
                             ? "bg-pink-50/80 text-[var(--accent)]"
-                            : "hover:bg-pink-50/50"
+                            : "hover:bg-pink-50/50 active:bg-pink-100/60"
                         )}
                       >
                         <span className="truncate text-gray-800">
                           <HighlightMatch text={cat.label} query={query} />
                         </span>
-                        <span className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-gray-400 sm:text-xs">
+                        <span className="flex shrink-0 items-center gap-1 text-xs font-semibold text-gray-400 sm:text-[11px]">
                           <span>in</span>
                           <span className="font-extrabold tracking-wider text-[var(--accent)] uppercase">
                             {cat.categoryName}
@@ -321,13 +339,13 @@ export function SearchAutocomplete({
                         type="button"
                         onClick={() => navigateTo(item.href)}
                         className={cn(
-                          "flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-xs transition-colors sm:text-sm",
+                          "flex min-h-[44px] w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors sm:text-xs",
                           isSelected
                             ? "bg-pink-50/80 text-[var(--accent)]"
-                            : "hover:bg-pink-50/50"
+                            : "hover:bg-pink-50/50 active:bg-pink-100/60"
                         )}
                       >
-                        <Search className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                        <Search className="h-4 w-4 shrink-0 text-gray-400 sm:h-3.5 sm:w-3.5" />
                         <span className="truncate text-gray-800">
                           <HighlightMatch text={item.text} query={query} />
                         </span>
@@ -421,11 +439,11 @@ export function SearchAutocomplete({
               )}
 
               {/* 4. Bottom Footer: View all results */}
-              <div className="border-t border-gray-100 bg-white p-2">
+              <div className="border-t border-gray-100 bg-white p-3 sm:p-2">
                 <button
                   type="button"
                   onClick={() => submitSearch()}
-                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-[var(--surface)] py-2 text-xs font-bold text-[var(--accent)] transition-colors hover:bg-pink-50"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[var(--surface)] py-3 text-xs font-bold text-[var(--accent)] transition-colors hover:bg-pink-50 active:bg-pink-100 sm:rounded-lg sm:py-2"
                 >
                   <span>
                     View all{" "}
@@ -434,17 +452,17 @@ export function SearchAutocomplete({
                       : ""}
                     results for &ldquo;{query}&rdquo;
                   </span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  <ArrowRight className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                 </button>
               </div>
 
               {/* Zero matches fallback inside dropdown */}
               {!hasResults && !isLoading && (
-                <div className="px-5 py-6 text-center">
-                  <p className="text-xs font-semibold text-gray-600">
+                <div className="px-5 py-8 text-center sm:py-6">
+                  <p className="text-sm font-semibold text-gray-700 sm:text-xs">
                     No instant suggestions for &ldquo;{query}&rdquo;
                   </p>
-                  <p className="mt-1 text-[11px] text-gray-400">
+                  <p className="mt-1 text-xs text-gray-400 sm:text-[11px]">
                     Press Enter to search the full catalog
                   </p>
                 </div>
@@ -452,14 +470,14 @@ export function SearchAutocomplete({
             </div>
           ) : (
             /* STATE B: Empty query (Focused state — Trending & Categories) */
-            <div className="p-4">
+            <div className="p-4 sm:p-5">
               {/* Trending Searches */}
-              <div className="mb-4">
-                <div className="mb-2.5 flex items-center gap-1.5 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
-                  <Flame className="h-3.5 w-3.5 text-amber-500" />
+              <div className="mb-5 sm:mb-4">
+                <div className="mb-3 flex items-center gap-1.5 text-[11px] font-black tracking-widest text-[var(--accent)] uppercase">
+                  <Flame className="h-4 w-4 text-amber-500" />
                   <span>Trending Searches</span>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {TRENDING_SEARCHES.map((term) => (
                     <button
                       key={term}
@@ -468,7 +486,7 @@ export function SearchAutocomplete({
                         setQuery(term);
                         submitSearch(term);
                       }}
-                      className="cursor-pointer rounded-full border border-gray-100 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 transition-colors hover:border-pink-200 hover:bg-pink-50 hover:text-[var(--accent)]"
+                      className="cursor-pointer rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-800 transition-colors hover:border-pink-300 hover:bg-pink-50 hover:text-[var(--accent)] active:scale-95"
                     >
                       {term}
                     </button>
@@ -477,18 +495,18 @@ export function SearchAutocomplete({
               </div>
 
               {/* Popular Categories */}
-              <div className="border-t border-gray-100 pt-3">
-                <div className="mb-2 flex items-center gap-1.5 text-[10px] font-black tracking-widest text-gray-400 uppercase">
-                  <Sparkles className="h-3 w-3 text-pink-400" />
+              <div className="border-t border-gray-100 pt-4 sm:pt-3">
+                <div className="mb-2.5 flex items-center gap-1.5 text-[11px] font-black tracking-widest text-gray-400 uppercase">
+                  <Sparkles className="h-3.5 w-3.5 text-pink-400" />
                   <span>Popular Categories</span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
                   {POPULAR_CATEGORIES.map((cat) => (
                     <button
                       key={cat.name}
                       type="button"
                       onClick={() => navigateTo(cat.href)}
-                      className="cursor-pointer text-xs font-bold text-gray-700 underline-offset-2 hover:text-[var(--accent)] hover:underline"
+                      className="cursor-pointer rounded-full border border-pink-100 bg-pink-50/50 px-3.5 py-1.5 text-xs font-bold text-gray-800 transition-colors hover:bg-[var(--accent)] hover:text-white active:scale-95"
                     >
                       {cat.name}
                     </button>

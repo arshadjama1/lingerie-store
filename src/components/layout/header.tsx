@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import {
+  ArrowLeft,
   ChevronDown,
   Heart,
   Menu,
@@ -33,6 +34,18 @@ export function Header() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lock body scroll on mobile when search overlay is open
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileSearchOpen]);
 
   const { cart, openCart } = useCartStore();
   const itemCount = cart?.itemCount || 0;
@@ -105,33 +118,15 @@ export function Header() {
 
             {/* Right Action Icons */}
             <div className="flex flex-1 items-center justify-end gap-0.5 sm:gap-1">
-              {/* Mobile inline search bar (expands on tap) */}
-              {mobileSearchOpen ? (
-                <div className="flex items-center gap-1 lg:hidden">
-                  <SearchAutocomplete
-                    autoFocus
-                    placeholder="Search..."
-                    className="w-44 sm:w-60"
-                    onSelect={() => setMobileSearchOpen(false)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMobileSearchOpen(false)}
-                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-500 hover:text-black"
-                    aria-label="Close search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setMobileSearchOpen(true)}
-                  className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] lg:hidden"
-                  aria-label="Search"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
-              )}
+              {/* Mobile search button */}
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-95 lg:hidden"
+                aria-label="Search"
+              >
+                <Search className="h-5 w-5" />
+              </button>
 
               <Link
                 href="/account"
@@ -340,6 +335,32 @@ export function Header() {
                 </div>
               </div>
             </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Full-Screen Search Overlay ─────────────────────── */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white lg:hidden">
+          {/* Mobile Search Header */}
+          <div className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-100 bg-white px-3 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(false)}
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+              aria-label="Back / Close search"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex-1">
+              <SearchAutocomplete
+                autoFocus
+                placeholder="Search bras, panties, nightwear..."
+                isMobileOverlay={true}
+                onSelect={() => setMobileSearchOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}
