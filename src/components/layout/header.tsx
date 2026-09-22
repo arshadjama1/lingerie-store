@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
@@ -28,8 +27,6 @@ import {
 } from "./data/navigationData";
 
 export function Header() {
-  const searchParams = useSearchParams();
-
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -93,10 +90,7 @@ export function Header() {
             {/* Left spacer on desktop so logo centers */}
             <div className="hidden flex-1 lg:flex lg:items-center lg:gap-5">
               {/* Search bar with live autocomplete dropdown */}
-              <SearchAutocomplete
-                initialQuery={searchParams.get("q") ?? ""}
-                className="max-w-md"
-              />
+              <SearchAutocomplete className="max-w-md" />
             </div>
 
             {/* Logo — centered via absolute on desktop */}
