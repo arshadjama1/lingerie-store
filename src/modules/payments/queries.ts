@@ -15,6 +15,7 @@ import { NotFoundError } from "@/lib/errors";
 import { clearCart } from "@/modules/cart";
 import { getCheckoutSession } from "@/modules/checkout";
 import { deductInventory } from "@/modules/checkout/inventory";
+import { getCouponCode, recordCouponUsage } from "@/modules/coupons";
 import {
   sendOrderConfirmationEmail,
   sendOrderConfirmationSMS,
@@ -93,6 +94,11 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
   // Get full session line items & address
   const hydratedSession = await getCheckoutSession(session.id, session.userId);
 
+  // Fetch coupon code before transaction (read-only, no lock needed)
+  const appliedCouponCode = session.couponId
+    ? await getCouponCode(session.couponId)
+    : null;
+
   // 4. Transaction: Order creation, payment record, inventory deduction, cart clearance
   const result = await db.transaction(async (tx) => {
     const newOrderId = createId();
@@ -108,7 +114,7 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
         shippingAddress: hydratedSession.address,
         subtotal: session.subtotal,
         discountAmount: session.discountAmount,
-        couponCode: null,
+        couponCode: appliedCouponCode,
         taxAmount: session.taxAmount,
         shippingAmount: session.shippingAmount,
         total: session.total,
@@ -150,6 +156,16 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
       status: "captured",
       method: method || null,
     });
+
+    // Record coupon usage atomically — increments uses_count and inserts usage row
+    if (session.couponId) {
+      await recordCouponUsage(tx, {
+        couponId: session.couponId,
+        userId: session.userId,
+        orderId: newOrderId,
+        discount: Number(session.discountAmount),
+      });
+    }
 
     // Deduct stock quantity and reserved quantity
     await deductInventory(

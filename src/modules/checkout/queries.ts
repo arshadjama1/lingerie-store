@@ -12,6 +12,7 @@ import {
 
 import { getAddressById } from "@/modules/addresses";
 import { getCart } from "@/modules/cart";
+import { validateCoupon } from "@/modules/coupons";
 
 import { calculateCheckoutTotals, calculateLineItem } from "./calculations";
 import { releaseInventory, reserveInventory } from "./inventory";
@@ -23,7 +24,7 @@ import type {
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput
 ): Promise<HydratedCheckoutSession> {
-  const { userId, cartId, addressId } = input;
+  const { userId, cartId, addressId, couponCode } = input;
 
   const address = await getAddressById(userId, addressId);
   const cart = await getCart({ userId });
@@ -37,7 +38,22 @@ export async function createCheckoutSession(
   }
 
   const lineItems = cart.items.map(calculateLineItem);
-  const totals = calculateCheckoutTotals(lineItems, 0);
+
+  // Fix #2: Validate coupon BEFORE the DB transaction so no lock contention
+  let couponId: string | null = null;
+  let discountAmount = 0;
+
+  if (couponCode) {
+    const subtotal = lineItems.reduce(
+      (s, i) => s + i.unitPrice * i.quantity,
+      0
+    );
+    const couponResult = await validateCoupon(couponCode, userId, subtotal);
+    couponId = couponResult.couponId;
+    discountAmount = couponResult.discountAmount;
+  }
+
+  const totals = calculateCheckoutTotals(lineItems, discountAmount);
 
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
   const sessionId = createId();
@@ -56,7 +72,7 @@ export async function createCheckoutSession(
       userId,
       cartId: cart.id,
       addressId: address.id,
-      couponId: null,
+      couponId,
       subtotal: totals.subtotal.toString(),
       discountAmount: totals.discountAmount.toString(),
       taxAmount: totals.taxAmount.toString(),
@@ -73,7 +89,7 @@ export async function createCheckoutSession(
     userId,
     cartId: cart.id,
     addressId: address.id,
-    couponId: null,
+    couponId,
     subtotal: totals.subtotal,
     discountAmount: totals.discountAmount,
     taxAmount: totals.taxAmount,
