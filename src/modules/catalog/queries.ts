@@ -23,7 +23,7 @@ import {
   productVariants,
   products,
 } from "@/db/schema";
-import { and, asc, desc, eq, gt, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, isNull, or, sql } from "drizzle-orm";
 
 import type {
   CategoryNode,
@@ -34,6 +34,7 @@ import type {
   ProductListItem,
   SearchProductsParams,
   SearchProductsResult,
+  SearchSuggestionsResult,
 } from "./types";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -514,6 +515,150 @@ export async function searchProducts(
     page,
     totalPages: Math.ceil(total / limit),
     isFuzzy: true,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// getSearchSuggestions
+// ─────────────────────────────────────────────────────────────────────
+
+export async function getSearchSuggestions(
+  rawQuery: string
+): Promise<SearchSuggestionsResult> {
+  const q = rawQuery.trim();
+  if (!q) {
+    return {
+      query: "",
+      categories: [],
+      suggestions: [],
+      products: [],
+      totalMatches: 0,
+    };
+  }
+
+  const normalizedQ = q.toLowerCase();
+
+  // Run parallel fetches for categories, top products, and keyword matches
+  const [activeCategories, previewResult, keywordRows] = await Promise.all([
+    db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        slug: categories.slug,
+        path: categories.path,
+      })
+      .from(categories)
+      .where(eq(categories.isActive, true))
+      .catch(() => []),
+
+    searchProducts({ q, limit: 3 }).catch(() => ({
+      products: [],
+      total: 0,
+      page: 1,
+      totalPages: 0,
+      isFuzzy: false,
+    })),
+
+    db
+      .select({
+        name: products.name,
+        tags: products.tags,
+      })
+      .from(products)
+      .where(
+        and(
+          eq(products.isActive, true),
+          or(
+            ilike(products.name, `%${q}%`),
+            sql`EXISTS (SELECT 1 FROM unnest(${products.tags}) tag WHERE tag ILIKE ${"%" + q + "%"})`
+          )
+        )
+      )
+      .limit(10)
+      .catch(() => []),
+  ]);
+
+  // 1. Scoped Category suggestions (Zivame pattern: e.g. "bras upto 60% off in SALE")
+  const categorySuggestions: SearchSuggestionsResult["categories"] = [
+    {
+      label: `${q} upto 65% off`,
+      categoryName: "SALE",
+      href: `/sale?q=${encodeURIComponent(q)}`,
+    },
+    {
+      label: q,
+      categoryName: "NEW ARRIVALS",
+      href: `/search?q=${encodeURIComponent(q)}&sort=newest`,
+    },
+  ];
+
+  for (const cat of activeCategories) {
+    const catLower = cat.name.toLowerCase();
+    if (
+      catLower.includes(normalizedQ) ||
+      normalizedQ.includes(catLower) ||
+      previewResult.products.some(
+        (p) =>
+          p.slug.toLowerCase().includes(cat.slug.toLowerCase()) ||
+          p.name.toLowerCase().includes(catLower)
+      )
+    ) {
+      categorySuggestions.push({
+        label: q,
+        categoryName: cat.name.toUpperCase(),
+        href: `/${cat.slug}?q=${encodeURIComponent(q)}`,
+      });
+    }
+  }
+
+  // 2. Keyword suggestions derived from matching product titles and tags
+  const rawKeywords: string[] = [];
+
+  for (const row of keywordRows) {
+    if (row.name && row.name.toLowerCase().includes(normalizedQ)) {
+      rawKeywords.push(row.name);
+    }
+    if (Array.isArray(row.tags)) {
+      for (const tag of row.tags) {
+        if (tag.toLowerCase().includes(normalizedQ)) {
+          rawKeywords.push(tag);
+        }
+      }
+    }
+  }
+
+  // Common attribute prefixes if query matches innerwear terms
+  const curatedAttributes = [
+    `backless ${q}`,
+    `lace ${q}`,
+    `full coverage ${q}`,
+    `cotton ${q}`,
+    `seamless ${q}`,
+    `padded ${q}`,
+  ];
+
+  for (const attr of curatedAttributes) {
+    if (!rawKeywords.some((k) => k.toLowerCase() === attr.toLowerCase())) {
+      rawKeywords.push(attr);
+    }
+  }
+
+  const uniqueSuggestions = Array.from(new Set(rawKeywords))
+    .filter(
+      (k) => k.trim().length > 0 && k.trim().toLowerCase() !== normalizedQ
+    )
+    .slice(0, 6)
+    .map((text) => ({
+      text,
+      href: `/search?q=${encodeURIComponent(text)}`,
+    }));
+
+  return {
+    query: q,
+    categories: categorySuggestions.slice(0, 4),
+    suggestions: uniqueSuggestions,
+    products: previewResult.products,
+    totalMatches: previewResult.total,
   };
 }
 

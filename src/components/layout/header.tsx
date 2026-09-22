@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import {
+  ArrowLeft,
   ChevronDown,
   Heart,
   Menu,
@@ -17,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 import {
   COMBO_QUICK_LINKS,
@@ -25,10 +28,24 @@ import {
 } from "./data/navigationData";
 
 export function Header() {
+  const searchParams = useSearchParams();
+
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lock body scroll on mobile when search overlay is open
+  useEffect(() => {
+    if (mobileSearchOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileSearchOpen]);
 
   const { cart, openCart } = useCartStore();
   const itemCount = cart?.itemCount || 0;
@@ -75,17 +92,11 @@ export function Header() {
 
             {/* Left spacer on desktop so logo centers */}
             <div className="hidden flex-1 lg:flex lg:items-center lg:gap-5">
-              {/* Search bar — left side on desktop */}
-              <div className="relative w-full max-w-md">
-                <input
-                  type="text"
-                  placeholder="Search bras, panties, nightwear, shapewear..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-xs transition-all placeholder:text-gray-400 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                />
-                <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </div>
+              {/* Search bar with live autocomplete dropdown */}
+              <SearchAutocomplete
+                initialQuery={searchParams.get("q") ?? ""}
+                className="max-w-md"
+              />
             </div>
 
             {/* Logo — centered via absolute on desktop */}
@@ -107,13 +118,15 @@ export function Header() {
 
             {/* Right Action Icons */}
             <div className="flex flex-1 items-center justify-end gap-0.5 sm:gap-1">
-              <Link
-                href="/search"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] lg:hidden"
+              {/* Mobile search button */}
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-95 lg:hidden"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
-              </Link>
+              </button>
 
               <Link
                 href="/account"
@@ -273,16 +286,12 @@ export function Header() {
               </button>
             </div>
 
-            {/* Mobile search */}
+            {/* Mobile search — inside drawer with live autocomplete */}
             <div className="border-b px-4 py-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search lingerie..."
-                  className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm focus:border-[var(--accent)] focus:outline-none"
-                />
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </div>
+              <SearchAutocomplete
+                placeholder="Search lingerie..."
+                onSelect={() => setMobileOpen(false)}
+              />
             </div>
 
             <nav className="flex-1 px-4 py-4">
@@ -326,6 +335,32 @@ export function Header() {
                 </div>
               </div>
             </nav>
+          </div>
+        </div>
+      )}
+
+      {/* ── Mobile Full-Screen Search Overlay ─────────────────────── */}
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white lg:hidden">
+          {/* Mobile Search Header */}
+          <div className="flex h-16 shrink-0 items-center gap-2 border-b border-gray-100 bg-white px-3 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(false)}
+              className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 active:scale-95"
+              aria-label="Back / Close search"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex-1">
+              <SearchAutocomplete
+                autoFocus
+                placeholder="Search bras, panties, nightwear..."
+                isMobileOverlay={true}
+                onSelect={() => setMobileSearchOpen(false)}
+              />
+            </div>
           </div>
         </div>
       )}
