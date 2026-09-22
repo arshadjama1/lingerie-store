@@ -4,6 +4,7 @@ import Image from "next/image";
 import React, { useMemo, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
+import { useWishlistStore } from "@/stores/useWishlistStore";
 import {
   ChevronLeft,
   ChevronRight,
@@ -25,6 +26,10 @@ interface ProductActionsProps {
 }
 
 export function ProductActions({ product }: ProductActionsProps) {
+  const hasItem = useWishlistStore((state) => state.hasItem);
+  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
+  const isWishlisted = hasItem(product.id);
+
   // Extract all unique colors and sizes from variants
   const colorMap = useMemo(() => {
     const map = new Map<string, string | null>();
@@ -373,10 +378,52 @@ export function ProductActions({ product }: ProductActionsProps) {
           </button>
 
           <button
-            className="flex cursor-pointer items-center justify-center rounded-none border border-gray-200 p-4 text-gray-700 shadow-xs transition-colors hover:border-[var(--accent)] hover:bg-pink-50 hover:text-[var(--accent)]"
-            aria-label="Add to wishlist"
+            type="button"
+            onClick={() => {
+              toggleWishlist(
+                {
+                  id: product.id,
+                  slug: product.slug,
+                  name: product.name,
+                  brandName: product.brand?.name ?? null,
+                  primaryImage: product.images[0]
+                    ? { url: product.images[0].url, alt: product.images[0].alt }
+                    : null,
+                  minPrice: String(product.variants[0]?.price ?? 0),
+                  minMrp: String(product.variants[0]?.mrp ?? 0),
+                  isInStock: product.variants.some((v) => v.available > 0),
+                  variants: product.variants.map((v) => ({
+                    id: v.id,
+                    sku: v.sku,
+                    size: v.size,
+                    color: v.color,
+                    price: v.price,
+                    mrp: v.mrp,
+                    isInStock: v.available > 0,
+                    availableStock: v.available,
+                  })),
+                },
+                selectedVariant?.id
+              );
+            }}
+            className={cn(
+              "flex cursor-pointer items-center justify-center rounded-none border p-4 shadow-xs transition-all active:scale-95",
+              isWishlisted
+                ? "border-[var(--accent)] bg-pink-50 text-[var(--accent)]"
+                : "border-gray-200 text-gray-700 hover:border-[var(--accent)] hover:bg-pink-50 hover:text-[var(--accent)]"
+            )}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           >
-            <Heart className="h-5 w-5" />
+            <Heart
+              className={cn(
+                "h-5 w-5 transition-transform",
+                isWishlisted &&
+                  "scale-110 fill-[var(--accent)] text-[var(--accent)]"
+              )}
+            />
           </button>
         </div>
 

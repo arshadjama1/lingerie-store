@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
+import { useWishlistStore } from "@/stores/useWishlistStore";
 import {
   ArrowLeft,
   ChevronDown,
@@ -46,6 +47,14 @@ export function Header() {
 
   const { cart, openCart } = useCartStore();
   const itemCount = cart?.itemCount || 0;
+
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
+  const wishlistCount = wishlistItems.length;
+
+  useEffect(() => {
+    fetchWishlist();
+  }, [fetchWishlist]);
 
   const handleMenuEnter = (name: string) => {
     if (menuTimeout.current) clearTimeout(menuTimeout.current);
@@ -133,9 +142,18 @@ export function Header() {
               <Link
                 href="/wishlist"
                 className="relative flex h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
-                aria-label="Wishlist"
+                aria-label={
+                  wishlistCount > 0
+                    ? `Wishlist (${wishlistCount} items)`
+                    : "Wishlist"
+                }
               >
                 <Heart className="h-5 w-5" />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] leading-none font-bold text-white">
+                    {wishlistCount > 99 ? "99+" : wishlistCount}
+                  </span>
+                )}
               </Link>
 
               <button
@@ -308,6 +326,35 @@ export function Header() {
                     </Link>
                   </li>
                 ))}
+                <li className="border-t border-gray-100 pt-2">
+                  <Link
+                    href="/wishlist"
+                    className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Heart className="h-4 w-4 text-[var(--accent)]" />
+                      Wishlist
+                    </span>
+                    {wishlistCount > 0 && (
+                      <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold text-white">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/account"
+                    className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <User className="h-4 w-4 text-gray-500" />
+                      My Account
+                    </span>
+                  </Link>
+                </li>
               </ul>
 
               {/* Mobile combo deals */}

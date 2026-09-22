@@ -4,9 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useWishlistStore } from "@/stores/useWishlistStore";
 import { Heart } from "lucide-react";
 
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 import { PRODUCT_TABS_DATA } from "./data/homeData";
 
@@ -22,6 +23,8 @@ export interface ProductItem {
 
 export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
   const [activeTab, setActiveTab] = useState("ALL");
+  const hasItem = useWishlistStore((state) => state.hasItem);
+  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
 
   const filteredProducts = products.filter((p) => {
     if (activeTab === "ALL") return true;
@@ -37,62 +40,65 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
         p.name.toLowerCase().includes("seamless")
       );
     if (activeTab === "SETS") return p.name.toLowerCase().includes("set");
+    if (activeTab === "NIGHTWEAR")
+      return (
+        p.name.toLowerCase().includes("night") ||
+        p.name.toLowerCase().includes("satin") ||
+        p.name.toLowerCase().includes("robe")
+      );
     if (activeTab === "LOUNGEWEAR")
-      return p.name.toLowerCase().includes("camisole");
+      return (
+        p.name.toLowerCase().includes("lounge") ||
+        p.name.toLowerCase().includes("pajama") ||
+        p.name.toLowerCase().includes("top") ||
+        p.name.toLowerCase().includes("modal")
+      );
     return true;
   });
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col items-center justify-between gap-4 sm:flex-row">
-        <div>
-          <h2 className="font-serif text-xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-3xl">
-            Bestseller Showcase
+    <section className="bg-white py-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Title */}
+        <div className="mb-8 text-center">
+          <p className="text-xs font-black tracking-widest text-[var(--accent-dark)] uppercase">
+            Customer Favourites
+          </p>
+          <h2 className="mt-1 font-serif text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Best Sellers
           </h2>
-          <p className="mt-0.5 text-xs font-light text-gray-500 sm:text-sm">
-            Filter by category to discover top-rated picks
+          <p className="mx-auto mt-2 max-w-xl text-sm text-gray-500">
+            Our most-loved pieces, chosen by thousands of women across India.
           </p>
         </div>
 
-        {/* Category Tabs */}
-        <div className="no-scrollbar flex max-w-full items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0">
+        {/* Category Filter Tabs */}
+        <div className="mb-10 flex scrollbar-none items-center justify-start gap-2 overflow-x-auto pb-2 sm:justify-center">
           {PRODUCT_TABS_DATA.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`cursor-pointer rounded-none px-4 py-2 text-[11px] font-black tracking-wider whitespace-nowrap uppercase transition-all ${
+              className={`cursor-pointer rounded-full px-5 py-2 text-xs font-bold tracking-wider whitespace-nowrap uppercase transition-all duration-200 ${
                 activeTab === tab
-                  ? "scale-105 bg-[var(--accent)] text-white shadow-md"
-                  : "border border-gray-200 bg-[var(--surface)] text-gray-700 hover:bg-pink-100"
+                  ? "bg-[var(--accent)] text-white shadow-sm"
+                  : "bg-gray-100 text-gray-600 hover:bg-pink-50 hover:text-[var(--accent)]"
               }`}
             >
               {tab}
             </button>
           ))}
         </div>
-      </div>
 
-      {/* Product Cards Grid */}
-      {filteredProducts.length === 0 ? (
-        <div className="rounded-none border border-dashed border-pink-200 bg-[var(--surface)] p-12 text-center">
-          <p className="text-sm font-medium text-gray-500">
-            No products found in this category tab.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4">
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filteredProducts.slice(0, 8).map((product) => {
-            const hasDiscount =
-              product.minMrp &&
-              parseFloat(product.minMrp) > parseFloat(product.minPrice);
+            const minPrice = parseFloat(product.minPrice);
+            const minMrp = product.minMrp ? parseFloat(product.minMrp) : null;
+            const hasDiscount = minMrp && minMrp > minPrice;
             const discountPercent = hasDiscount
-              ? Math.round(
-                  ((parseFloat(product.minMrp!) -
-                    parseFloat(product.minPrice)) /
-                    parseFloat(product.minMrp!)) *
-                    100
-                )
+              ? Math.round(((minMrp - minPrice) / minMrp) * 100)
               : 0;
+            const isWishlisted = hasItem(product.id);
 
             return (
               <div
@@ -114,10 +120,42 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
                     </div>
                   )}
                   <button
-                    className="absolute top-3 right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-md backdrop-blur-xs transition-all hover:bg-white hover:text-[var(--accent)]"
-                    aria-label="Add to wishlist"
+                    type="button"
+                    className={cn(
+                      "absolute top-3 right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all active:scale-90",
+                      isWishlisted
+                        ? "bg-white text-[var(--accent)] hover:bg-rose-50"
+                        : "bg-white/90 text-gray-500 hover:bg-white hover:text-[var(--accent)]"
+                    )}
+                    aria-label={
+                      isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleWishlist({
+                        id: product.id,
+                        slug: product.slug,
+                        name: product.name,
+                        brandName: product.brandName,
+                        primaryImage: product.primaryImage
+                          ? {
+                              url: product.primaryImage.url,
+                              alt: product.primaryImage.alt ?? product.name,
+                            }
+                          : null,
+                        minPrice: product.minPrice,
+                        minMrp: product.minMrp || undefined,
+                      });
+                    }}
                   >
-                    <Heart className="h-4 w-4" />
+                    <Heart
+                      className={cn(
+                        "h-4 w-4 transition-transform",
+                        isWishlisted &&
+                          "scale-110 fill-[var(--accent)] text-[var(--accent)]"
+                      )}
+                    />
                   </button>
                   {hasDiscount && (
                     <span className="absolute top-3 left-3 z-10 rounded-none bg-[var(--accent)] px-2.5 py-0.5 text-[10px] font-black tracking-wider text-white uppercase shadow-xs">
@@ -159,7 +197,7 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
             );
           })}
         </div>
-      )}
+      </div>
     </section>
   );
 }
