@@ -73,9 +73,15 @@ export function SearchAutocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync initial query prop
+  // Sync initial query prop or read from URL on client mount
   useEffect(() => {
-    setQuery(initialQuery);
+    if (initialQuery) {
+      setQuery(initialQuery);
+    } else if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlQ = params.get("q");
+      if (urlQ) setQuery(urlQ);
+    }
   }, [initialQuery]);
 
   // Click outside listener to close dropdown
