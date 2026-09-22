@@ -14,6 +14,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
+import { categories } from "./catalog";
 import { couponTypeEnum } from "./enums";
 import { orders } from "./orders";
 import { profiles } from "./users";
@@ -39,6 +40,14 @@ export const coupons = pgTable(
     isActive: boolean("is_active").default(true).notNull(),
     startsAt: timestamp("starts_at", { mode: "date" }).notNull(),
     expiresAt: timestamp("expires_at", { mode: "date" }),
+    // Extended coupon rule fields
+    isFirstOrderOnly: boolean("is_first_order_only").default(false).notNull(),
+    applicableCategoryId: text("applicable_category_id").references(
+      () => categories.id,
+      { onDelete: "set null" }
+    ),
+    minItemCount: integer("min_item_count"),
+    bundleProductIds: text("bundle_product_ids").array(),
   },
   (t) => [index("coupons_code_active_idx").on(t.code, t.isActive)]
 );
