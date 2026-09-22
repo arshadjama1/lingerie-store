@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { Address } from "@/db/schema";
 import { useCartStore } from "@/stores/useCartStore";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
+import {
+  calculateCheckoutTotals,
+  calculateLineItem,
+} from "@/modules/checkout/calculations";
 import type { HydratedCheckoutSession } from "@/modules/checkout/types";
 
 import { AddressStep } from "@/components/checkout/AddressStep";
@@ -24,11 +28,29 @@ export default function CheckoutPage() {
   const [session, setSession] = useState<HydratedCheckoutSession | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
+  // Coupon state — managed at page level and passed down
+  const [couponId, setCouponId] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState(0);
+
+  // Fix #3: calculateLineItem / calculateCheckoutTotals have no server-only guard
+  // — safe to call in this client component for live preview in Step 2.
+  const lineItems = useMemo(
+    () => cart?.items.map(calculateLineItem) ?? [],
+    [cart]
+  );
+
+  const totals = useMemo(
+    () => calculateCheckoutTotals(lineItems, discountAmount),
+    [lineItems, discountAmount]
+  );
+
   const handleSelectAddress = (address: Address) => {
     setSelectedAddress(address);
   };
 
-  const handleProceedToReview = async () => {
+  // Fix #4: Step 1→2 no longer creates a session — just validates and advances.
+  const handleProceedToReview = () => {
     if (!selectedAddress) {
       toast.error("Please select a delivery address");
       return;
@@ -40,6 +62,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    setCurrentStep(2);
+  };
+
+  // Fix #4: Session is created here at Step 2→3 so couponCode is already known.
+  const handleProceedToPayment = async () => {
+    if (!selectedAddress || !cart) return;
+
     try {
       setIsCreatingSession(true);
       const res = await fetch("/api/checkout/session", {
@@ -48,6 +77,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           cartId: cart.id,
           addressId: selectedAddress.id,
+          couponCode: couponCode ?? undefined,
         }),
       });
 
@@ -58,7 +88,7 @@ export default function CheckoutPage() {
       }
 
       setSession(data.session);
-      setCurrentStep(2);
+      setCurrentStep(3);
     } catch (err) {
       console.error("[CheckoutPage] Create session error:", err);
       toast.error("Failed to initiate checkout session");
@@ -66,6 +96,25 @@ export default function CheckoutPage() {
       setIsCreatingSession(false);
     }
   };
+
+  function handleCouponApplied(
+    newCouponId: string,
+    newDiscountAmount: number,
+    newCode: string
+  ) {
+    setCouponId(newCouponId);
+    setCouponCode(newCode);
+    setDiscountAmount(newDiscountAmount);
+  }
+
+  function handleCouponRemoved() {
+    setCouponId(null);
+    setCouponCode(null);
+    setDiscountAmount(0);
+  }
+
+  // Suppress unused variable warning — couponId stored for potential future use
+  void couponId;
 
   return (
     <div className="min-h-screen bg-neutral-50/50 pt-8 pb-16">
@@ -132,28 +181,24 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={handleProceedToReview}
-                  disabled={!selectedAddress || isCreatingSession}
+                  disabled={!selectedAddress}
                   className="rounded-xl bg-rose-600 px-8 py-3.5 font-semibold text-white shadow hover:bg-rose-700 disabled:opacity-50"
                 >
-                  {isCreatingSession
-                    ? "Initiating..."
-                    : "Deliver to This Address"}
+                  Deliver to This Address
                 </button>
               </div>
             </div>
           )}
 
-          {currentStep === 2 && session && (
+          {currentStep === 2 && (
             <OrderReviewStep
-              lineItems={session.lineItems}
-              totals={{
-                subtotal: session.subtotal,
-                discountAmount: session.discountAmount,
-                taxAmount: session.taxAmount,
-                shippingAmount: session.shippingAmount,
-                total: session.total,
-              }}
-              onProceedToPayment={() => setCurrentStep(3)}
+              lineItems={lineItems}
+              totals={totals}
+              couponCode={couponCode}
+              onCouponApplied={handleCouponApplied}
+              onCouponRemoved={handleCouponRemoved}
+              onProceedToPayment={handleProceedToPayment}
+              isSubmitting={isCreatingSession}
             />
           )}
 
