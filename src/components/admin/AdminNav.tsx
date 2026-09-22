@@ -35,6 +35,12 @@ export function AdminNav({ email }: AdminNavProps) {
         >
           Orders
         </Link>
+        <Link
+          href="/admin/coupons"
+          className="text-sm font-medium text-gray-600 transition-colors hover:text-[#3d0a20]"
+        >
+          Coupons
+        </Link>
       </nav>
 
       {/* Right: email + sign-out */}
