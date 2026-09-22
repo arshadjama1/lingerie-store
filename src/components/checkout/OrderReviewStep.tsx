@@ -4,14 +4,25 @@ import Image from "next/image";
 
 import { Package, ShieldCheck, Truck } from "lucide-react";
 
+import { formatPrice } from "@/lib/utils";
+
 import type {
   CheckoutLineItem,
   CheckoutTotals,
 } from "@/modules/checkout/types";
 
+import { CouponInput } from "./CouponInput";
+
 interface OrderReviewStepProps {
   lineItems: CheckoutLineItem[];
   totals: CheckoutTotals;
+  couponCode?: string | null;
+  onCouponApplied: (
+    couponId: string,
+    discountAmount: number,
+    code: string
+  ) => void;
+  onCouponRemoved: () => void;
   onProceedToPayment: () => void;
   isSubmitting?: boolean;
 }
@@ -19,6 +30,9 @@ interface OrderReviewStepProps {
 export function OrderReviewStep({
   lineItems,
   totals,
+  couponCode,
+  onCouponApplied,
+  onCouponRemoved,
   onProceedToPayment,
   isSubmitting = false,
 }: OrderReviewStepProps) {
@@ -85,6 +99,15 @@ export function OrderReviewStep({
         </div>
       </div>
 
+      {/* Coupon Input */}
+      <CouponInput
+        cartSubtotal={totals.subtotal}
+        onApplied={onCouponApplied}
+        onRemoved={onCouponRemoved}
+        appliedCode={couponCode}
+        appliedDiscount={totals.discountAmount}
+      />
+
       {/* Cost summary table */}
       <div className="space-y-3 rounded-xl border border-neutral-200 bg-neutral-50 p-5">
         <div className="flex justify-between text-sm text-neutral-600">
@@ -96,9 +119,9 @@ export function OrderReviewStep({
 
         {totals.discountAmount > 0 && (
           <div className="flex justify-between text-sm text-emerald-600">
-            <span>Coupon Discount</span>
+            <span>Discount{couponCode ? ` (${couponCode})` : ""}</span>
             <span className="font-medium">
-              -₹{totals.discountAmount.toLocaleString("en-IN")}
+              −{formatPrice(totals.discountAmount)}
             </span>
           </div>
         )}
