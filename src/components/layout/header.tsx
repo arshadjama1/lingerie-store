@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import {
@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 import {
   COMBO_QUICK_LINKS,
@@ -26,28 +27,12 @@ import {
 } from "./data/navigationData";
 
 export function Header() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") ?? "");
-  const [mobileSearchQuery, setMobileSearchQuery] = useState("");
   const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
-
-  // Keep desktop input in sync when navigating between search results
-  useEffect(() => {
-    setSearchQuery(searchParams.get("q") ?? "");
-  }, [searchParams]);
-
-  // Focus mobile search input when it opens
-  useEffect(() => {
-    if (mobileSearchOpen) {
-      mobileSearchInputRef.current?.focus();
-    }
-  }, [mobileSearchOpen]);
 
   const { cart, openCart } = useCartStore();
   const itemCount = cart?.itemCount || 0;
@@ -59,20 +44,6 @@ export function Header() {
   const handleMenuLeave = () => {
     menuTimeout.current = setTimeout(() => setActiveMenu(null), 180);
   };
-
-  function submitDesktopSearch() {
-    const q = searchQuery.trim();
-    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
-  }
-
-  function submitMobileSearch() {
-    const q = mobileSearchQuery.trim();
-    if (q) {
-      router.push(`/search?q=${encodeURIComponent(q)}`);
-      setMobileSearchOpen(false);
-      setMobileSearchQuery("");
-    }
-  }
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
@@ -108,31 +79,11 @@ export function Header() {
 
             {/* Left spacer on desktop so logo centers */}
             <div className="hidden flex-1 lg:flex lg:items-center lg:gap-5">
-              {/* Search bar — left side on desktop */}
-              <form
-                className="relative w-full max-w-md"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  submitDesktopSearch();
-                }}
-                role="search"
-              >
-                <input
-                  type="search"
-                  placeholder="Search bras, panties, nightwear, shapewear..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      submitDesktopSearch();
-                    }
-                  }}
-                  className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-10 text-xs transition-all placeholder:text-gray-400 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
-                  aria-label="Search products"
-                />
-                <Search className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </form>
+              {/* Search bar with live autocomplete dropdown */}
+              <SearchAutocomplete
+                initialQuery={searchParams.get("q") ?? ""}
+                className="max-w-md"
+              />
             </div>
 
             {/* Logo — centered via absolute on desktop */}
@@ -156,40 +107,22 @@ export function Header() {
             <div className="flex flex-1 items-center justify-end gap-0.5 sm:gap-1">
               {/* Mobile inline search bar (expands on tap) */}
               {mobileSearchOpen ? (
-                <form
-                  className="flex items-center gap-1 lg:hidden"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    submitMobileSearch();
-                  }}
-                  role="search"
-                >
-                  <input
-                    ref={mobileSearchInputRef}
-                    type="search"
-                    value={mobileSearchQuery}
-                    onChange={(e) => setMobileSearchQuery(e.target.value)}
-                    onBlur={() => {
-                      if (!mobileSearchQuery.trim()) setMobileSearchOpen(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setMobileSearchOpen(false);
-                        setMobileSearchQuery("");
-                      }
-                    }}
+                <div className="flex items-center gap-1 lg:hidden">
+                  <SearchAutocomplete
+                    autoFocus
                     placeholder="Search..."
-                    className="w-36 rounded-full border border-gray-200 bg-gray-50 py-1.5 pr-3 pl-3 text-xs transition-all focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none sm:w-48"
-                    aria-label="Search products"
+                    className="w-44 sm:w-60"
+                    onSelect={() => setMobileSearchOpen(false)}
                   />
                   <button
-                    type="submit"
-                    className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
-                    aria-label="Submit search"
+                    type="button"
+                    onClick={() => setMobileSearchOpen(false)}
+                    className="flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-gray-500 hover:text-black"
+                    aria-label="Close search"
                   >
-                    <Search className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   </button>
-                </form>
+                </div>
               ) : (
                 <button
                   onClick={() => setMobileSearchOpen(true)}
@@ -358,31 +291,12 @@ export function Header() {
               </button>
             </div>
 
-            {/* Mobile search — inside drawer */}
+            {/* Mobile search — inside drawer with live autocomplete */}
             <div className="border-b px-4 py-3">
-              <form
-                className="relative"
-                role="search"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const q = mobileSearchQuery.trim();
-                  if (q) {
-                    router.push(`/search?q=${encodeURIComponent(q)}`);
-                    setMobileOpen(false);
-                    setMobileSearchQuery("");
-                  }
-                }}
-              >
-                <input
-                  type="search"
-                  value={mobileSearchQuery}
-                  onChange={(e) => setMobileSearchQuery(e.target.value)}
-                  placeholder="Search lingerie..."
-                  className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 pr-4 pl-9 text-sm focus:border-[var(--accent)] focus:outline-none"
-                  aria-label="Search products"
-                />
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              </form>
+              <SearchAutocomplete
+                placeholder="Search lingerie..."
+                onSelect={() => setMobileOpen(false)}
+              />
             </div>
 
             <nav className="flex-1 px-4 py-4">

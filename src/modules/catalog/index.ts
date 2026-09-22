@@ -6,6 +6,7 @@ import {
   getFeaturedProducts,
   getProductBySlug,
   getRelatedProducts,
+  getSearchSuggestions,
   listCategories,
   listProducts,
   searchProducts,
@@ -18,6 +19,9 @@ import type {
   ProductListItem,
   SearchProductsParams,
   SearchProductsResult,
+  SearchSuggestionCategory,
+  SearchSuggestionKeyword,
+  SearchSuggestionsResult,
   SortOption,
 } from "./types";
 
@@ -104,6 +108,13 @@ export async function searchCatalog(
   return searchProducts(validated);
 }
 
+export async function getCatalogSearchSuggestions(
+  query: string
+): Promise<SearchSuggestionsResult> {
+  const validated = z.string().trim().max(200).parse(query);
+  return getSearchSuggestions(validated);
+}
+
 // ── Re-exports all types so consumers only need one import ───────────
 export type {
   CategoryNode,
@@ -113,5 +124,8 @@ export type {
   ListProductsResult,
   SearchProductsParams,
   SearchProductsResult,
+  SearchSuggestionCategory,
+  SearchSuggestionKeyword,
+  SearchSuggestionsResult,
   SortOption,
 };

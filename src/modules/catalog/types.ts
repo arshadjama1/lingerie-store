@@ -88,3 +88,22 @@ export type SearchProductsParams = {
 export type SearchProductsResult = ListProductsResult & {
   isFuzzy: boolean;
 };
+
+export type SearchSuggestionCategory = {
+  label: string;
+  categoryName: string;
+  href: string;
+};
+
+export type SearchSuggestionKeyword = {
+  text: string;
+  href: string;
+};
+
+export type SearchSuggestionsResult = {
+  query: string;
+  categories: SearchSuggestionCategory[];
+  suggestions: SearchSuggestionKeyword[];
+  products: ProductListItem[];
+  totalMatches: number;
+};
