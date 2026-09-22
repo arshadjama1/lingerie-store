@@ -9,10 +9,14 @@ interface CartState {
   isLoading: boolean;
   isUpdatingItem: Record<string, boolean>;
 
+  isFastCheckoutOpen: boolean;
+
   // Actions
   openCart: () => void;
   closeCart: () => void;
   toggleCart: () => void;
+  openFastCheckout: () => void;
+  closeFastCheckout: () => void;
   fetchCart: () => Promise<void>;
   addItem: (variantId: string, quantity?: number) => Promise<boolean>;
   updateQuantity: (itemId: string, quantity: number) => Promise<boolean>;
@@ -22,12 +26,15 @@ interface CartState {
 export const useCartStore = create<CartState>((set) => ({
   cart: null,
   isOpen: false,
+  isFastCheckoutOpen: false,
   isLoading: false,
   isUpdatingItem: {},
 
   openCart: () => set({ isOpen: true }),
   closeCart: () => set({ isOpen: false }),
   toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
+  openFastCheckout: () => set({ isOpen: false, isFastCheckoutOpen: true }),
+  closeFastCheckout: () => set({ isFastCheckoutOpen: false }),
 
   fetchCart: async () => {
     try {

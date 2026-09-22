@@ -1,128 +1,274 @@
 "use client";
 
-import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
-import { ArrowRight, ShoppingBag, X } from "lucide-react";
+import {
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Truck,
+  User,
+  X,
+} from "lucide-react";
 
+import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 
+import { FastCheckoutModal } from "../checkout/FastCheckoutModal";
 import { CartItemCard } from "./cart-item-card";
 
 export function CartDrawer() {
-  const { cart, isOpen, closeCart, fetchCart } = useCartStore();
+  const {
+    cart,
+    isOpen,
+    closeCart,
+    fetchCart,
+    isFastCheckoutOpen,
+    openFastCheckout,
+    closeFastCheckout,
+  } = useCartStore();
+
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCart();
   }, [fetchCart]);
 
-  if (!isOpen) return null;
+  // Auth User Fetch
+  useEffect(() => {
+    if (!isOpen) return;
+
+    async function getUserProfile() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const emailPrefix = user.email?.split("@")[0];
+          setUserFirstName(
+            user.user_metadata?.full_name || emailPrefix || "Shopper"
+          );
+        } else {
+          setUserFirstName(null);
+        }
+      } catch (err) {
+        console.error("[CartDrawer] User data fetch error:", err);
+      }
+    }
+
+    getUserProfile();
+  }, [isOpen]);
+
+  if (!isOpen && !isFastCheckoutOpen) return null;
 
   const items = cart?.items || [];
   const itemCount = cart?.itemCount || 0;
   const subtotal = cart?.subtotal || 0;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Backdrop */}
-      <div
-        className="animate-in fade-in fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-        onClick={closeCart}
-      />
+  // Pricing calculations
+  const originalMrp = Math.round(subtotal * 1.35);
+  const estimatedSavings = Math.max(0, originalMrp - subtotal);
+  const discountPercent =
+    originalMrp > 0
+      ? Math.round(((originalMrp - subtotal) / originalMrp) * 100)
+      : 0;
 
-      <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-        <div className="bg-background animate-in slide-in-from-right border-border/40 flex w-screen max-w-md flex-col border-l shadow-2xl duration-300">
-          {/* Header */}
-          <div className="border-border/60 bg-card/40 flex items-center justify-between border-b px-6 py-4">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="text-primary h-5 w-5" />
-              <h2 className="text-foreground font-serif text-lg font-bold tracking-tight">
-                Your Shopping Bag
-              </h2>
-              {itemCount > 0 && (
-                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-semibold">
-                  {itemCount} {itemCount === 1 ? "item" : "items"}
-                </span>
+  // Free shipping milestone (₹999)
+  const freeShippingThreshold = 999;
+  const isFreeShipping = subtotal >= freeShippingThreshold;
+
+  const progressPercent = Math.min(
+    100,
+    Math.round((subtotal / freeShippingThreshold) * 100)
+  );
+
+  return (
+    <>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            onClick={closeCart}
+          />
+
+          <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div className="flex w-screen max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl duration-300">
+              {/* ── TIER 1: Header (User Greeting & Urgency Countdown) ── */}
+              <div className="border-b border-neutral-100 bg-white px-5 py-3.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-800">
+                    <User className="h-4 w-4 text-[var(--accent)]" />
+                    <span>
+                      {userFirstName ? `Hi, ${userFirstName}` : "Hi, Guest"}
+                    </span>
+                    {itemCount > 0 && (
+                      <span className="rounded-full bg-[var(--accent-subtle)] px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
+                        {itemCount} {itemCount === 1 ? "item" : "items"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={closeCart}
+                      className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                      aria-label="Close cart drawer"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── TIER 2: Milestone Progress Bar (Free Shipping) ── */}
+                {items.length > 0 && (
+                  <div className="mt-3 rounded-2xl border border-neutral-100 bg-neutral-50/80 p-3">
+                    <p className="text-center text-xs font-semibold text-neutral-800">
+                      {!isFreeShipping ? (
+                        <>
+                          Add{" "}
+                          <span className="text-[var(--accent)]">
+                            ₹
+                            {(freeShippingThreshold - subtotal).toLocaleString(
+                              "en-IN"
+                            )}
+                          </span>{" "}
+                          more for{" "}
+                          <span className="font-bold">
+                            FREE Discreet Shipping
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-emerald-700">
+                          🎉 You unlocked FREE Discreet Shipping!
+                        </span>
+                      )}
+                    </p>
+
+                    {/* Visual Bar */}
+                    <div className="relative mt-2.5 h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+                      <div
+                        className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+
+                    <div className="mt-1.5 flex justify-between text-[10px] font-semibold text-neutral-500">
+                      <span>₹0</span>
+                      <span className="flex items-center gap-1">
+                        <Truck className="h-3 w-3 text-[var(--accent)]" /> ₹999
+                        Free Shipping
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ── TIER 3: Cart Content / Item List ────────────────── */}
+              <div className="flex-1 overflow-y-auto px-5 py-3">
+                {items.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
+                      <ShoppingBag className="h-8 w-8" />
+                    </div>
+                    <h3 className="mt-4 font-serif text-lg font-bold text-neutral-900">
+                      Your bag is empty
+                    </h3>
+                    <p className="mt-1 max-w-xs text-xs text-neutral-500">
+                      Explore our handcrafted lingerie, seamless bralettes, and
+                      silk sleepwear.
+                    </p>
+                    <button
+                      onClick={closeCart}
+                      className="mt-6 inline-flex items-center justify-center rounded-2xl bg-neutral-900 px-6 py-2.5 text-xs font-bold tracking-wider text-white uppercase shadow hover:bg-black"
+                    >
+                      Start Shopping
+                    </button>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-neutral-100">
+                    {items.map((item) => (
+                      <CartItemCard
+                        key={item.id}
+                        item={item}
+                        onCloseDrawer={closeCart}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── TIER 4: Footer / Summary (Matching Reference Screenshot 3) ── */}
+              {items.length > 0 && (
+                <div className="border-t border-neutral-200 bg-white p-5 shadow-lg">
+                  {/* Savings Banner */}
+                  {estimatedSavings > 0 && (
+                    <div className="mb-3 flex items-center justify-center gap-1.5 rounded-xl bg-teal-50 py-1.5 text-xs font-bold text-teal-800">
+                      <Sparkles className="h-3.5 w-3.5 text-teal-600" />
+                      <span>
+                        ₹{estimatedSavings.toLocaleString("en-IN")} Saved so
+                        far!
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Estimated Total */}
+                  <div className="mb-3 flex items-baseline justify-between">
+                    <span className="text-xs font-bold text-neutral-700">
+                      Estimated Total
+                    </span>
+                    <div className="text-right">
+                      {originalMrp > subtotal && (
+                        <span className="mr-2 text-xs text-neutral-400 line-through">
+                          ₹{originalMrp.toLocaleString("en-IN")}
+                        </span>
+                      )}
+                      <span className="text-base font-extrabold text-neutral-900">
+                        {formatPrice(subtotal)}
+                      </span>
+                      {discountPercent > 0 && (
+                        <span className="ml-1.5 text-xs font-bold text-emerald-600">
+                          ({discountPercent}% OFF)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CHECKOUT Action Button */}
+                  <button
+                    type="button"
+                    onClick={() => openFastCheckout()}
+                    className="flex w-full items-center justify-center rounded-2xl bg-black py-3.5 text-sm font-extrabold tracking-wider text-white uppercase shadow-xl transition-transform hover:bg-neutral-800 active:scale-[0.99]"
+                  >
+                    CHECKOUT
+                  </button>
+
+                  <div className="mt-3 flex items-center justify-center gap-4 text-[10px] text-neutral-400">
+                    <span className="flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3 text-emerald-600" /> 100%
+                      Secure
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <Truck className="h-3 w-3 text-[var(--accent)]" /> 100%
+                      Discreet Box
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
-
-            <button
-              onClick={closeCart}
-              className="text-muted-foreground hover:text-foreground hover:bg-accent rounded-full p-1.5 transition-colors"
-              aria-label="Close cart drawer"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
-
-          {/* Cart Content / Item List */}
-          <div className="flex-1 overflow-y-auto px-6 py-4">
-            {items.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-                <div className="bg-primary/10 text-primary mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-                  <ShoppingBag className="h-8 w-8" />
-                </div>
-                <h3 className="text-foreground mb-1 text-base font-semibold">
-                  Your bag is empty
-                </h3>
-                <p className="text-muted-foreground mb-6 max-w-xs text-sm">
-                  Explore our curated lingerie edits, bralettes, and sleepwear.
-                </p>
-                <button
-                  onClick={closeCart}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium shadow transition-colors"
-                >
-                  Start Shopping
-                </button>
-              </div>
-            ) : (
-              <div className="divide-border/60 divide-y">
-                {items.map((item) => (
-                  <CartItemCard
-                    key={item.id}
-                    item={item}
-                    onCloseDrawer={closeCart}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Footer / Summary */}
-          {items.length > 0 && (
-            <div className="border-border/60 bg-card/40 space-y-4 border-t p-6">
-              <div className="space-y-2 text-sm">
-                <div className="text-muted-foreground flex justify-between">
-                  <span>Subtotal</span>
-                  <span className="text-foreground font-semibold">
-                    {formatPrice(subtotal)}
-                  </span>
-                </div>
-                <div className="text-muted-foreground flex justify-between text-xs">
-                  <span>Taxes & Shipping</span>
-                  <span>Calculated at checkout</span>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
-                >
-                  <span>Proceed to Checkout</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-
-                <p className="text-muted-foreground mt-3 text-center text-[11px]">
-                  🔒 Safe & Secure 256-bit Encrypted Checkout
-                </p>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* 1-Click Fast Checkout Modal */}
+      <FastCheckoutModal
+        isOpen={isFastCheckoutOpen}
+        onClose={closeFastCheckout}
+      />
+    </>
   );
 }
