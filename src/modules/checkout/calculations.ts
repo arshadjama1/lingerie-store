@@ -2,16 +2,15 @@ import type { CartItemWithVariant } from "@/modules/cart/types";
 
 import type { CheckoutLineItem, CheckoutTotals } from "./types";
 
-export function getGstRate(unitPrice: number): 0.05 | 0.12 {
-  return unitPrice < 1000 ? 0.05 : 0.12;
+export function getGstRate(_unitPrice: number): number {
+  return 0;
 }
 
 export function calculateLineItem(item: CartItemWithVariant): CheckoutLineItem {
   const unitPrice = Number(item.variant?.price ?? item.priceAtAddition ?? 0);
-  const gstRate = getGstRate(unitPrice);
   const lineSubtotal = unitPrice * item.quantity;
-  const taxAmount = Number((lineSubtotal * gstRate).toFixed(2));
-  const total = Number((lineSubtotal + taxAmount).toFixed(2));
+  const taxAmount = 0;
+  const total = Number(lineSubtotal.toFixed(2));
 
   const product = item.variant?.product;
   const primaryImg =
@@ -44,16 +43,12 @@ export function calculateCheckoutTotals(
       .toFixed(2)
   );
 
-  const taxAmount = Number(
-    lineItems.reduce((sum, item) => sum + item.taxAmount, 0).toFixed(2)
-  );
+  const taxAmount = 0;
 
   const shippingAmount = subtotal >= 999 ? 0 : 99;
 
   const total = Number(
-    Math.max(0, subtotal - discountAmount + taxAmount + shippingAmount).toFixed(
-      2
-    )
+    Math.max(0, subtotal - discountAmount + shippingAmount).toFixed(2)
   );
 
   return {

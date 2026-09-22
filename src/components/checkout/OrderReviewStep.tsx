@@ -80,7 +80,7 @@ export function OrderReviewStep({
                 ₹{item.total.toLocaleString("en-IN")}
               </div>
               <div className="text-[10px] text-neutral-400">
-                ₹{item.unitPrice} × {item.quantity} + ₹{item.taxAmount} GST
+                ₹{item.unitPrice} × {item.quantity}
               </div>
             </div>
           </div>
@@ -126,12 +126,14 @@ export function OrderReviewStep({
           </div>
         )}
 
-        <div className="flex justify-between text-sm text-neutral-600">
-          <span>Estimated GST (5% / 12%)</span>
-          <span className="font-medium text-neutral-900">
-            +₹{totals.taxAmount.toLocaleString("en-IN")}
-          </span>
-        </div>
+        {totals.taxAmount > 0 && (
+          <div className="flex justify-between text-sm text-neutral-600">
+            <span>Estimated GST</span>
+            <span className="font-medium text-neutral-900">
+              +₹{totals.taxAmount.toLocaleString("en-IN")}
+            </span>
+          </div>
+        )}
 
         <div className="flex justify-between text-sm text-neutral-600">
           <span>Delivery Fee</span>
