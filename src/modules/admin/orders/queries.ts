@@ -130,6 +130,7 @@ export async function getAdminOrderDetails(
 
   const mappedItems: OrderItem[] = order.items.map((item) => ({
     id: item.id,
+    variantId: item.variantId,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
     taxAmount: item.taxAmount,

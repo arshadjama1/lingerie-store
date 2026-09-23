@@ -14,6 +14,7 @@ export interface OrderSummary {
 
 export interface OrderItem {
   id: string;
+  variantId: string;
   quantity: number;
   unitPrice: string;
   taxAmount: string;

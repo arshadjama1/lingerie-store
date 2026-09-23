@@ -5,6 +5,7 @@ import {
   getCategoryBySlug,
   getFeaturedProducts,
   getProductBySlug,
+  getProductIdByVariantId,
   getRelatedProducts,
   getSearchSuggestions,
   listCategories,
@@ -114,6 +115,8 @@ export async function getCatalogSearchSuggestions(
   const validated = z.string().trim().max(200).parse(query);
   return getSearchSuggestions(validated);
 }
+
+export { getProductIdByVariantId };
 
 // ── Re-exports all types so consumers only need one import ───────────
 export type {
