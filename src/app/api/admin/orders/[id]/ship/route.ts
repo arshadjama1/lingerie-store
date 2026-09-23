@@ -43,6 +43,27 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   // Fetch full order details for DTDC shipment creation
   const order = await getAdminOrderDetails(orderId);
 
+  // Guard: only book if order is in a shippable state
+  if (!["pending", "confirmed", "processing"].includes(order.status)) {
+    return NextResponse.json(
+      {
+        error: `Cannot book a DTDC shipment for an order with status "${order.status}"`,
+      },
+      { status: 409 }
+    );
+  }
+
+  // Guard: prevent duplicate consignment creation
+  if (order.awbNumber) {
+    return NextResponse.json(
+      {
+        error: `A DTDC shipment has already been booked for this order (AWB: ${order.awbNumber})`,
+        awbNumber: order.awbNumber,
+      },
+      { status: 409 }
+    );
+  }
+
   // Call official DTDC Booking API (Softdata Upload v2.0)
   const result = await createDtdcShipment(order, {
     weightKg: bodyData?.weightKg,

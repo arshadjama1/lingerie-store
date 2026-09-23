@@ -137,7 +137,7 @@ export function AdminShipForm({ orderId, currentAwb }: AdminShipFormProps) {
             </a>
 
             <a
-              href={`https://www.dtdc.in/tracking.asp`}
+              href={`https://www.dtdc.in/tracking.asp?strConsignmentNo=${encodeURIComponent(currentAwb ?? "")}&addColDetails=Y`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-1.5 border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-50"

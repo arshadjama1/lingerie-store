@@ -83,12 +83,12 @@ export async function createDtdcShipment(
     weight_unit: "kg",
     weight: String(dimensions.weightKg),
     num_pieces: "1",
-    declared_value: String(Math.round(Number(order.total))),
+    declared_value: String(Math.round(Math.max(0, Number(order.total) || 0))),
     customer_reference_number: order.orderNumber,
     commodity_id: serverEnv.DTDC_COMMODITY_ID || "CLOTHING",
     is_risk_surcharge_applicable: false,
-    cod_amount: isCod ? String(Math.round(Number(order.total))) : "",
-    cod_collection_mode: isCod ? "CASH" : "",
+    cod_amount: isCod ? String(Math.round(Number(order.total))) : "0",
+    cod_collection_mode: isCod ? "CASH" : "PREPAID",
     origin_details: {
       name: serverEnv.DTDC_WAREHOUSE_NAME,
       phone: serverEnv.DTDC_WAREHOUSE_PHONE,
@@ -304,7 +304,7 @@ export async function checkDtdcPincodeServiceability(
         orgPincode: String(origin),
         desPincode: String(destPincode),
       }),
-      next: { revalidate: 86400 }, // Cache pincode serviceability for 24 hours
+      cache: "no-store",
     });
 
     if (!res.ok) {

@@ -75,7 +75,7 @@ export function OrderTrackingTimeline({
             AWB: {awbNumber}
           </span>
           <a
-            href="https://www.dtdc.in/tracking.asp"
+            href={`https://www.dtdc.in/tracking.asp?strConsignmentNo=${encodeURIComponent(awbNumber)}&addColDetails=Y`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 text-xs text-violet-700 underline hover:text-violet-900"

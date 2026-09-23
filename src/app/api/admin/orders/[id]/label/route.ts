@@ -49,7 +49,7 @@ export const GET = withErrorHandling(async (_req: Request, ctx?: unknown) => {
     headers: {
       "Content-Type": contentType || "application/pdf",
       "Content-Disposition": `inline; filename="DTDC-Label-${order.awbNumber}.pdf"`,
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": "no-store",
     },
   });
 });
