@@ -1,4 +1,4 @@
-﻿import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface RatingStarsProps {
   rating: number; // 0–5, can be decimal e.g. 4.3
@@ -13,6 +13,10 @@ export function RatingStars({
   size = "sm",
   className,
 }: RatingStarsProps) {
+  if (!rating || rating <= 0 || (count !== undefined && count <= 0)) {
+    return null;
+  }
+
   const rounded = Math.round(rating * 2) / 2; // round to nearest 0.5
   const starSize = size === "sm" ? "h-3 w-3" : "h-4 w-4";
 
