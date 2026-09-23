@@ -14,6 +14,8 @@ import "server-only";
 
 import { ConflictError, NotFoundError, ValidationError } from "@/lib/errors";
 
+import { cancelDtdcShipment } from "@/modules/shipping";
+
 import type {
   ListOrdersResult,
   OrderDetails,
@@ -217,6 +219,17 @@ export async function cancelOrder(
         .where(eq(inventory.variantId, item.variantId));
     }
   });
+
+  // If order was already booked with DTDC, asynchronously cancel with carrier
+  if (order.awbNumber) {
+    cancelDtdcShipment(order.awbNumber).catch((err) =>
+      console.error(
+        "[DTDC] Shipment cancellation failed for order",
+        order.orderNumber,
+        err
+      )
+    );
+  }
 
   return { success: true, orderNumber: order.orderNumber };
 }
