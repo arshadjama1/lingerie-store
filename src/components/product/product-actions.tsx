@@ -91,13 +91,26 @@ export function ProductActions({ product }: ProductActionsProps) {
   // Get gallery images
   const galleryImages = useMemo(() => {
     if (selectedColor) {
-      const activeColorImages = colorVariants.flatMap((v) => v.images);
+      const seenUrls = new Set<string>();
+      const activeColorImages = colorVariants
+        .flatMap((v) => v.images)
+        .filter((img) => {
+          if (!img?.url || seenUrls.has(img.url)) return false;
+          seenUrls.add(img.url);
+          return true;
+        });
       if (activeColorImages.length > 0) {
         return activeColorImages;
       }
     }
-    return product.images.length > 0
-      ? product.images
+    const seenUrls = new Set<string>();
+    const uniqueProductImages = product.images.filter((img) => {
+      if (!img?.url || seenUrls.has(img.url)) return false;
+      seenUrls.add(img.url);
+      return true;
+    });
+    return uniqueProductImages.length > 0
+      ? uniqueProductImages
       : [
           {
             id: "placeholder",

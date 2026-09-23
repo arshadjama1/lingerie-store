@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 import { getCatalogProduct, getCatalogRelated } from "@/modules/catalog";
 
 import { Breadcrumb } from "@/components/common/breadcrumb";
+import { ProductDescription } from "@/components/product/ProductDescription";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductGrid } from "@/components/product/product-grid";
@@ -137,18 +138,7 @@ export default async function ProductPage({
               <h2 className="font-serif text-xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-2xl">
                 Product Details & Fabric Care
               </h2>
-              <div className="space-y-4 text-xs leading-relaxed font-light text-gray-700 sm:text-sm">
-                {product.description ? (
-                  product.description
-                    .split("\n\n")
-                    .map((para, index) => <p key={index}>{para}</p>)
-                ) : (
-                  <p>
-                    Designed for all-day skin comfort with premium breathable
-                    fabric, shape retention, and precision support.
-                  </p>
-                )}
-              </div>
+              <ProductDescription description={product.description} />
 
               {product.hsnCode && (
                 <p className="mt-6 border-t border-gray-100 pt-2 font-mono text-xs text-gray-400">
