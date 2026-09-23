@@ -15,6 +15,13 @@
       "when": 1782211219640,
       "tag": "0001_functions_fts_rls",
       "breakpoints": false
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790098384593,
+      "tag": "0002_ambitious_blonde_phantom",
+      "breakpoints": true
     }
   ]
 }

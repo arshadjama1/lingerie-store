@@ -41,6 +41,16 @@ export const orders = pgTable(
     total: decimal("total", { precision: 10, scale: 2 }).notNull(),
     shiprocketOrderId: text("shiprocket_order_id"),
     awbNumber: text("awb_number"),
+    courierName: text("courier_name").default("DTDC"),
+    shippingLabelUrl: text("shipping_label_url"),
+    shippingMetadata: jsonb("shipping_metadata").$type<{
+      consignmentId?: string;
+      referenceNumber?: string;
+      routingCode?: string;
+      bookedAt?: string;
+      cancelledAt?: string;
+      serviceTypeId?: string;
+    }>(),
     notes: text("notes"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date" })
