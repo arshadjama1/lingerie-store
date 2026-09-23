@@ -46,7 +46,7 @@ export async function listUserOrders(
         status: orders.status,
         total: orders.total,
         createdAt: orders.createdAt,
-        itemCount: sql<number>`(SELECT COUNT(*)::int FROM ${orderItems} oi WHERE oi.order_id = ${orders.id})`,
+        itemCount: sql<number>`(SELECT COUNT(*)::int FROM ${orderItems} oi WHERE oi.order_id = ${orders}.id)`,
       })
       .from(orders)
       .where(eq(orders.userId, userId))
