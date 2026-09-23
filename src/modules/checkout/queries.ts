@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import { checkoutSessions } from "@/db/schema";
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, lte } from "drizzle-orm";
 import "server-only";
 
 import {
@@ -17,6 +17,7 @@ import { validateCoupon } from "@/modules/coupons";
 import { calculateCheckoutTotals, calculateLineItem } from "./calculations";
 import { releaseInventory, reserveInventory } from "./inventory";
 import type {
+  CheckoutLineItem,
   CreateCheckoutSessionInput,
   HydratedCheckoutSession,
 } from "./types";
@@ -80,6 +81,8 @@ export async function createCheckoutSession(
       total: totals.total.toString(),
       razorpayOrderId: null,
       orderId: null,
+      status: "active",
+      lineItems,
       expiresAt,
     });
   });
@@ -97,6 +100,7 @@ export async function createCheckoutSession(
     total: totals.total,
     razorpayOrderId: null,
     orderId: null,
+    status: "active",
     expiresAt,
     createdAt: new Date(),
     address,
@@ -106,7 +110,8 @@ export async function createCheckoutSession(
 
 export async function getCheckoutSession(
   sessionId: string,
-  userId: string
+  userId: string,
+  options?: { allowExpired?: boolean }
 ): Promise<HydratedCheckoutSession> {
   const session = await db.query.checkoutSessions.findFirst({
     where: and(
@@ -119,14 +124,19 @@ export async function getCheckoutSession(
     throw new NotFoundError("Checkout session");
   }
 
-  if (new Date(session.expiresAt) <= new Date()) {
+  if (!options?.allowExpired && new Date(session.expiresAt) <= new Date()) {
     throw new CheckoutExpiredError();
   }
 
   const address = await getAddressById(userId, session.addressId);
-  const cart = await getCart({ userId });
 
-  const lineItems = cart ? cart.items.map(calculateLineItem) : [];
+  let lineItems: CheckoutLineItem[] = [];
+  if (session.lineItems && session.lineItems.length > 0) {
+    lineItems = session.lineItems;
+  } else {
+    const cart = await getCart({ userId });
+    lineItems = cart ? cart.items.map(calculateLineItem) : [];
+  }
 
   return {
     id: session.id,
@@ -141,6 +151,7 @@ export async function getCheckoutSession(
     total: Number(session.total),
     razorpayOrderId: session.razorpayOrderId,
     orderId: session.orderId,
+    status: session.status,
     expiresAt: session.expiresAt,
     createdAt: session.createdAt,
     address,
@@ -153,23 +164,83 @@ export async function expireCheckoutSession(sessionId: string) {
     where: eq(checkoutSessions.id, sessionId),
   });
 
-  if (!session) return;
+  if (!session || session.status === "expired" || session.orderId) return;
 
-  const cart = await getCart({ userId: session.userId });
-  if (!cart) return;
-
-  await db.transaction(async (tx) => {
-    await releaseInventory(
-      tx,
-      cart.items.map((item) => ({
+  let itemsToRelease: { variantId: string; quantity: number }[] = [];
+  if (session.lineItems && session.lineItems.length > 0) {
+    itemsToRelease = session.lineItems.map((item) => ({
+      variantId: item.variantId,
+      quantity: item.quantity,
+    }));
+  } else {
+    const cart = await getCart({ userId: session.userId });
+    if (cart) {
+      itemsToRelease = cart.items.map((item) => ({
         variantId: item.variantId,
         quantity: item.quantity,
-      }))
-    );
+      }));
+    }
+  }
+
+  await db.transaction(async (tx) => {
+    if (itemsToRelease.length > 0) {
+      await releaseInventory(tx, itemsToRelease);
+    }
 
     await tx
       .update(checkoutSessions)
-      .set({ expiresAt: new Date() })
+      .set({
+        status: "expired",
+        expiresAt: new Date(),
+      })
       .where(eq(checkoutSessions.id, sessionId));
   });
+}
+
+export async function cleanupExpiredCheckoutSessions(): Promise<number> {
+  const now = new Date();
+
+  const expiredSessions = await db.query.checkoutSessions.findMany({
+    where: and(
+      eq(checkoutSessions.status, "active"),
+      lte(checkoutSessions.expiresAt, now),
+      isNull(checkoutSessions.orderId)
+    ),
+  });
+
+  let cleanedCount = 0;
+  for (const session of expiredSessions) {
+    let itemsToRelease: { variantId: string; quantity: number }[] = [];
+    if (session.lineItems && session.lineItems.length > 0) {
+      itemsToRelease = session.lineItems.map((item) => ({
+        variantId: item.variantId,
+        quantity: item.quantity,
+      }));
+    } else {
+      const cart = await getCart({ userId: session.userId });
+      if (cart) {
+        itemsToRelease = cart.items.map((item) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+        }));
+      }
+    }
+
+    await db.transaction(async (tx) => {
+      if (itemsToRelease.length > 0) {
+        await releaseInventory(tx, itemsToRelease);
+      }
+
+      await tx
+        .update(checkoutSessions)
+        .set({
+          status: "expired",
+        })
+        .where(eq(checkoutSessions.id, session.id));
+    });
+
+    cleanedCount++;
+  }
+
+  return cleanedCount;
 }

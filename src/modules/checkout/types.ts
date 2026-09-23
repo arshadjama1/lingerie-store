@@ -44,6 +44,7 @@ export interface HydratedCheckoutSession {
   total: number;
   razorpayOrderId: string | null;
   orderId: string | null;
+  status: string;
   expiresAt: Date;
   createdAt: Date;
   address: Address;
