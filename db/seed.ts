@@ -686,12 +686,8 @@ async function seed() {
       soldCount: p.isBestSeller
         ? Math.floor(Math.random() * 300) + 100
         : Math.floor(Math.random() * 50) + 5,
-      ratingAvg: p.isBestSeller
-        ? (Math.random() * 0.5 + 4.3).toFixed(2)
-        : (Math.random() * 1.0 + 3.5).toFixed(2),
-      ratingCount: p.isBestSeller
-        ? Math.floor(Math.random() * 150) + 30
-        : Math.floor(Math.random() * 30) + 5,
+      ratingAvg: "0",
+      ratingCount: 0,
       metaTitle: `${p.name} | Surekh`,
       metaDesc: `Buy ${p.name} online at Surekh.${p.fabric ? ` Made from ${p.fabric}.` : ""} Shop premium innerwear with fast delivery.`,
     });

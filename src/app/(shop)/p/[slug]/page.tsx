@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 import { getCatalogProduct, getCatalogRelated } from "@/modules/catalog";
 
 import { Breadcrumb } from "@/components/common/breadcrumb";
+import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductGrid } from "@/components/product/product-grid";
 
@@ -13,6 +14,9 @@ export const revalidate = 60;
 interface ProductPageProps {
   params: Promise<{
     slug: string;
+  }>;
+  searchParams?: Promise<{
+    reviewPage?: string;
   }>;
 }
 
@@ -43,8 +47,16 @@ export async function generateMetadata({
   };
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({
+  params,
+  searchParams,
+}: ProductPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const reviewPage = Math.max(
+    1,
+    parseInt(resolvedSearchParams?.reviewPage ?? "1", 10)
+  );
   const product = await getCatalogProduct(slug).catch(() => null);
 
   if (!product) {
@@ -175,6 +187,17 @@ export default async function ProductPage({ params }: ProductPageProps) {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16 border-t border-gray-100 pt-10">
+          <Suspense
+            fallback={
+              <div className="h-48 animate-pulse rounded-none bg-[var(--surface)]" />
+            }
+          >
+            <ProductReviews productId={product.id} page={reviewPage} />
+          </Suspense>
         </div>
 
         {/* Related Products Section */}

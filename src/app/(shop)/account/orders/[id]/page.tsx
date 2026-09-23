@@ -6,13 +6,16 @@ import { ArrowLeft, CreditCard, MapPin, Package2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 
+import { getProductIdByVariantId } from "@/modules/catalog";
 import { getOrderDetails } from "@/modules/orders";
+import { hasUserReviewedProduct } from "@/modules/reviews";
 
 import { CancelOrderButton } from "@/components/orders/CancelOrderButton";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTrackingTimeline } from "@/components/orders/OrderTrackingTimeline";
 import { ReturnRequestForm } from "@/components/orders/ReturnRequestForm";
 import { StatusTimeline } from "@/components/orders/StatusTimeline";
+import { WriteReviewButton } from "@/components/orders/WriteReviewButton";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +70,39 @@ export default async function OrderDetailPage({
   const canReturn = (RETURNABLE_STATUSES as readonly string[]).includes(
     order.status
   );
+
+  const isDelivered = order.status === "delivered";
+  const productIdMap: Record<string, string> = {};
+  const reviewedSet = new Set<string>();
+
+  if (isDelivered && order.items.length > 0) {
+    const itemProductPairs = await Promise.all(
+      order.items.map(async (item) => {
+        const pId = await getProductIdByVariantId(item.variantId);
+        return { itemId: item.id, productId: pId };
+      })
+    );
+
+    for (const pair of itemProductPairs) {
+      if (pair.productId) {
+        productIdMap[pair.itemId] = pair.productId;
+      }
+    }
+
+    const uniqueProductIds = Array.from(new Set(Object.values(productIdMap)));
+    const reviewChecks = await Promise.all(
+      uniqueProductIds.map(async (pId) => {
+        const reviewed = await hasUserReviewedProduct(user.id, pId);
+        return { productId: pId, reviewed };
+      })
+    );
+
+    for (const check of reviewChecks) {
+      if (check.reviewed) {
+        reviewedSet.add(check.productId);
+      }
+    }
+  }
 
   const address = order.shippingAddress;
 
@@ -146,6 +182,16 @@ export default async function OrderDetailPage({
                       {formatPrice(item.total)}
                     </p>
                   </div>
+                  {isDelivered && productIdMap[item.id] && (
+                    <div className="mt-3">
+                      <WriteReviewButton
+                        productId={productIdMap[item.id]}
+                        productName={item.productSnapshot.productName}
+                        orderId={order.id}
+                        alreadyReviewed={reviewedSet.has(productIdMap[item.id])}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

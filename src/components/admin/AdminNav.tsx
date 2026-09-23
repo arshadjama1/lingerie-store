@@ -41,6 +41,12 @@ export function AdminNav({ email }: AdminNavProps) {
         >
           Coupons
         </Link>
+        <Link
+          href="/admin/reviews"
+          className="text-sm font-medium text-gray-600 transition-colors hover:text-[#3d0a20]"
+        >
+          Reviews
+        </Link>
       </nav>
 
       {/* Right: email + sign-out */}

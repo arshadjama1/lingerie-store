@@ -115,15 +115,16 @@ export function ProductCard({
             {product.name}
           </h3>
 
-          {/* Rating */}
-          {product.ratingCount > 0 && (
-            <RatingStars
-              rating={parseFloat(product.ratingAvg)}
-              count={product.ratingCount}
-              size="sm"
-              className="mt-0.5"
-            />
-          )}
+          {/* Rating — only displayed when product has ratings */}
+          {Number(product.ratingCount) > 0 &&
+            parseFloat(product.ratingAvg || "0") > 0 && (
+              <RatingStars
+                rating={parseFloat(product.ratingAvg)}
+                count={product.ratingCount}
+                size="sm"
+                className="mt-0.5"
+              />
+            )}
 
           {/* Price */}
           <div className="mt-1.5 flex items-baseline gap-2">

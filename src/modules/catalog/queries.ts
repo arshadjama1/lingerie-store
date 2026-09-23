@@ -859,3 +859,18 @@ function toProductListItem(row: ProductRow): ProductListItem {
     soldCount: row.soldCount,
   };
 }
+
+/**
+ * Single indexed FK lookup on product_variants to get the parent product ID.
+ */
+export async function getProductIdByVariantId(
+  variantId: string
+): Promise<string | null> {
+  const row = await db
+    .select({ productId: productVariants.productId })
+    .from(productVariants)
+    .where(eq(productVariants.id, variantId))
+    .limit(1);
+
+  return row[0]?.productId ?? null;
+}
