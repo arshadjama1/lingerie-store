@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
 import { Heart } from "lucide-react";
 
 import { calcDiscount, cn, formatPrice } from "@/lib/utils";
@@ -24,6 +25,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const discount = calcDiscount(product.minPrice, product.minMrp);
   const hasDiscount = discount > 0;
+  const isWishlisted = useIsWishlisted(product.id);
+  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
 
   return (
     <article
@@ -57,13 +60,30 @@ export function ProductCard({
 
           {/* Wishlist Button Overlay */}
           <button
-            className="absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-md backdrop-blur-xs transition-all hover:bg-white hover:text-[var(--accent)]"
-            aria-label="Add to wishlist"
+            type="button"
+            className={cn(
+              "absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all duration-200 active:scale-90",
+              isWishlisted
+                ? "bg-rose-50 text-[var(--accent)] ring-1 ring-rose-300 hover:bg-rose-100"
+                : "bg-white/90 text-gray-500 hover:bg-white hover:text-[var(--accent)]"
+            )}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
             onClick={(e) => {
               e.preventDefault();
+              e.stopPropagation();
+              toggleWishlist(product);
             }}
           >
-            <Heart className="h-4 w-4" />
+            <Heart
+              className={cn(
+                "h-4 w-4 transition-all duration-200",
+                isWishlisted
+                  ? "scale-110 fill-current text-[var(--accent)]"
+                  : "text-gray-500 hover:text-[var(--accent)]"
+              )}
+            />
           </button>
 
           {/* Badges — top left */}
