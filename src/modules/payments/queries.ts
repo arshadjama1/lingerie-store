@@ -91,8 +91,10 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
     }
   }
 
-  // Get full session line items & address
-  const hydratedSession = await getCheckoutSession(session.id, session.userId);
+  // Get full session line items & address (allow expired sessions since payment has already been verified/captured)
+  const hydratedSession = await getCheckoutSession(session.id, session.userId, {
+    allowExpired: true,
+  });
 
   // Fetch coupon code before transaction (read-only, no lock needed)
   const appliedCouponCode = session.couponId
@@ -179,10 +181,13 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
     // Clear user cart items within the transaction
     await tx.delete(cartItems).where(eq(cartItems.cartId, session.cartId));
 
-    // Link orderId to checkout session
+    // Link orderId to checkout session and mark status as completed
     await tx
       .update(checkoutSessions)
-      .set({ orderId: newOrder.id })
+      .set({
+        orderId: newOrder.id,
+        status: "completed",
+      })
       .where(eq(checkoutSessions.id, session.id));
 
     return {
