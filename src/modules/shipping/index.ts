@@ -1,2 +1,17 @@
-export { createDtdcShipment } from "./dtdc";
-export type { DtdcShipmentResult } from "./dtdc";
+export {
+  createDtdcShipment,
+  getDtdcShippingLabel,
+  cancelDtdcShipment,
+  checkDtdcPincodeServiceability,
+  getDtdcTracking,
+  calculateDefaultPackageDimensions,
+} from "./dtdc";
+
+export type {
+  DtdcPackageDimensions,
+  DtdcShipmentResult,
+  DtdcCancelResult,
+  DtdcServiceabilityResult,
+  DtdcTrackingCheckpoint,
+  DtdcTrackingResult,
+} from "./types";

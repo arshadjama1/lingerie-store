@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { ArrowLeft, CreditCard, MapPin, Package2, Truck } from "lucide-react";
+import { ArrowLeft, CreditCard, MapPin, Package2 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { getOrderDetails } from "@/modules/orders";
 
 import { CancelOrderButton } from "@/components/orders/CancelOrderButton";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
+import { OrderTrackingTimeline } from "@/components/orders/OrderTrackingTimeline";
 import { ReturnRequestForm } from "@/components/orders/ReturnRequestForm";
 import { StatusTimeline } from "@/components/orders/StatusTimeline";
 
@@ -216,34 +217,11 @@ export default async function OrderDetailPage({
 
           {/* DTDC Tracking */}
           {order.awbNumber && (
-            <section className="rounded-2xl border border-violet-200 bg-violet-50 p-5">
-              <div className="flex items-start gap-3">
-                <Truck className="mt-0.5 h-5 w-5 shrink-0 text-violet-600" />
-                <div>
-                  <p className="text-sm font-semibold text-violet-900">
-                    Shipment Tracking
-                  </p>
-                  <p className="mt-0.5 text-xs text-violet-700">
-                    Courier: DTDC
-                  </p>
-                  <p className="mt-0.5 font-mono text-sm font-bold text-violet-900">
-                    AWB: {order.awbNumber}
-                  </p>
-                  <p className="mt-1 text-xs text-violet-600">
-                    Track your shipment on the{" "}
-                    <a
-                      href="https://www.dtdc.in/tracking.asp"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-violet-800"
-                    >
-                      DTDC website
-                    </a>{" "}
-                    using the AWB number above.
-                  </p>
-                </div>
-              </div>
-            </section>
+            <OrderTrackingTimeline
+              orderId={order.id}
+              awbNumber={order.awbNumber}
+              orderStatus={order.status}
+            />
           )}
 
           {/* Action Zone */}

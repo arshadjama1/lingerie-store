@@ -23,6 +23,38 @@ const schema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   REVALIDATE_SECRET: z.string().min(32),
   NEXT_PUBLIC_APP_URL: z.string().url(),
+
+  // DTDC Express Logistics
+  DTDC_API_KEY: z.string().optional().default("ad2e54eabad12f21e624fcabf55ade"),
+  DTDC_CUSTOMER_CODE: z.string().optional().default("GL19550"),
+  DTDC_API_URL: z.string().url().optional().default("https://pxapi.dtdc.in"),
+  DTDC_SERVICE_TYPE_ID: z.string().optional().default("B2C PRIORITY"),
+  DTDC_COMMODITY_ID: z.string().optional().default("CLOTHING"),
+  DTDC_TRACKING_URL: z
+    .string()
+    .url()
+    .optional()
+    .default("https://blktracksvc.dtdc.com"),
+  DTDC_PINCODE_URL: z
+    .string()
+    .url()
+    .optional()
+    .default("https://smarttrack-ctbsplus.dtdc.com/ratecalapi/PincodeApiCall"),
+
+  // DTDC Warehouse / Shipper Origin
+  DTDC_WAREHOUSE_NAME: z.string().optional().default("Surekh"),
+  DTDC_WAREHOUSE_PHONE: z.string().optional().default("9702150990"),
+  DTDC_WAREHOUSE_LINE1: z
+    .string()
+    .optional()
+    .default("Shop No 1, Raj Darshan Apartment"),
+  DTDC_WAREHOUSE_LINE2: z
+    .string()
+    .optional()
+    .default("In front of kajuwadi last bus stop, louiswadi"),
+  DTDC_WAREHOUSE_PINCODE: z.string().optional().default("400604"),
+  DTDC_WAREHOUSE_CITY: z.string().optional().default("Thane West"),
+  DTDC_WAREHOUSE_STATE: z.string().optional().default("Maharashtra"),
 });
 
 const parsed = schema.safeParse(process.env);
