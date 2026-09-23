@@ -3,6 +3,7 @@ import { relations } from "drizzle-orm";
 import {
   decimal,
   index,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -12,6 +13,22 @@ import {
 import { carts } from "./cart";
 import { coupons } from "./promotions";
 import { addresses, profiles } from "./users";
+
+export interface CheckoutLineItemSnapshot {
+  variantId: string;
+  quantity: number;
+  unitPrice: number;
+  taxAmount: number;
+  total: number;
+  snapshot: {
+    productName: string;
+    sku: string;
+    size?: string;
+    color?: string;
+    imageUrl?: string;
+    hsnCode?: string;
+  };
+}
 
 export const checkoutSessions = pgTable(
   "checkout_sessions",
@@ -41,6 +58,8 @@ export const checkoutSessions = pgTable(
     total: decimal("total", { precision: 10, scale: 2 }).notNull(),
     razorpayOrderId: text("razorpay_order_id").unique(),
     orderId: text("order_id"),
+    status: text("status").default("active").notNull(),
+    lineItems: jsonb("line_items").$type<CheckoutLineItemSnapshot[]>(),
     expiresAt: timestamp("expires_at", { mode: "date" }).notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
@@ -72,3 +91,6 @@ export const checkoutSessionsRelations = relations(
     }),
   })
 );
+
+export type CheckoutSession = typeof checkoutSessions.$inferSelect;
+export type NewCheckoutSession = typeof checkoutSessions.$inferInsert;
