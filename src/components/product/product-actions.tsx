@@ -4,7 +4,7 @@ import Image from "next/image";
 import React, { useMemo, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
-import { useWishlistStore } from "@/stores/useWishlistStore";
+import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
 import {
   ChevronLeft,
   ChevronRight,
@@ -26,9 +26,8 @@ interface ProductActionsProps {
 }
 
 export function ProductActions({ product }: ProductActionsProps) {
-  const hasItem = useWishlistStore((state) => state.hasItem);
+  const isWishlisted = useIsWishlisted(product.id);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
-  const isWishlisted = hasItem(product.id);
 
   // Extract all unique colors and sizes from variants
   const colorMap = useMemo(() => {
@@ -419,9 +418,10 @@ export function ProductActions({ product }: ProductActionsProps) {
           >
             <Heart
               className={cn(
-                "h-5 w-5 transition-transform",
-                isWishlisted &&
-                  "scale-110 fill-[var(--accent)] text-[var(--accent)]"
+                "h-5 w-5 transition-all duration-200",
+                isWishlisted
+                  ? "scale-110 fill-current text-[var(--accent)]"
+                  : "text-gray-700"
               )}
             />
           </button>

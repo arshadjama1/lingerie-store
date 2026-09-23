@@ -84,6 +84,7 @@ export const useWishlistStore = create<WishlistState>()(
 
           set({
             isAuthenticated: isAuthed,
+            hasHydrated: true,
           });
 
           if (isAuthed) {
@@ -110,6 +111,7 @@ export const useWishlistStore = create<WishlistState>()(
                 set({
                   items: mergedData.items || [],
                   productIds: mergedData.productIds || [],
+                  hasHydrated: true,
                 });
                 return;
               }
@@ -118,12 +120,27 @@ export const useWishlistStore = create<WishlistState>()(
             set({
               items: serverItems,
               productIds: serverProductIds,
+              hasHydrated: true,
+            });
+          } else {
+            // Guest session: sync productIds with local items
+            const currentItems = get().items;
+            const currentProductIds = get().productIds;
+            const derived = Array.from(
+              new Set([
+                ...currentProductIds,
+                ...currentItems.map((i) => i.productId),
+              ])
+            );
+            set({
+              productIds: derived,
+              hasHydrated: true,
             });
           }
         } catch (err) {
           console.error("[useWishlistStore] fetchWishlist error:", err);
         } finally {
-          set({ isLoading: false });
+          set({ isLoading: false, hasHydrated: true });
         }
       },
 
@@ -255,7 +272,7 @@ export const useWishlistStore = create<WishlistState>()(
           (i) => i.id === productIdOrItemId || i.productId === productIdOrItemId
         );
 
-        if (!itemToRemove) return false;
+        const targetProductId = itemToRemove?.productId || productIdOrItemId;
 
         const prevItems = [...items];
         const prevProductIds = [...productIds];
@@ -265,14 +282,14 @@ export const useWishlistStore = create<WishlistState>()(
             (i) =>
               i.id !== productIdOrItemId && i.productId !== productIdOrItemId
           ),
-          productIds: productIds.filter((id) => id !== itemToRemove.productId),
+          productIds: productIds.filter((id) => id !== targetProductId),
         });
 
         toast.info("Removed from your wishlist");
 
         if (isAuthenticated) {
           try {
-            const res = await fetch(`/api/wishlist/${itemToRemove.productId}`, {
+            const res = await fetch(`/api/wishlist/${targetProductId}`, {
               method: "DELETE",
             });
 
@@ -351,8 +368,28 @@ export const useWishlistStore = create<WishlistState>()(
         productIds: state.productIds,
       }),
       onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+        if (state) {
+          const derived = Array.from(
+            new Set([
+              ...state.productIds,
+              ...state.items.map((i) => i.productId),
+            ])
+          );
+          state.setHasHydrated(true);
+          useWishlistStore.setState({ productIds: derived });
+        }
       },
     }
   )
 );
+
+/**
+ * Reactive hook to determine whether a product is wishlisted.
+ * Automatically synchronizes with client storage and server updates,
+ * safe from hydration mismatches during server rendering.
+ */
+export function useIsWishlisted(productId: string): boolean {
+  return useWishlistStore(
+    (state) => state.hasHydrated && state.productIds.includes(productId)
+  );
+}

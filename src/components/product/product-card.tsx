@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { useWishlistStore } from "@/stores/useWishlistStore";
+import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
 import { Heart } from "lucide-react";
 
 import { calcDiscount, cn, formatPrice } from "@/lib/utils";
@@ -25,9 +25,8 @@ export function ProductCard({
 }: ProductCardProps) {
   const discount = calcDiscount(product.minPrice, product.minMrp);
   const hasDiscount = discount > 0;
-  const hasItem = useWishlistStore((state) => state.hasItem);
+  const isWishlisted = useIsWishlisted(product.id);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
-  const isWishlisted = hasItem(product.id);
 
   return (
     <article
@@ -63,9 +62,9 @@ export function ProductCard({
           <button
             type="button"
             className={cn(
-              "absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all active:scale-90",
+              "absolute top-3 right-3 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all duration-200 active:scale-90",
               isWishlisted
-                ? "bg-white text-[var(--accent)] hover:bg-rose-50"
+                ? "bg-rose-50 text-[var(--accent)] ring-1 ring-rose-300 hover:bg-rose-100"
                 : "bg-white/90 text-gray-500 hover:bg-white hover:text-[var(--accent)]"
             )}
             aria-label={
@@ -79,9 +78,10 @@ export function ProductCard({
           >
             <Heart
               className={cn(
-                "h-4 w-4 transition-transform",
-                isWishlisted &&
-                  "scale-110 fill-[var(--accent)] text-[var(--accent)]"
+                "h-4 w-4 transition-all duration-200",
+                isWishlisted
+                  ? "scale-110 fill-current text-[var(--accent)]"
+                  : "text-gray-500 hover:text-[var(--accent)]"
               )}
             />
           </button>

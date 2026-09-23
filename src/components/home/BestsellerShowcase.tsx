@@ -23,7 +23,8 @@ export interface ProductItem {
 
 export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
   const [activeTab, setActiveTab] = useState("ALL");
-  const hasItem = useWishlistStore((state) => state.hasItem);
+  const productIds = useWishlistStore((state) => state.productIds);
+  const hasHydrated = useWishlistStore((state) => state.hasHydrated);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
 
   const filteredProducts = products.filter((p) => {
@@ -98,7 +99,7 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
             const discountPercent = hasDiscount
               ? Math.round(((minMrp - minPrice) / minMrp) * 100)
               : 0;
-            const isWishlisted = hasItem(product.id);
+            const isWishlisted = hasHydrated && productIds.includes(product.id);
 
             return (
               <div
@@ -122,9 +123,9 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
                   <button
                     type="button"
                     className={cn(
-                      "absolute top-3 right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all active:scale-90",
+                      "absolute top-3 right-3 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full shadow-md backdrop-blur-xs transition-all duration-200 active:scale-90",
                       isWishlisted
-                        ? "bg-white text-[var(--accent)] hover:bg-rose-50"
+                        ? "bg-rose-50 text-[var(--accent)] ring-1 ring-rose-300 hover:bg-rose-100"
                         : "bg-white/90 text-gray-500 hover:bg-white hover:text-[var(--accent)]"
                     )}
                     aria-label={
@@ -151,9 +152,10 @@ export function BestsellerShowcase({ products }: { products: ProductItem[] }) {
                   >
                     <Heart
                       className={cn(
-                        "h-4 w-4 transition-transform",
-                        isWishlisted &&
-                          "scale-110 fill-[var(--accent)] text-[var(--accent)]"
+                        "h-4 w-4 transition-all duration-200",
+                        isWishlisted
+                          ? "scale-110 fill-current text-[var(--accent)]"
+                          : "text-gray-500 hover:text-[var(--accent)]"
                       )}
                     />
                   </button>
