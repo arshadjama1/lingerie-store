@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import {
+  cartItems,
   checkoutSessions,
   orderItems,
   orderStatusHistory,
@@ -12,7 +13,6 @@ import "server-only";
 
 import { NotFoundError } from "@/lib/errors";
 
-import { clearCart } from "@/modules/cart";
 import { getCheckoutSession } from "@/modules/checkout";
 import { deductInventory } from "@/modules/checkout/inventory";
 import { getCouponCode, recordCouponUsage } from "@/modules/coupons";
@@ -176,8 +176,8 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
       }))
     );
 
-    // Clear user cart
-    await clearCart({ userId: session.userId });
+    // Clear user cart items within the transaction
+    await tx.delete(cartItems).where(eq(cartItems.cartId, session.cartId));
 
     // Link orderId to checkout session
     await tx
