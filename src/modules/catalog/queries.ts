@@ -192,6 +192,7 @@ export async function listProducts(
         id: products.id,
         slug: products.slug,
         name: products.name,
+        isFeatured: products.isFeatured,
         ratingAvg: products.ratingAvg,
         ratingCount: products.ratingCount,
         soldCount: products.soldCount,
@@ -211,6 +212,77 @@ export async function listProducts(
             AND  pi.variant_id IS NULL
           ORDER  BY pi.sort_order
           LIMIT  1
+        )`,
+        secondaryImageUrl: sql<string | null>`(
+          SELECT pi.url FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order
+          LIMIT  1
+        )`,
+        secondaryImageAlt: sql<string | null>`(
+          SELECT pi.alt FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order
+          LIMIT  1
+        )`,
+        colors: sql<
+          Array<{ color: string; hex: string | null; imageUrl?: string | null }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'color', c.color,
+                'hex', c.color_hex,
+                'imageUrl', c.image_url
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT DISTINCT ON (pv.color) 
+              pv.color, 
+              pv.color_hex,
+              (
+                SELECT pi.url 
+                FROM ${productImages} pi 
+                WHERE pi.variant_id = pv.id 
+                ORDER BY pi.sort_order 
+                LIMIT 1
+              ) as image_url
+            FROM ${productVariants} pv
+            WHERE pv.product_id = ${products.id}
+              AND pv.is_active = true
+            ORDER BY pv.color
+          ) c
+        )`,
+        variants: sql<
+          Array<{
+            id: string;
+            size: string;
+            color: string;
+            price: string;
+            isAvailable: boolean;
+          }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pv.id,
+                'size', pv.size,
+                'color', pv.color,
+                'price', pv.price::text,
+                'isAvailable', (inv.quantity - inv.reserved_quantity) > 0
+              )
+              ORDER BY pv.sort_order ASC, pv.size ASC
+            ),
+            '[]'::json
+          )
+          FROM ${productVariants} pv
+          JOIN ${inventory} inv ON inv.variant_id = pv.id
+          WHERE pv.product_id = ${products.id}
+            AND pv.is_active = true
         )`,
         minPrice: sql<string>`(
           SELECT MIN(pv.price)::text FROM ${productVariants} pv
@@ -244,22 +316,7 @@ export async function listProducts(
   ]);
 
   const total = countResult[0]?.count ?? 0;
-
-  const productListItems: ProductListItem[] = rows.map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    brandName: row.brandName ?? null,
-    primaryImage: row.primaryImageUrl
-      ? { url: row.primaryImageUrl, alt: row.primaryImageAlt ?? null }
-      : null,
-    minPrice: row.minPrice ?? "0",
-    minMrp: row.minMrp ?? "0",
-    isInStock: row.isInStock,
-    ratingAvg: row.ratingAvg,
-    ratingCount: row.ratingCount,
-    soldCount: row.soldCount,
-  }));
+  const productListItems: ProductListItem[] = rows.map(toProductListItem);
 
   return {
     products: productListItems,
@@ -390,6 +447,7 @@ export async function searchProducts(
         id: products.id,
         slug: products.slug,
         name: products.name,
+        isFeatured: products.isFeatured,
         brandName: brands.name,
         ratingAvg: products.ratingAvg,
         ratingCount: products.ratingCount,
@@ -407,6 +465,75 @@ export async function searchProducts(
             AND  pi.is_primary = true
             AND  pi.variant_id IS NULL
           ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        secondaryImageUrl: sql<string | null>`(
+          SELECT pi.url FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        secondaryImageAlt: sql<string | null>`(
+          SELECT pi.alt FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        colors: sql<
+          Array<{ color: string; hex: string | null; imageUrl?: string | null }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'color', c.color,
+                'hex', c.color_hex,
+                'imageUrl', c.image_url
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT DISTINCT ON (pv.color) 
+              pv.color, 
+              pv.color_hex,
+              (
+                SELECT pi.url 
+                FROM ${productImages} pi 
+                WHERE pi.variant_id = pv.id 
+                ORDER BY pi.sort_order 
+                LIMIT 1
+              ) as image_url
+            FROM ${productVariants} pv
+            WHERE pv.product_id = ${products.id}
+              AND pv.is_active = true
+            ORDER BY pv.color
+          ) c
+        )`,
+        variants: sql<
+          Array<{
+            id: string;
+            size: string;
+            color: string;
+            price: string;
+            isAvailable: boolean;
+          }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pv.id,
+                'size', pv.size,
+                'color', pv.color,
+                'price', pv.price::text,
+                'isAvailable', (inv.quantity - inv.reserved_quantity) > 0
+              )
+              ORDER BY pv.sort_order ASC, pv.size ASC
+            ),
+            '[]'::json
+          )
+          FROM ${productVariants} pv
+          JOIN ${inventory} inv ON inv.variant_id = pv.id
+          WHERE pv.product_id = ${products.id}
+            AND pv.is_active = true
         )`,
         minPrice: sql<string>`(
           SELECT MIN(pv.price)::text FROM ${productVariants} pv
@@ -465,6 +592,7 @@ export async function searchProducts(
         id: products.id,
         slug: products.slug,
         name: products.name,
+        isFeatured: products.isFeatured,
         brandName: brands.name,
         ratingAvg: products.ratingAvg,
         ratingCount: products.ratingCount,
@@ -482,6 +610,75 @@ export async function searchProducts(
             AND  pi.is_primary = true
             AND  pi.variant_id IS NULL
           ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        secondaryImageUrl: sql<string | null>`(
+          SELECT pi.url FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        secondaryImageAlt: sql<string | null>`(
+          SELECT pi.alt FROM ${productImages} pi
+          WHERE  pi.product_id = ${products.id}
+            AND  pi.is_primary = false
+          ORDER  BY pi.sort_order LIMIT 1
+        )`,
+        colors: sql<
+          Array<{ color: string; hex: string | null; imageUrl?: string | null }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'color', c.color,
+                'hex', c.color_hex,
+                'imageUrl', c.image_url
+              )
+            ),
+            '[]'::json
+          )
+          FROM (
+            SELECT DISTINCT ON (pv.color) 
+              pv.color, 
+              pv.color_hex,
+              (
+                SELECT pi.url 
+                FROM ${productImages} pi 
+                WHERE pi.variant_id = pv.id 
+                ORDER BY pi.sort_order 
+                LIMIT 1
+              ) as image_url
+            FROM ${productVariants} pv
+            WHERE pv.product_id = ${products.id}
+              AND pv.is_active = true
+            ORDER BY pv.color
+          ) c
+        )`,
+        variants: sql<
+          Array<{
+            id: string;
+            size: string;
+            color: string;
+            price: string;
+            isAvailable: boolean;
+          }>
+        >`(
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id', pv.id,
+                'size', pv.size,
+                'color', pv.color,
+                'price', pv.price::text,
+                'isAvailable', (inv.quantity - inv.reserved_quantity) > 0
+              )
+              ORDER BY pv.sort_order ASC, pv.size ASC
+            ),
+            '[]'::json
+          )
+          FROM ${productVariants} pv
+          JOIN ${inventory} inv ON inv.variant_id = pv.id
+          WHERE pv.product_id = ${products.id}
+            AND pv.is_active = true
         )`,
         minPrice: sql<string>`(
           SELECT MIN(pv.price)::text FROM ${productVariants} pv
@@ -702,6 +899,7 @@ export async function getRelatedProducts(
       id: products.id,
       slug: products.slug,
       name: products.name,
+      isFeatured: products.isFeatured,
       brandName: brands.name,
       ratingAvg: products.ratingAvg,
       ratingCount: products.ratingCount,
@@ -719,6 +917,75 @@ export async function getRelatedProducts(
           AND  pi.is_primary = true
           AND  pi.variant_id IS NULL
         ORDER  BY pi.sort_order LIMIT 1
+      )`,
+      secondaryImageUrl: sql<string | null>`(
+        SELECT pi.url FROM ${productImages} pi
+        WHERE  pi.product_id = ${products.id}
+          AND  pi.is_primary = false
+        ORDER  BY pi.sort_order LIMIT 1
+      )`,
+      secondaryImageAlt: sql<string | null>`(
+        SELECT pi.alt FROM ${productImages} pi
+        WHERE  pi.product_id = ${products.id}
+          AND  pi.is_primary = false
+        ORDER  BY pi.sort_order LIMIT 1
+      )`,
+      colors: sql<
+        Array<{ color: string; hex: string | null; imageUrl?: string | null }>
+      >`(
+        SELECT COALESCE(
+          json_agg(
+            json_build_object(
+              'color', c.color,
+              'hex', c.color_hex,
+              'imageUrl', c.image_url
+            )
+          ),
+          '[]'::json
+        )
+        FROM (
+          SELECT DISTINCT ON (pv.color) 
+            pv.color, 
+            pv.color_hex,
+            (
+              SELECT pi.url 
+              FROM ${productImages} pi 
+              WHERE pi.variant_id = pv.id 
+              ORDER BY pi.sort_order 
+              LIMIT 1
+            ) as image_url
+          FROM ${productVariants} pv
+          WHERE pv.product_id = ${products.id}
+            AND pv.is_active = true
+          ORDER BY pv.color
+        ) c
+      )`,
+      variants: sql<
+        Array<{
+          id: string;
+          size: string;
+          color: string;
+          price: string;
+          isAvailable: boolean;
+        }>
+      >`(
+        SELECT COALESCE(
+          json_agg(
+            json_build_object(
+              'id', pv.id,
+              'size', pv.size,
+              'color', pv.color,
+              'price', pv.price::text,
+              'isAvailable', (inv.quantity - inv.reserved_quantity) > 0
+            )
+            ORDER BY pv.sort_order ASC, pv.size ASC
+          ),
+          '[]'::json
+        )
+        FROM ${productVariants} pv
+        JOIN ${inventory} inv ON inv.variant_id = pv.id
+        WHERE pv.product_id = ${products.id}
+          AND pv.is_active = true
       )`,
       minPrice: sql<string>`(
         SELECT MIN(pv.price)::text FROM ${productVariants} pv
@@ -833,6 +1100,21 @@ type ProductRow = {
   brandName: string | null | undefined;
   primaryImageUrl: string | null;
   primaryImageAlt: string | null;
+  secondaryImageUrl?: string | null;
+  secondaryImageAlt?: string | null;
+  colors?: Array<{
+    color: string;
+    hex: string | null;
+    imageUrl?: string | null;
+  }> | null;
+  variants?: Array<{
+    id: string;
+    size: string;
+    color: string;
+    price: string;
+    isAvailable: boolean;
+  }> | null;
+  isFeatured?: boolean;
   minPrice: string | null;
   minMrp: string | null;
   isInStock: boolean;
@@ -851,6 +1133,12 @@ function toProductListItem(row: ProductRow): ProductListItem {
     primaryImage: row.primaryImageUrl
       ? { url: row.primaryImageUrl, alt: row.primaryImageAlt ?? null }
       : null,
+    secondaryImage: row.secondaryImageUrl
+      ? { url: row.secondaryImageUrl, alt: row.secondaryImageAlt ?? null }
+      : null,
+    colors: row.colors ?? [],
+    variants: row.variants ?? [],
+    isFeatured: row.isFeatured ?? false,
     minPrice: row.minPrice ?? "0",
     minMrp: row.minMrp ?? "0",
     isInStock: row.isInStock,

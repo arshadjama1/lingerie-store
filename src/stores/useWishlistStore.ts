@@ -6,6 +6,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type {
   WishlistItemProduct,
   WishlistItemWithProduct,
+  WishlistProductVariant,
 } from "@/modules/wishlist/types";
 
 export interface WishlistProductInput {
@@ -19,16 +20,20 @@ export interface WishlistProductInput {
   isInStock?: boolean;
   ratingAvg?: string;
   ratingCount?: number;
-  variants?: Array<{
-    id: string;
-    sku: string;
-    size: string | null;
-    color: string | null;
-    price: string;
-    mrp: string;
-    isInStock: boolean;
-    availableStock: number;
-  }>;
+  variants?: Array<
+    | WishlistProductVariant
+    | {
+        id: string;
+        size: string;
+        color: string;
+        price: string;
+        isAvailable: boolean;
+        sku?: string;
+        mrp?: string;
+        isInStock?: boolean;
+        availableStock?: number;
+      }
+  >;
 }
 
 interface WishlistState {
@@ -181,7 +186,26 @@ export const useWishlistStore = create<WishlistState>()(
         }
 
         // Optimistically add to wishlist
-        const fallbackVariants = product.variants || [];
+        const fallbackVariants: WishlistProductVariant[] = (
+          product.variants || []
+        ).map((v) => ({
+          id: v.id,
+          sku: "sku" in v && v.sku ? v.sku : v.id,
+          size: v.size ?? null,
+          color: v.color ?? null,
+          price: v.price,
+          mrp: "mrp" in v && v.mrp ? v.mrp : v.price,
+          isInStock:
+            "isInStock" in v && typeof v.isInStock === "boolean"
+              ? v.isInStock
+              : "isAvailable" in v
+                ? v.isAvailable
+                : true,
+          availableStock:
+            "availableStock" in v && typeof v.availableStock === "number"
+              ? v.availableStock
+              : 10,
+        }));
         const productPayload: WishlistItemProduct = {
           id: product.id,
           slug: product.slug,

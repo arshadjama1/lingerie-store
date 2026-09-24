@@ -24,6 +24,20 @@ export type ProductListItem = {
   name: string;
   brandName: string | null;
   primaryImage: { url: string; alt: string | null } | null;
+  secondaryImage?: { url: string; alt: string | null } | null;
+  colors?: Array<{
+    color: string;
+    hex: string | null;
+    imageUrl?: string | null;
+  }>;
+  variants?: Array<{
+    id: string;
+    size: string;
+    color: string;
+    price: string;
+    isAvailable: boolean;
+  }>;
+  isFeatured?: boolean;
   minPrice: string; // decimal as string — JS number can't represent arbitrary precision
   minMrp: string;
   isInStock: boolean;
