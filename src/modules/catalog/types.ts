@@ -73,6 +73,7 @@ export type SortOption = "newest" | "price_asc" | "price_desc" | "popular";
 export type ListProductsParams = {
   categoryPath?: string;
   brandSlug?: string;
+  brandSlugs?: string[];
   sizes?: string[];
   colors?: string[];
   priceMin?: number;

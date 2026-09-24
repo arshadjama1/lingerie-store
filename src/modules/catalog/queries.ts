@@ -85,6 +85,7 @@ export async function listProducts(
   const {
     categoryPath,
     brandSlug,
+    brandSlugs,
     sizes,
     colors,
     priceMin,
@@ -114,12 +115,22 @@ export async function listProducts(
     conditions.push(eq(products.isFeatured, true));
   }
 
-  if (brandSlug) {
+  const brandList =
+    brandSlugs && brandSlugs.length > 0
+      ? brandSlugs
+      : brandSlug
+        ? [brandSlug]
+        : undefined;
+
+  if (brandList && brandList.length > 0) {
     conditions.push(
       sql`EXISTS (
         SELECT 1 FROM ${brands} b
         WHERE b.id   = ${products.brandId}
-          AND b.slug = ${brandSlug}
+          AND b.slug IN (${sql.join(
+            brandList.map((b) => sql`${b}`),
+            sql`, `
+          )})
           AND b.is_active = true
       )`
     );
@@ -131,7 +142,10 @@ export async function listProducts(
         SELECT 1 FROM ${productVariants} pv
         WHERE pv.product_id = ${products.id}
           AND pv.is_active  = true
-          AND pv.size       = ANY(${sizes})
+          AND UPPER(pv.size) IN (${sql.join(
+            sizes.map((s) => sql`UPPER(${s})`),
+            sql`, `
+          )})
       )`
     );
   }
@@ -142,28 +156,41 @@ export async function listProducts(
         SELECT 1 FROM ${productVariants} pv
         WHERE pv.product_id = ${products.id}
           AND pv.is_active  = true
-          AND pv.color      = ANY(${colors})
+          AND LOWER(pv.color) IN (${sql.join(
+            colors.map((c) => sql`LOWER(${c})`),
+            sql`, `
+          )})
       )`
     );
   }
 
-  if (priceMin !== undefined) {
+  if (priceMin !== undefined && priceMax !== undefined) {
     conditions.push(
-      sql`(
-        SELECT MIN(pv.price) FROM ${productVariants} pv
+      sql`EXISTS (
+        SELECT 1 FROM ${productVariants} pv
         WHERE pv.product_id = ${products.id}
           AND pv.is_active  = true
-      ) >= ${priceMin}`
+          AND pv.price >= ${priceMin}
+          AND pv.price <= ${priceMax}
+      )`
     );
-  }
-
-  if (priceMax !== undefined) {
+  } else if (priceMin !== undefined) {
     conditions.push(
-      sql`(
-        SELECT MIN(pv.price) FROM ${productVariants} pv
+      sql`EXISTS (
+        SELECT 1 FROM ${productVariants} pv
         WHERE pv.product_id = ${products.id}
           AND pv.is_active  = true
-      ) <= ${priceMax}`
+          AND pv.price >= ${priceMin}
+      )`
+    );
+  } else if (priceMax !== undefined) {
+    conditions.push(
+      sql`EXISTS (
+        SELECT 1 FROM ${productVariants} pv
+        WHERE pv.product_id = ${products.id}
+          AND pv.is_active  = true
+          AND pv.price <= ${priceMax}
+      )`
     );
   }
 
