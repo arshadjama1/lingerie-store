@@ -129,7 +129,7 @@ export const FOOTER_LINK_GROUPS = {
   "Customer Support": [
     { label: "Track Your Order", href: "/account/orders" },
     { label: "Shipping & Delivery Policy", href: "/shipping" },
-    { label: "15-Day Easy Returns", href: "/returns" },
+    { label: "Return & Exchange Policy", href: "/legal/returns" },
     { label: "Contact Customer Care", href: "/contact" },
     { label: "FAQs", href: "/faqs" },
   ],
