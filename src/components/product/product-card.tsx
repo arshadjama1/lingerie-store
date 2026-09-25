@@ -77,80 +77,42 @@ const SIZE_ORDER: Record<string, number> = {
   "ONE SIZE": 99,
 };
 
-const COLOR_HEX_FALLBACK: Record<string, string> = {
-  black: "#1a1a1a",
-  white: "#ffffff",
-  cinder: "#6d6f72",
-  navy: "#1f3a52",
-  "navy blue": "#1f3a52",
-  pink: "#f7b7cf",
-  maroon: "#800000",
-  olive: "#556b2f",
-  red: "#c5221f",
-  nude: "#d2b48c",
-  beige: "#f5f5dc",
-  lavender: "#e6e6fa",
-  grey: "#808080",
-  gray: "#808080",
-};
-
-function resolveColorHex(colorName: string, hex?: string | null): string {
-  if (hex && hex.startsWith("#")) return hex;
-  const match = COLOR_HEX_FALLBACK[colorName.trim().toLowerCase()];
-  return match || "#d1d5db";
-}
-
 export function ProductCard({
   product,
   priority = false,
   className,
 }: ProductCardProps) {
   const hasDiscount = calcDiscount(product.minPrice, product.minMrp) > 0;
-  const isWishlisted = useIsWishlisted(product.id);
+  const isWishlisted = useIsWishlisted(product.parentProductId || product.id);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const addItem = useCartStore((state) => state.addItem);
 
   // States
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false);
   const [addingVariantId, setAddingVariantId] = useState<string | null>(null);
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
 
-  // Active color priority: hovered swatch > selected swatch > first available color
-  const activeColor =
-    hoveredColor ??
-    selectedColor ??
-    (product.colors && product.colors.length > 0
-      ? product.colors[0]?.color
-      : null);
-
-  // Find color item object for image lookup
-  const activeColorObj = useMemo(() => {
-    if (!activeColor || !product.colors) return null;
-    return product.colors.find(
-      (c) => c.color.toLowerCase() === activeColor.toLowerCase()
-    );
-  }, [activeColor, product.colors]);
-
-  // Color specific image (if user interacted with swatches)
-  const colorImageUrl =
-    (hoveredColor || selectedColor) && activeColorObj?.imageUrl
-      ? activeColorObj.imageUrl
-      : null;
-
-  // Filter & sort variants for the active color
+  // Filter & sort variants for the product card
   const availableVariants = useMemo(() => {
     if (!product.variants || product.variants.length === 0) return [];
 
     let filtered = product.variants;
-    if (activeColor) {
+    if (product.selectedColor) {
       const byColor = product.variants.filter(
-        (v) => v.color?.toLowerCase() === activeColor.toLowerCase()
+        (v) => v.color?.toLowerCase() === product.selectedColor?.toLowerCase()
       );
       if (byColor.length > 0) {
         filtered = byColor;
       }
+    } else {
+      // Deduplicate sizes for products without a specific color (e.g. packs)
+      const seenSizes = new Set<string>();
+      filtered = filtered.filter((v) => {
+        const s = v.size?.trim().toUpperCase() ?? "";
+        if (seenSizes.has(s)) return false;
+        seenSizes.add(s);
+        return true;
+      });
     }
 
     return [...filtered].sort((a, b) => {
@@ -159,7 +121,7 @@ export function ProductCard({
       if (orderA !== orderB) return orderA - orderB;
       return (a.size ?? "").localeCompare(b.size ?? "");
     });
-  }, [product.variants, activeColor]);
+  }, [product.variants, product.selectedColor]);
 
   const hasMultipleSizes =
     availableVariants.length > 1 &&
@@ -196,6 +158,10 @@ export function ProductCard({
     }
   };
 
+  const productHref = product.selectedColor
+    ? `/p/${product.slug}?color=${encodeURIComponent(product.selectedColor)}`
+    : `/p/${product.slug}`;
+
   return (
     <article
       className={cn(
@@ -206,14 +172,14 @@ export function ProductCard({
       {/* Image Container with Subtle Luxury Zoom */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#faf8f7]">
         <Link
-          href={`/p/${product.slug}`}
+          href={productHref}
           className="block h-full w-full focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:outline-none"
           tabIndex={0}
           aria-label={`${product.name}${product.brandName ? ` by ${product.brandName}` : ""} — ${formatPrice(product.minPrice)}`}
         >
           {product.primaryImage ? (
             <Image
-              src={colorImageUrl || product.primaryImage.url}
+              src={product.primaryImage.url}
               alt={product.primaryImage.alt ?? product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -240,7 +206,10 @@ export function ProductCard({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            toggleWishlist(product);
+            toggleWishlist({
+              ...product,
+              id: product.parentProductId || product.id,
+            });
           }}
         >
           <Heart
@@ -256,53 +225,9 @@ export function ProductCard({
 
       {/* Product Details Section */}
       <div className="flex flex-1 flex-col p-3 sm:p-3.5">
-        {/* Interactive Color Swatches */}
-        {product.colors && product.colors.length > 0 && (
-          <div className="flex items-center gap-1.5 pb-1">
-            {product.colors.slice(0, 5).map((c) => {
-              const hex = resolveColorHex(c.color, c.hex);
-              const isActive =
-                activeColor?.toLowerCase() === c.color.toLowerCase();
-
-              return (
-                <button
-                  key={c.color}
-                  type="button"
-                  title={c.color}
-                  aria-label={`Select color ${c.color}`}
-                  className={cn(
-                    "group/swatch relative h-3.5 w-3.5 cursor-pointer rounded-full transition-transform hover:scale-125 focus:outline-none",
-                    isActive
-                      ? "ring-1.5 ring-stone-900 ring-offset-1"
-                      : "ring-0.5 ring-stone-300/80 hover:ring-stone-600"
-                  )}
-                  onMouseEnter={() => setHoveredColor(c.color)}
-                  onMouseLeave={() => setHoveredColor(null)}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setSelectedColor(c.color);
-                  }}
-                >
-                  <span
-                    className="block h-full w-full rounded-full border border-black/10"
-                    style={{ backgroundColor: hex }}
-                  />
-                </button>
-              );
-            })}
-
-            {product.colors.length > 5 && (
-              <span className="text-[10px] font-medium text-stone-400">
-                +{product.colors.length - 5}
-              </span>
-            )}
-          </div>
-        )}
-
         {/* Brand & Name Link */}
         <Link
-          href={`/p/${product.slug}`}
+          href={productHref}
           className="group/link flex flex-col gap-0.5 focus-visible:outline-none"
         >
           {product.brandName && (
@@ -311,9 +236,16 @@ export function ProductCard({
             </p>
           )}
 
-          <h3 className="line-clamp-2 text-xs leading-snug font-semibold text-stone-900 transition-colors group-hover/link:text-[var(--accent)] sm:text-sm">
-            {product.name}
-          </h3>
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
+            <h3 className="line-clamp-2 text-xs leading-snug font-semibold text-stone-900 transition-colors group-hover/link:text-[var(--accent)] sm:text-sm">
+              {product.name}
+            </h3>
+            {product.selectedColor && (
+              <span className="text-[11px] font-normal whitespace-nowrap text-stone-500">
+                ({product.selectedColor})
+              </span>
+            )}
+          </div>
         </Link>
 
         {/* Bottom Row: Price & Rating on Left, ADD TO CART Button on Right */}
@@ -416,10 +348,10 @@ export function ProductCard({
             <div className="flex items-center justify-between border-b border-stone-100 pb-2">
               <span className="text-xs font-semibold text-stone-800">
                 Select a size
-                {activeColor && (
+                {product.selectedColor && (
                   <span className="font-normal text-stone-500 capitalize">
                     {" "}
-                    · {activeColor}
+                    · {product.selectedColor}
                   </span>
                 )}
               </span>

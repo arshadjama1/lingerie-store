@@ -20,8 +20,11 @@ export type DbInventory = InferSelectModel<typeof inventory>;
 
 export type ProductListItem = {
   id: string;
+  parentProductId?: string;
   slug: string;
   name: string;
+  selectedColor?: string;
+  colorName?: string;
   brandName: string | null;
   primaryImage: { url: string; alt: string | null } | null;
   secondaryImage?: { url: string; alt: string | null } | null;
@@ -29,6 +32,7 @@ export type ProductListItem = {
     color: string;
     hex: string | null;
     imageUrl?: string | null;
+    secondaryImageUrl?: string | null;
   }>;
   variants?: Array<{
     id: string;

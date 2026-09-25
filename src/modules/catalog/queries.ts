@@ -213,7 +213,7 @@ export async function listProducts(
     popular: [desc(products.soldCount), desc(products.ratingCount)],
   }[sort];
 
-  const [rows, countResult] = await Promise.all([
+  const [rows] = await Promise.all([
     db
       .select({
         id: products.id,
@@ -255,14 +255,20 @@ export async function listProducts(
           LIMIT  1
         )`,
         colors: sql<
-          Array<{ color: string; hex: string | null; imageUrl?: string | null }>
+          Array<{
+            color: string;
+            hex: string | null;
+            imageUrl?: string | null;
+            secondaryImageUrl?: string | null;
+          }>
         >`(
           SELECT COALESCE(
             json_agg(
               json_build_object(
                 'color', c.color,
                 'hex', c.color_hex,
-                'imageUrl', c.image_url
+                'imageUrl', c.image_url,
+                'secondaryImageUrl', c.secondary_image_url
               )
             ),
             '[]'::json
@@ -274,10 +280,24 @@ export async function listProducts(
               (
                 SELECT pi.url 
                 FROM ${productImages} pi 
-                WHERE pi.variant_id = pv.id 
-                ORDER BY pi.sort_order 
+                WHERE (pi.variant_id = pv.id OR pi.variant_id IN (
+                  SELECT pv2.id FROM ${productVariants} pv2
+                  WHERE pv2.product_id = ${products.id} AND LOWER(pv2.color) = LOWER(pv.color)
+                ))
+                ORDER BY pi.is_primary DESC, pi.sort_order ASC
                 LIMIT 1
-              ) as image_url
+              ) as image_url,
+              (
+                SELECT pi.url 
+                FROM ${productImages} pi 
+                WHERE (pi.variant_id = pv.id OR pi.variant_id IN (
+                  SELECT pv2.id FROM ${productVariants} pv2
+                  WHERE pv2.product_id = ${products.id} AND LOWER(pv2.color) = LOWER(pv.color)
+                ))
+                  AND pi.is_primary = false
+                ORDER BY pi.sort_order ASC
+                LIMIT 1
+              ) as secondary_image_url
             FROM ${productVariants} pv
             WHERE pv.product_id = ${products.id}
               AND pv.is_active = true
@@ -333,23 +353,26 @@ export async function listProducts(
       .leftJoin(brands, eq(products.brandId, brands.id))
       .where(whereClause)
       .orderBy(...orderBy)
-      .limit(limit)
-      .offset(offset),
-
-    db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(products)
-      .where(whereClause),
+      .limit(Math.max(100, page * limit * 4)),
   ]);
 
-  const total = countResult[0]?.count ?? 0;
-  const productListItems: ProductListItem[] = rows.map(toProductListItem);
+  const rawListItems: ProductListItem[] = rows.map(toProductListItem);
+  const expandedList = expandProductItemsByColor(
+    rawListItems,
+    colors,
+    sizes,
+    priceMin,
+    priceMax
+  );
+
+  const total = expandedList.length;
+  const paginated = expandedList.slice(offset, offset + limit);
 
   return {
-    products: productListItems,
+    products: paginated,
     total,
     page,
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.max(1, Math.ceil(total / limit)),
   };
 }
 
@@ -613,7 +636,7 @@ export async function searchProducts(
     gt(sql<number>`similarity(${products.name}, ${q})`, SIMILARITY_THRESHOLD),
   ];
 
-  const [fuzzyRows, fuzzyCount] = await Promise.all([
+  const [fuzzyRows] = await Promise.all([
     db
       .select({
         id: products.id,
@@ -722,22 +745,26 @@ export async function searchProducts(
       .leftJoin(brands, eq(products.brandId, brands.id))
       .where(and(...fuzzyConditions))
       .orderBy(desc(sql`similarity(${products.name}, ${q})`))
-      .limit(limit)
-      .offset(offset),
-
-    db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(products)
-      .where(and(...fuzzyConditions)),
+      .limit(Math.max(100, page * limit * 4)),
   ]);
 
-  const total = fuzzyCount[0]?.count ?? 0;
+  const rawFuzzyItems = fuzzyRows.map(toProductListItem);
+  const expandedFuzzy = expandProductItemsByColor(
+    rawFuzzyItems,
+    undefined,
+    undefined,
+    priceMin,
+    priceMax
+  );
+
+  const total = expandedFuzzy.length;
+  const paginated = expandedFuzzy.slice(offset, offset + limit);
 
   return {
-    products: fuzzyRows.map(toProductListItem),
+    products: paginated,
     total,
     page,
-    totalPages: Math.ceil(total / limit),
+    totalPages: Math.max(1, Math.ceil(total / limit)),
     isFuzzy: true,
   };
 }
@@ -1034,9 +1061,11 @@ export async function getRelatedProducts(
     .leftJoin(brands, eq(products.brandId, brands.id))
     .where(and(...conditions))
     .orderBy(desc(products.soldCount), desc(products.ratingCount))
-    .limit(limit);
+    .limit(limit * 2);
 
-  return rows.map(toProductListItem);
+  const rawRelatedItems = rows.map(toProductListItem);
+  const expandedRelated = expandProductItemsByColor(rawRelatedItems);
+  return expandedRelated.slice(0, limit);
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -1133,6 +1162,7 @@ type ProductRow = {
     color: string;
     hex: string | null;
     imageUrl?: string | null;
+    secondaryImageUrl?: string | null;
   }> | null;
   variants?: Array<{
     id: string;
@@ -1173,6 +1203,127 @@ function toProductListItem(row: ProductRow): ProductListItem {
     ratingCount: row.ratingCount,
     soldCount: row.soldCount,
   };
+}
+
+export function expandProductItemsByColor(
+  items: ProductListItem[],
+  filterColors?: string[],
+  filterSizes?: string[],
+  priceMin?: number,
+  priceMax?: number
+): ProductListItem[] {
+  const expanded: ProductListItem[] = [];
+
+  for (const item of items) {
+    const isPackOfThree =
+      /pack\s*(of|-)\s*(3|three)|(3|three)\s*(-|\s*)pack/i.test(item.name) ||
+      /pack.*(3|three)|(3|three).*pack/i.test(item.slug);
+
+    if (isPackOfThree || !item.colors || item.colors.length === 0) {
+      if (filterColors && filterColors.length > 0) {
+        if (!item.colors || item.colors.length === 0) continue;
+        const hasMatchingColor = item.colors.some((c) =>
+          filterColors.some((fc) => fc.toLowerCase() === c.color.toLowerCase())
+        );
+        if (!hasMatchingColor) continue;
+      }
+
+      if (filterSizes && filterSizes.length > 0 && item.variants) {
+        const hasMatchingSize = item.variants.some((v) =>
+          filterSizes.some(
+            (fs) => fs.toUpperCase() === v.size?.trim().toUpperCase()
+          )
+        );
+        if (!hasMatchingSize) continue;
+      }
+
+      if ((priceMin !== undefined || priceMax !== undefined) && item.variants) {
+        const hasMatchingPrice = item.variants.some((v) => {
+          const p = parseFloat(v.price);
+          if (priceMin !== undefined && p < priceMin) return false;
+          if (priceMax !== undefined && p > priceMax) return false;
+          return true;
+        });
+        if (!hasMatchingPrice) continue;
+      }
+
+      expanded.push(item);
+      continue;
+    }
+
+    // Filter colors if color filter is specified
+    const activeColors =
+      filterColors && filterColors.length > 0
+        ? item.colors.filter((c) =>
+            filterColors.some(
+              (fc) => fc.toLowerCase() === c.color.toLowerCase()
+            )
+          )
+        : item.colors;
+
+    const colorsToDisplay =
+      activeColors.length > 0 ? activeColors : item.colors;
+
+    for (const c of colorsToDisplay) {
+      // Find variants of this specific color
+      const colorVariants =
+        item.variants?.filter(
+          (v) => v.color?.toLowerCase() === c.color.toLowerCase()
+        ) ?? [];
+
+      // If size filter is active, check if this color has any matching size
+      if (filterSizes && filterSizes.length > 0) {
+        const hasMatchingSize = colorVariants.some((v) =>
+          filterSizes.some(
+            (fs) => fs.toUpperCase() === v.size?.trim().toUpperCase()
+          )
+        );
+        if (!hasMatchingSize) continue;
+      }
+
+      // If price filter is active, check if any variant of this color matches
+      if (priceMin !== undefined || priceMax !== undefined) {
+        const hasMatchingPrice = colorVariants.some((v) => {
+          const p = parseFloat(v.price);
+          if (priceMin !== undefined && p < priceMin) return false;
+          if (priceMax !== undefined && p > priceMax) return false;
+          return true;
+        });
+        if (!hasMatchingPrice) continue;
+      }
+
+      // Compute minPrice, inStock for this specific color
+      let minP = Infinity;
+      let isInStock = false;
+      for (const v of colorVariants) {
+        const p = parseFloat(v.price);
+        if (!isNaN(p) && p < minP) minP = p;
+        if (v.isAvailable) isInStock = true;
+      }
+
+      const colorSlug = c.color.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+      expanded.push({
+        ...item,
+        id: `${item.id}-${colorSlug}`,
+        parentProductId: item.id,
+        selectedColor: c.color,
+        colorName: c.color,
+        primaryImage: c.imageUrl
+          ? { url: c.imageUrl, alt: `${item.name} - ${c.color}` }
+          : item.primaryImage,
+        secondaryImage: c.secondaryImageUrl
+          ? { url: c.secondaryImageUrl, alt: `${item.name} - ${c.color}` }
+          : null,
+        variants: colorVariants.length > 0 ? colorVariants : item.variants,
+        minPrice: isFinite(minP) ? minP.toFixed(2) : item.minPrice,
+        minMrp: item.minMrp,
+        isInStock: colorVariants.length > 0 ? isInStock : item.isInStock,
+      });
+    }
+  }
+
+  return expanded;
 }
 
 /**

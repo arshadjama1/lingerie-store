@@ -29,9 +29,10 @@ import { StickyMobileBar } from "./StickyMobileBar";
 
 interface ProductActionsProps {
   product: ProductDetail;
+  initialColor?: string;
 }
 
-export function ProductActions({ product }: ProductActionsProps) {
+export function ProductActions({ product, initialColor }: ProductActionsProps) {
   const isWishlisted = useIsWishlisted(product.id);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const { addItem, isLoading: isCartLoading } = useCartStore();
@@ -64,8 +65,18 @@ export function ProductActions({ product }: ProductActionsProps) {
   }, [product.variants]);
 
   // Initial states
+  const matchedInitialColor = useMemo(() => {
+    if (initialColor) {
+      const match = colorMap.find(
+        (c) => c.name.toLowerCase() === initialColor.toLowerCase()
+      );
+      if (match) return match.name;
+    }
+    return colorMap[0]?.name || undefined;
+  }, [colorMap, initialColor]);
+
   const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    colorMap[0]?.name || undefined
+    matchedInitialColor
   );
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
     undefined

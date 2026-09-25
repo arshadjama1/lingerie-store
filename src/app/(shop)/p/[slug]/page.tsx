@@ -18,6 +18,7 @@ interface ProductPageProps {
   }>;
   searchParams?: Promise<{
     reviewPage?: string;
+    color?: string;
   }>;
 }
 
@@ -128,7 +129,10 @@ export default async function ProductPage({
         <Breadcrumb items={breadcrumbs} className="mb-6" />
 
         {/* Product Top Fold Interactive Island */}
-        <ProductActions product={product} />
+        <ProductActions
+          product={product}
+          initialColor={resolvedSearchParams?.color}
+        />
 
         {/* Product Bottom Fold Details Accordions */}
         <div className="mt-16 border-t border-gray-100 pt-10">
