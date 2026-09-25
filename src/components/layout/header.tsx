@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import { useWishlistStore } from "@/stores/useWishlistStore";
 import {
   ArrowLeft,
-  ChevronDown,
   Heart,
   Menu,
   Search,
@@ -24,14 +24,13 @@ import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 import {
   COMBO_QUICK_LINKS,
   MARQUEE_ANNOUNCEMENTS,
-  NAV_MEGA_GROUPS,
+  NAV_CATEGORY_LINKS,
 } from "./data/navigationData";
 
 export function Header() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const menuTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lock body scroll on mobile when search overlay is open
   useEffect(() => {
@@ -55,14 +54,6 @@ export function Header() {
   useEffect(() => {
     fetchWishlist();
   }, [fetchWishlist]);
-
-  const handleMenuEnter = (name: string) => {
-    if (menuTimeout.current) clearTimeout(menuTimeout.current);
-    setActiveMenu(name);
-  };
-  const handleMenuLeave = () => {
-    menuTimeout.current = setTimeout(() => setActiveMenu(null), 180);
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white shadow-sm">
@@ -108,7 +99,6 @@ export function Header() {
               className="absolute left-1/2 hidden -translate-x-1/2 font-serif text-3xl font-black tracking-widest text-[#3d0a20] transition-opacity hover:opacity-90 lg:block"
             >
               Surekh
-              <span className="text-[var(--accent)]">.</span>
             </Link>
 
             {/* Mobile Logo */}
@@ -173,76 +163,33 @@ export function Header() {
         </div>
       </div>
 
-      {/* ── TIER 3: Mega-Menu Nav Strip ──────────────────────────────── */}
+      {/* ── TIER 3: Category Nav Strip ──────────────────────────────── */}
       <div className="relative z-40 hidden w-full overflow-hidden border-b border-gray-100 bg-white lg:block">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav
             className="no-scrollbar flex max-w-full items-center justify-between gap-1 overflow-x-auto py-0.5 lg:justify-center"
             aria-label="Main navigation"
           >
-            {/* Category links with mega-menus */}
+            {/* Category standalone links */}
             <div className="flex flex-shrink-0 items-center gap-0.5">
-              {Object.keys(NAV_MEGA_GROUPS).map((cat) => (
-                <div
-                  key={cat}
-                  onMouseEnter={() => handleMenuEnter(cat)}
-                  onMouseLeave={handleMenuLeave}
-                  className="relative"
-                >
+              {NAV_CATEGORY_LINKS.map((cat) => {
+                const isActive =
+                  pathname === cat.href || pathname.startsWith(`${cat.href}/`);
+                return (
                   <Link
-                    href={`/${cat.toLowerCase()}`}
+                    key={cat.label}
+                    href={cat.href}
                     className={cn(
-                      "flex items-center gap-1 border-b-2 border-transparent px-3.5 py-3 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] xl:text-xs",
-                      activeMenu === cat
+                      "flex items-center border-b-2 px-3.5 py-3 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:text-xs",
+                      isActive
                         ? "border-[var(--accent)] text-[var(--accent)]"
-                        : "text-gray-800"
+                        : "border-transparent text-gray-800 hover:border-[var(--accent)] hover:text-[var(--accent)]"
                     )}
                   >
-                    {cat}
-                    <ChevronDown
-                      className={cn(
-                        "h-3 w-3 transition-transform",
-                        activeMenu === cat ? "rotate-180" : ""
-                      )}
-                    />
+                    {cat.label}
                   </Link>
-
-                  {/* Mega Dropdown */}
-                  {activeMenu === cat && NAV_MEGA_GROUPS[cat] && (
-                    <div
-                      className="absolute top-full left-0 z-50 mt-0 min-w-[600px] rounded-b-none border border-gray-100 bg-white shadow-2xl xl:left-1/2 xl:min-w-[640px] xl:-translate-x-1/2"
-                      onMouseEnter={() => handleMenuEnter(cat)}
-                      onMouseLeave={handleMenuLeave}
-                    >
-                      <div className="flex gap-0 p-6">
-                        {NAV_MEGA_GROUPS[cat].groups.map((group, gi) => (
-                          <div
-                            key={gi}
-                            className="min-w-[130px] flex-1 border-r border-gray-100 pr-4 last:border-r-0 last:pr-0"
-                          >
-                            <p className="mb-3 border-b border-pink-100 pb-1.5 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
-                              {group.title}
-                            </p>
-                            <ul className="space-y-1.5">
-                              {group.items.map((item) => (
-                                <li key={item.label}>
-                                  <Link
-                                    href={item.href}
-                                    className="block text-xs text-gray-600 transition-colors hover:font-semibold hover:text-[var(--accent)]"
-                                    onClick={() => setActiveMenu(null)}
-                                  >
-                                    {item.label}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Separator */}
@@ -308,24 +255,27 @@ export function Header() {
 
             <nav className="flex-1 px-4 py-4">
               <ul className="space-y-0.5">
-                {[
-                  { label: "Bras", href: "/bras" },
-                  { label: "Panties", href: "/panties" },
-                  { label: "Sets", href: "/sets" },
-                  { label: "Loungewear", href: "/loungewear" },
-                  { label: "Nightwear", href: "/nightwear" },
-                  { label: "Shapewear", href: "/shapewear" },
-                ].map((cat) => (
-                  <li key={cat.label}>
-                    <Link
-                      href={cat.href}
-                      className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      <span>{cat.label}</span>
-                    </Link>
-                  </li>
-                ))}
+                {NAV_CATEGORY_LINKS.map((cat) => {
+                  const isActive =
+                    pathname === cat.href ||
+                    pathname.startsWith(`${cat.href}/`);
+                  return (
+                    <li key={cat.label}>
+                      <Link
+                        href={cat.href}
+                        className={cn(
+                          "flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold transition-colors",
+                          isActive
+                            ? "bg-pink-50 text-[var(--accent)]"
+                            : "text-gray-800 hover:bg-pink-50 hover:text-[var(--accent)]"
+                        )}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span>{cat.label}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
                 <li className="border-t border-gray-100 pt-2">
                   <Link
                     href="/wishlist"
@@ -397,7 +347,7 @@ export function Header() {
             <div className="flex-1">
               <SearchAutocomplete
                 autoFocus
-                placeholder="Search bras, panties, nightwear..."
+                placeholder="Search bras, panties, loungewear..."
                 isMobileOverlay={true}
                 onSelect={() => setMobileSearchOpen(false)}
               />
