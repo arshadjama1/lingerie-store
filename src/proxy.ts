@@ -38,6 +38,8 @@ export async function proxy(request: NextRequest) {
     const isWhitelisted =
       pathname.startsWith("/api") ||
       pathname.startsWith("/auth") ||
+      pathname.startsWith("/login") ||
+      pathname.startsWith("/verify") ||
       pathname.startsWith("/admin") ||
       pathname.startsWith("/images") ||
       pathname.startsWith("/_next") ||
@@ -97,12 +99,37 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
-    const { data: profile } = await supabase
+
+    let role: string | null = null;
+    const { data: profileById } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
-    if (!profile || !["admin", "staff"].includes(profile.role)) {
+      .maybeSingle();
+
+    if (profileById) {
+      role = profileById.role;
+    } else if (user.email) {
+      const { data: profileByEmail } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("email", user.email)
+        .maybeSingle();
+      if (profileByEmail) {
+        role = profileByEmail.role;
+      }
+    } else if (user.phone) {
+      const { data: profileByPhone } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("phone", user.phone)
+        .maybeSingle();
+      if (profileByPhone) {
+        role = profileByPhone.role;
+      }
+    }
+
+    if (!role || !["admin", "staff"].includes(role)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
