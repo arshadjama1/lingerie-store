@@ -83,7 +83,11 @@ export function ProductCard({
   className,
 }: ProductCardProps) {
   const hasDiscount = calcDiscount(product.minPrice, product.minMrp) > 0;
-  const isWishlisted = useIsWishlisted(product.parentProductId || product.id);
+  const isWishlisted = useIsWishlisted(
+    product.id,
+    product.selectedColor,
+    product.variants?.[0]?.id
+  );
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const addItem = useCartStore((state) => state.addItem);
 
@@ -206,10 +210,14 @@ export function ProductCard({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            toggleWishlist({
-              ...product,
-              id: product.parentProductId || product.id,
-            });
+            toggleWishlist(
+              {
+                ...product,
+                parentProductId: product.parentProductId,
+                selectedColor: product.selectedColor,
+              },
+              product.variants?.[0]?.id
+            );
           }}
         >
           <Heart

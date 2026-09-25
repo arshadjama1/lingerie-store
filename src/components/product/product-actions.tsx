@@ -33,9 +33,8 @@ interface ProductActionsProps {
 }
 
 export function ProductActions({ product, initialColor }: ProductActionsProps) {
-  const isWishlisted = useIsWishlisted(product.id);
-  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const { addItem, isLoading: isCartLoading } = useCartStore();
+  const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -105,6 +104,12 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
       (v) => v.color === selectedColor && v.size === selectedSize
     );
   }, [product.variants, selectedColor, selectedSize]);
+
+  const isWishlisted = useIsWishlisted(
+    product.id,
+    selectedColor,
+    selectedVariant?.id
+  );
 
   // Get gallery images deduplicated
   const galleryImages = useMemo(() => {
@@ -444,19 +449,41 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
           <button
             type="button"
             onClick={() => {
+              const activeVariant =
+                selectedVariant || colorVariants[0] || product.variants[0];
+              const colorSlug = selectedColor
+                ? selectedColor.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+                : undefined;
+              const cardId = colorSlug
+                ? `${product.id}-${colorSlug}`
+                : product.id;
+              const targetImage = galleryImages[0]
+                ? { url: galleryImages[0].url, alt: galleryImages[0].alt }
+                : product.images[0]
+                  ? { url: product.images[0].url, alt: product.images[0].alt }
+                  : null;
+
               toggleWishlist(
                 {
-                  id: product.id,
+                  id: cardId,
+                  parentProductId: product.id,
                   slug: product.slug,
                   name: product.name,
+                  selectedColor: selectedColor || null,
+                  colorName: selectedColor || null,
                   brandName: product.brand?.name ?? null,
-                  primaryImage: product.images[0]
-                    ? { url: product.images[0].url, alt: product.images[0].alt }
-                    : null,
-                  minPrice: String(product.variants[0]?.price ?? 0),
-                  minMrp: String(product.variants[0]?.mrp ?? 0),
-                  isInStock: product.variants.some((v) => v.available > 0),
-                  variants: product.variants.map((v) => ({
+                  primaryImage: targetImage,
+                  minPrice: String(
+                    activeVariant?.price ?? product.variants[0]?.price ?? 0
+                  ),
+                  minMrp: String(
+                    activeVariant?.mrp ?? product.variants[0]?.mrp ?? 0
+                  ),
+                  isInStock: !isOutOfStock,
+                  variants: (colorVariants.length > 0
+                    ? colorVariants
+                    : product.variants
+                  ).map((v) => ({
                     id: v.id,
                     sku: v.sku,
                     size: v.size,
@@ -467,7 +494,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
                     availableStock: v.available,
                   })),
                 },
-                selectedVariant?.id
+                activeVariant?.id
               );
             }}
             className={cn(

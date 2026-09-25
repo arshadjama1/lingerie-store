@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useWishlistStore } from "@/stores/useWishlistStore";
 import { ShoppingBag, Trash2 } from "lucide-react";
@@ -15,18 +15,53 @@ interface WishlistItemCardProps {
   item: WishlistItemWithProduct;
 }
 
+const SIZE_ORDER: Record<string, number> = {
+  XS: 1,
+  S: 2,
+  M: 3,
+  L: 4,
+  XL: 5,
+  XXL: 6,
+  "2XL": 6,
+  "3XL": 7,
+  "4XL": 8,
+};
+
 export function WishlistItemCard({ item }: WishlistItemCardProps) {
   const { removeItem, moveToBag } = useWishlistStore();
   const [isMoving, setIsMoving] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
 
   const product = item.product;
-  const variants = product.variants || [];
+  const rawVariants = product.variants || [];
+
+  const itemColor =
+    item.selectedVariant?.color ||
+    product.selectedColor ||
+    product.colorName ||
+    null;
+
+  // Filter variants to only the wishlisted color if applicable
+  const variants = useMemo(() => {
+    if (!itemColor) return rawVariants;
+    const byColor = rawVariants.filter(
+      (v) => v.color?.toLowerCase() === itemColor.toLowerCase()
+    );
+    const result = byColor.length > 0 ? byColor : rawVariants;
+    return [...result].sort((a, b) => {
+      const orderA = SIZE_ORDER[a.size?.trim().toUpperCase() ?? ""] ?? 50;
+      const orderB = SIZE_ORDER[b.size?.trim().toUpperCase() ?? ""] ?? 50;
+      if (orderA !== orderB) return orderA - orderB;
+      return (a.size ?? "").localeCompare(b.size ?? "");
+    });
+  }, [rawVariants, itemColor]);
 
   // Pick initial variant: either item's chosen variant, or first in-stock variant, or first variant
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     () => {
-      if (item.variantId) return item.variantId;
+      if (item.variantId && variants.some((v) => v.id === item.variantId)) {
+        return item.variantId;
+      }
       const inStock = variants.find((v) => v.isInStock && v.availableStock > 0);
       return inStock?.id || variants[0]?.id || null;
     }
@@ -40,6 +75,10 @@ export function WishlistItemCard({ item }: WishlistItemCardProps) {
   const isCurrentInStock = activeVariant
     ? activeVariant.isInStock && activeVariant.availableStock > 0
     : product.isInStock;
+
+  const productHref = itemColor
+    ? `/p/${product.slug}?color=${encodeURIComponent(itemColor)}`
+    : `/p/${product.slug}`;
 
   const handleMoveToBag = async () => {
     if (!isCurrentInStock) return;
@@ -75,7 +114,7 @@ export function WishlistItemCard({ item }: WishlistItemCardProps) {
 
       {/* Image Container */}
       <Link
-        href={`/p/${product.slug}`}
+        href={productHref}
         className="relative block aspect-[3/4] overflow-hidden bg-[var(--surface)]"
       >
         {product.primaryImage ? (
@@ -115,12 +154,20 @@ export function WishlistItemCard({ item }: WishlistItemCardProps) {
           </p>
         )}
 
-        <Link
-          href={`/p/${product.slug}`}
-          className="mt-0.5 line-clamp-1 text-sm font-medium text-neutral-900 transition-colors hover:text-[var(--accent)]"
-        >
-          {product.name}
-        </Link>
+        {/* Product Title and Color Pill */}
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <Link
+            href={productHref}
+            className="line-clamp-1 text-sm font-semibold text-neutral-900 transition-colors hover:text-[var(--accent)]"
+          >
+            {product.name}
+          </Link>
+          {itemColor && (
+            <span className="inline-flex items-center rounded-full bg-pink-50 px-2 py-0.5 text-[11px] font-semibold text-[var(--accent)] ring-1 ring-pink-200/80">
+              {itemColor}
+            </span>
+          )}
+        </div>
 
         {/* Price Row */}
         <div className="mt-2 flex items-baseline gap-2">
@@ -134,7 +181,7 @@ export function WishlistItemCard({ item }: WishlistItemCardProps) {
           )}
         </div>
 
-        {/* Sizes Selector (if variants exist) */}
+        {/* Sizes Selector (for this color's sizes) */}
         {variants.length > 1 && (
           <div className="mt-3">
             <p className="mb-1.5 text-[10px] font-bold tracking-wider text-neutral-400 uppercase">

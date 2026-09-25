@@ -11,6 +11,9 @@ import type {
 
 export interface WishlistProductInput {
   id: string;
+  parentProductId?: string;
+  selectedColor?: string | null;
+  colorName?: string | null;
   slug: string;
   name: string;
   brandName?: string | null;
@@ -36,6 +39,53 @@ export interface WishlistProductInput {
   >;
 }
 
+export function isWishlistItemMatch(
+  item: WishlistItemWithProduct,
+  productIdOrCardId: string,
+  color?: string | null,
+  variantId?: string | null
+): boolean {
+  // 1. Direct item ID or variant ID match
+  if (
+    item.id === productIdOrCardId ||
+    (variantId && item.variantId === variantId)
+  ) {
+    return true;
+  }
+
+  // 2. Direct card ID match (e.g. "prod_1-pink")
+  if (item.product.id === productIdOrCardId) {
+    return true;
+  }
+
+  // 3. Base product ID match
+  const matchesBaseProduct =
+    item.productId === productIdOrCardId ||
+    item.product.slug === productIdOrCardId;
+
+  if (matchesBaseProduct) {
+    // If a color is specified, verify color matches
+    if (color) {
+      const itemColor =
+        item.selectedVariant?.color ||
+        item.product.selectedColor ||
+        item.product.colorName;
+      if (itemColor) {
+        return itemColor.toLowerCase() === color.toLowerCase();
+      }
+    } else {
+      // If no color specified on card or on item, it's a match
+      const itemColor =
+        item.selectedVariant?.color ||
+        item.product.selectedColor ||
+        item.product.colorName;
+      return !itemColor;
+    }
+  }
+
+  return false;
+}
+
 interface WishlistState {
   items: WishlistItemWithProduct[];
   productIds: string[];
@@ -47,7 +97,11 @@ interface WishlistState {
   // Actions
   setHasHydrated: (val: boolean) => void;
   fetchWishlist: () => Promise<void>;
-  hasItem: (productId: string) => boolean;
+  hasItem: (
+    productIdOrCardId: string,
+    color?: string | null,
+    variantId?: string | null
+  ) => boolean;
   toggleWishlist: (
     product: WishlistProductInput,
     variantId?: string | null
@@ -72,8 +126,14 @@ export const useWishlistStore = create<WishlistState>()(
 
       setHasHydrated: (val: boolean) => set({ hasHydrated: val }),
 
-      hasItem: (productId: string) => {
-        return get().productIds.includes(productId);
+      hasItem: (
+        productIdOrCardId: string,
+        color?: string | null,
+        variantId?: string | null
+      ) => {
+        return get().items.some((item) =>
+          isWishlistItemMatch(item, productIdOrCardId, color, variantId)
+        );
       },
 
       fetchWishlist: async () => {
@@ -178,11 +238,18 @@ export const useWishlistStore = create<WishlistState>()(
       },
 
       toggleWishlist: async (product, variantId) => {
-        const { hasItem, removeItem, items, productIds, isAuthenticated } =
-          get();
+        const { removeItem, items, isAuthenticated } = get();
 
-        if (hasItem(product.id)) {
-          return await removeItem(product.id);
+        const targetColor = product.selectedColor || product.colorName || null;
+        const baseProductId = product.parentProductId || product.id;
+
+        // Check if an item matching this card/color is already wishlisted
+        const existingItem = items.find((item) =>
+          isWishlistItemMatch(item, product.id, targetColor, variantId)
+        );
+
+        if (existingItem) {
+          return await removeItem(existingItem.id);
         }
 
         // Optimistically add to wishlist
@@ -206,10 +273,19 @@ export const useWishlistStore = create<WishlistState>()(
               ? v.availableStock
               : 10,
         }));
+
+        const selectedVariantObj = variantId
+          ? (fallbackVariants.find((v) => v.id === variantId) ?? null)
+          : (fallbackVariants[0] ?? null);
+
+        const effectiveVariantId = variantId || selectedVariantObj?.id || null;
+
         const productPayload: WishlistItemProduct = {
           id: product.id,
           slug: product.slug,
           name: product.name,
+          selectedColor: targetColor,
+          colorName: targetColor,
           brandName: product.brandName ?? null,
           primaryImage: product.primaryImage ?? null,
           minPrice: product.minPrice ?? "0",
@@ -224,31 +300,37 @@ export const useWishlistStore = create<WishlistState>()(
         const newItem: WishlistItemWithProduct = {
           id: tempId,
           userId: "guest",
-          productId: product.id,
-          variantId: variantId ?? null,
+          productId: baseProductId,
+          variantId: effectiveVariantId,
           addedAt: new Date().toISOString(),
           product: productPayload,
-          selectedVariant: variantId
-            ? (fallbackVariants.find((v) => v.id === variantId) ?? null)
-            : null,
+          selectedVariant: selectedVariantObj,
         };
 
         const prevItems = [...items];
-        const prevProductIds = [...productIds];
+        const nextItems = [newItem, ...items];
+        const nextProductIds = Array.from(
+          new Set(nextItems.map((i) => i.productId))
+        );
 
         set({
-          items: [newItem, ...items],
-          productIds: [...productIds, product.id],
+          items: nextItems,
+          productIds: nextProductIds,
         });
 
-        toast.success("Saved to your wishlist", {
-          action: {
-            label: "View Wishlist",
-            onClick: () => {
-              window.location.href = "/wishlist";
+        toast.success(
+          targetColor
+            ? `Saved ${product.name} (${targetColor}) to your wishlist`
+            : "Saved to your wishlist",
+          {
+            action: {
+              label: "View Wishlist",
+              onClick: () => {
+                window.location.href = "/wishlist";
+              },
             },
-          },
-        });
+          }
+        );
 
         if (isAuthenticated) {
           try {
@@ -256,8 +338,8 @@ export const useWishlistStore = create<WishlistState>()(
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                productId: product.id,
-                variantId: variantId || null,
+                productId: baseProductId,
+                variantId: effectiveVariantId,
               }),
             });
 
@@ -279,7 +361,9 @@ export const useWishlistStore = create<WishlistState>()(
             // Rollback
             set({
               items: prevItems,
-              productIds: prevProductIds,
+              productIds: Array.from(
+                new Set(prevItems.map((i) => i.productId))
+              ),
             });
             toast.error("Could not save to wishlist");
             return false;
@@ -290,30 +374,42 @@ export const useWishlistStore = create<WishlistState>()(
       },
 
       removeItem: async (productIdOrItemId: string) => {
-        const { items, productIds, isAuthenticated } = get();
+        const { items, isAuthenticated } = get();
 
         const itemToRemove = items.find(
           (i) => i.id === productIdOrItemId || i.productId === productIdOrItemId
         );
 
-        const targetProductId = itemToRemove?.productId || productIdOrItemId;
+        const targetItemId = itemToRemove?.id || productIdOrItemId;
+        const targetProductId = itemToRemove?.productId;
+        const targetVariantId = itemToRemove?.variantId;
 
         const prevItems = [...items];
-        const prevProductIds = [...productIds];
+
+        const nextItems = items.filter(
+          (i) =>
+            i.id !== targetItemId &&
+            (itemToRemove
+              ? i.id !== itemToRemove.id
+              : i.productId !== productIdOrItemId)
+        );
 
         set({
-          items: items.filter(
-            (i) =>
-              i.id !== productIdOrItemId && i.productId !== productIdOrItemId
-          ),
-          productIds: productIds.filter((id) => id !== targetProductId),
+          items: nextItems,
+          productIds: Array.from(new Set(nextItems.map((i) => i.productId))),
         });
 
         toast.info("Removed from your wishlist");
 
         if (isAuthenticated) {
           try {
-            const res = await fetch(`/api/wishlist/${targetProductId}`, {
+            const deleteTarget = targetItemId.startsWith("local-")
+              ? targetProductId || targetItemId
+              : targetItemId;
+            const query = targetVariantId
+              ? `?variantId=${encodeURIComponent(targetVariantId)}`
+              : "";
+            const res = await fetch(`/api/wishlist/${deleteTarget}${query}`, {
               method: "DELETE",
             });
 
@@ -325,7 +421,9 @@ export const useWishlistStore = create<WishlistState>()(
             // Rollback
             set({
               items: prevItems,
-              productIds: prevProductIds,
+              productIds: Array.from(
+                new Set(prevItems.map((i) => i.productId))
+              ),
             });
             toast.error("Could not remove item from server");
             return false;
@@ -354,7 +452,6 @@ export const useWishlistStore = create<WishlistState>()(
         let variantIdToAdd = targetVariantId || item.variantId;
 
         if (!variantIdToAdd) {
-          // If only 1 variant exists or find first in-stock variant
           const inStockVariant = item.product.variants.find(
             (v) => v.isInStock && v.availableStock > 0
           );
@@ -367,7 +464,10 @@ export const useWishlistStore = create<WishlistState>()(
 
         if (!variantIdToAdd) {
           // Can't auto-pick variant, redirect to PDP to select size
-          window.location.href = `/p/${item.product.slug}`;
+          const colorParam = item.product.selectedColor
+            ? `?color=${encodeURIComponent(item.product.selectedColor)}`
+            : "";
+          window.location.href = `/p/${item.product.slug}${colorParam}`;
           return false;
         }
 
@@ -408,12 +508,19 @@ export const useWishlistStore = create<WishlistState>()(
 );
 
 /**
- * Reactive hook to determine whether a product is wishlisted.
+ * Reactive hook to determine whether a product / color variant is wishlisted.
  * Automatically synchronizes with client storage and server updates,
  * safe from hydration mismatches during server rendering.
  */
-export function useIsWishlisted(productId: string): boolean {
-  return useWishlistStore(
-    (state) => state.hasHydrated && state.productIds.includes(productId)
-  );
+export function useIsWishlisted(
+  productIdOrCardId: string,
+  color?: string | null,
+  variantId?: string | null
+): boolean {
+  return useWishlistStore((state) => {
+    if (!state.hasHydrated) return false;
+    return state.items.some((item) =>
+      isWishlistItemMatch(item, productIdOrCardId, color, variantId)
+    );
+  });
 }

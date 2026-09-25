@@ -79,19 +79,38 @@ export async function getUserWishlist(
       variants[0]?.mrp ?? "0"
     );
 
+    const selectedVariant = item.variantId
+      ? (variants.find((v) => v.id === item.variantId) ?? null)
+      : null;
+
+    const colorLower = selectedVariant?.color?.toLowerCase();
+
+    // Find image specifically matching this variant or color
+    const colorImage = colorLower
+      ? prod.images?.find((img) => {
+          if (img.variantId && img.variantId === item.variantId) return true;
+          return (img.alt || "").toLowerCase().includes(colorLower);
+        })
+      : null;
+
     const primaryImg =
+      colorImage ||
       prod.images?.find((img) => img.isPrimary && !img.variantId) ||
       prod.images?.[0] ||
       null;
 
-    const selectedVariant = item.variantId
-      ? (variants.find((v) => v.id === item.variantId) ?? null)
-      : null;
+    const colorVariants = colorLower
+      ? variants.filter((v) => v.color?.toLowerCase() === colorLower)
+      : variants;
+
+    const displayVariants = colorVariants.length > 0 ? colorVariants : variants;
 
     const productPayload: WishlistItemProduct = {
       id: prod.id,
       slug: prod.slug,
       name: prod.name,
+      selectedColor: selectedVariant?.color ?? null,
+      colorName: selectedVariant?.color ?? null,
       brandName: prod.brand?.name ?? null,
       primaryImage: primaryImg
         ? { url: primaryImg.url, alt: primaryImg.alt ?? prod.name }
@@ -101,7 +120,7 @@ export async function getUserWishlist(
       isInStock,
       ratingAvg: prod.ratingAvg ?? "0",
       ratingCount: prod.ratingCount ?? 0,
-      variants,
+      variants: displayVariants,
     };
 
     formatted.push({
@@ -190,9 +209,12 @@ export async function addToWishlist(
       addedAt: new Date(),
     })
     .onConflictDoUpdate({
-      target: [wishlistItems.userId, wishlistItems.productId],
+      target: [
+        wishlistItems.userId,
+        wishlistItems.productId,
+        wishlistItems.variantId,
+      ],
       set: {
-        variantId: input.variantId || null,
         addedAt: new Date(),
       },
     })
@@ -203,19 +225,34 @@ export async function addToWishlist(
 
 export async function removeFromWishlist(
   userId: string,
-  targetId: string
+  targetId: string,
+  variantId?: string | null
 ): Promise<boolean> {
+  const conditions = [eq(wishlistItems.userId, userId)];
+
+  if (variantId) {
+    conditions.push(
+      or(
+        eq(wishlistItems.id, targetId),
+        and(
+          eq(wishlistItems.productId, targetId),
+          eq(wishlistItems.variantId, variantId)
+        )
+      )!
+    );
+  } else {
+    conditions.push(
+      or(
+        eq(wishlistItems.id, targetId),
+        eq(wishlistItems.productId, targetId),
+        eq(wishlistItems.variantId, targetId)
+      )!
+    );
+  }
+
   const result = await db
     .delete(wishlistItems)
-    .where(
-      and(
-        eq(wishlistItems.userId, userId),
-        or(
-          eq(wishlistItems.id, targetId),
-          eq(wishlistItems.productId, targetId)
-        )
-      )
-    )
+    .where(and(...conditions))
     .returning({ id: wishlistItems.id });
 
   return result.length > 0;

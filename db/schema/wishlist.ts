@@ -30,7 +30,11 @@ export const wishlistItems = pgTable(
     addedAt: timestamp("added_at", { mode: "date" }).defaultNow().notNull(),
   },
   (t) => [
-    unique("wishlist_user_product_uq").on(t.userId, t.productId),
+    unique("wishlist_user_product_variant_uq").on(
+      t.userId,
+      t.productId,
+      t.variantId
+    ),
     index("wishlist_user_idx").on(t.userId),
   ]
 );

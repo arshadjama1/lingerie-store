@@ -32,6 +32,8 @@ export interface WishlistItemProduct {
   id: string;
   slug: string;
   name: string;
+  selectedColor?: string | null;
+  colorName?: string | null;
   brandName: string | null;
   primaryImage: { url: string; alt: string | null } | null;
   minPrice: string;
