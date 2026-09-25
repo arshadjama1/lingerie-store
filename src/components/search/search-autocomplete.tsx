@@ -41,14 +41,14 @@ const TRENDING_SEARCHES = [
 const POPULAR_CATEGORIES = [
   { name: "Bras", href: "/bras" },
   { name: "Panties", href: "/panties" },
-  { name: "Nightwear", href: "/nightwear" },
-  { name: "Shapewear", href: "/shapewear" },
+  { name: "Sets", href: "/sets" },
+  { name: "Loungewear", href: "/loungewear" },
   { name: "Sale", href: "/sale" },
 ];
 
 export function SearchAutocomplete({
   initialQuery = "",
-  placeholder = "Search bras, panties, nightwear, shapewear...",
+  placeholder = "Search bras, panties, sets, loungewear...",
   className,
   inputClassName,
   onSelect,
