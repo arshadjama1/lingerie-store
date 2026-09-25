@@ -27,7 +27,10 @@ export const DELETE = withErrorHandling(
       throw new UnauthorizedError();
     }
 
-    const removed = await removeFromWishlist(user.id, id);
+    const url = new URL(_req.url);
+    const variantId = url.searchParams.get("variantId");
+
+    const removed = await removeFromWishlist(user.id, id, variantId);
 
     return NextResponse.json({ success: removed });
   }

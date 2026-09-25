@@ -15,7 +15,10 @@ import {
 import { Breadcrumb } from "@/components/common/breadcrumb";
 import { EmptyState } from "@/components/common/empty-state";
 import { Pagination } from "@/components/common/pagination";
+import { ActiveFiltersBar } from "@/components/filters/active-filters-bar";
 import { FilterSidebar } from "@/components/filters/filter-sidebar";
+import { MobileFilterDrawer } from "@/components/filters/mobile-filter-drawer";
+import { SortDropdown } from "@/components/filters/sort-dropdown";
 import { ProductGrid } from "@/components/product/product-grid";
 
 export const revalidate = 300;
@@ -74,6 +77,7 @@ export default async function CategoryPage({
   searchParams,
 }: CategoryPageProps) {
   const { category: slug } = await params;
+
   const category = await getCatalogCategoryBySlug(slug).catch(() => null);
 
   if (!category) {
@@ -82,37 +86,39 @@ export default async function CategoryPage({
 
   const resolvedSearchParams = await searchParams;
 
-  // Normalize search params to arrays for multi-selects
-  const sizes = resolvedSearchParams.size
-    ? Array.isArray(resolvedSearchParams.size)
-      ? resolvedSearchParams.size
-      : [resolvedSearchParams.size]
-    : undefined;
+  // Helper to robustly parse single, array, or comma-separated query params
+  const parseArrayParam = (val?: string | string[]): string[] | undefined => {
+    if (!val) return undefined;
+    const items = Array.isArray(val) ? val : [val];
+    const flat = items
+      .flatMap((item) => item.split(","))
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return flat.length > 0 ? Array.from(new Set(flat)) : undefined;
+  };
 
-  const colors = resolvedSearchParams.color
-    ? Array.isArray(resolvedSearchParams.color)
-      ? resolvedSearchParams.color
-      : [resolvedSearchParams.color]
-    : undefined;
+  const sizes = parseArrayParam(resolvedSearchParams.size);
+  const colors = parseArrayParam(resolvedSearchParams.color);
 
-  const brands = resolvedSearchParams.brand
-    ? Array.isArray(resolvedSearchParams.brand)
-      ? resolvedSearchParams.brand
-      : [resolvedSearchParams.brand]
-    : undefined;
+  const priceMin =
+    resolvedSearchParams.priceMin !== undefined &&
+    resolvedSearchParams.priceMin !== "" &&
+    !isNaN(Number(resolvedSearchParams.priceMin))
+      ? Math.max(0, Number(resolvedSearchParams.priceMin))
+      : undefined;
 
-  const brandSlug = brands && brands.length > 0 ? brands[0] : undefined;
+  const priceMax =
+    resolvedSearchParams.priceMax !== undefined &&
+    resolvedSearchParams.priceMax !== "" &&
+    !isNaN(Number(resolvedSearchParams.priceMax))
+      ? Math.max(0, Number(resolvedSearchParams.priceMax))
+      : undefined;
 
-  const priceMin = resolvedSearchParams.priceMin
-    ? Number(resolvedSearchParams.priceMin)
-    : undefined;
-  const priceMax = resolvedSearchParams.priceMax
-    ? Number(resolvedSearchParams.priceMax)
-    : undefined;
   const sort = (resolvedSearchParams.sort || "newest") as SortOption;
-  const page = resolvedSearchParams.page
-    ? Number(resolvedSearchParams.page)
-    : 1;
+  const page =
+    resolvedSearchParams.page && !isNaN(Number(resolvedSearchParams.page))
+      ? Math.max(1, Number(resolvedSearchParams.page))
+      : 1;
 
   // Fetch product listings & filters in parallel with graceful catch blocks
   const [productData, filterData] = await Promise.all([
@@ -120,18 +126,20 @@ export default async function CategoryPage({
       categoryPath: category.path,
       sizes,
       colors,
-      brandSlug,
       priceMin,
       priceMax,
       sort,
       page,
       limit: 12,
-    }).catch(() => ({
-      products: [],
-      total: 0,
-      page: 1,
-      totalPages: 0,
-    })),
+    }).catch((err) => {
+      console.error("[CategoryPage] getCatalogProducts failed:", err);
+      return {
+        products: [],
+        total: 0,
+        page: 1,
+        totalPages: 0,
+      };
+    }),
     getCatalogFilters(category.path).catch(() => ({
       sizes: [],
       colors: [],
@@ -144,13 +152,12 @@ export default async function CategoryPage({
   const buildPageUrl = (targetPage: number) => {
     const q: Record<string, string | string[] | number | undefined> = {};
     if (resolvedSearchParams.sort) q.sort = resolvedSearchParams.sort;
-    if (resolvedSearchParams.priceMin)
+    if (resolvedSearchParams.priceMin !== undefined)
       q.priceMin = resolvedSearchParams.priceMin;
-    if (resolvedSearchParams.priceMax)
+    if (resolvedSearchParams.priceMax !== undefined)
       q.priceMax = resolvedSearchParams.priceMax;
-    if (resolvedSearchParams.size) q.size = resolvedSearchParams.size;
-    if (resolvedSearchParams.color) q.color = resolvedSearchParams.color;
-    if (resolvedSearchParams.brand) q.brand = resolvedSearchParams.brand;
+    if (sizes && sizes.length > 0) q.size = sizes;
+    if (colors && colors.length > 0) q.color = colors;
     q.page = targetPage;
     return `/${slug}${buildQueryString(q)}`;
   };
@@ -158,75 +165,98 @@ export default async function CategoryPage({
   const breadcrumbs = [{ label: "Home", href: "/" }, { label: category.name }];
 
   return (
-    <main className="bg-white pb-16">
-      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <Breadcrumb items={breadcrumbs} className="mb-4" />
+    <main className="min-h-screen bg-[#faf8f7]/50 pb-20">
+      {/* Category Editorial Header */}
+      <div className="border-b border-stone-200/80 bg-white">
+        <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 sm:px-6 lg:px-8">
+          <Breadcrumb items={breadcrumbs} className="mb-3" />
 
-        {/* Category Hero Banner */}
-        <div className="mb-8 rounded-none bg-gradient-to-r from-[#3d0a20] via-[#5c1032] to-[#7b1842] p-8 text-white shadow-md sm:p-10">
-          <span className="mb-2 inline-block rounded-none bg-[var(--accent)] px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase shadow-xs">
-            COLLECTION SHOWCASE
-          </span>
-          <h1 className="font-serif text-3xl font-black tracking-tight text-white uppercase sm:text-5xl">
-            {category.name}
-          </h1>
-          <p className="mt-2 max-w-2xl text-xs leading-relaxed font-light text-pink-100 sm:text-sm">
-            Explore our curated selection of {category.name.toLowerCase()}.
-            Meticulously tailored for shape, silhouette, skin-soft comfort, and
-            signature confidence.
-          </p>
+          <div className="flex flex-col gap-2">
+            <h1 className="font-serif text-3xl font-extrabold tracking-tight text-stone-900 sm:text-4xl lg:text-5xl">
+              {category.name}
+            </h1>
+            <p className="max-w-2xl text-xs leading-relaxed text-stone-500 sm:text-sm">
+              Explore our curated selection of {category.name.toLowerCase()}.
+              Meticulously tailored for silhouette, breathable all-day comfort,
+              and signature confidence.
+            </p>
+          </div>
         </div>
+      </div>
 
+      <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-4">
-          {/* Filter Sidebar */}
-          <div className="lg:col-span-1">
+          {/* Desktop Filter Sidebar (Sticky, Hidden on mobile) */}
+          <div className="hidden lg:col-span-1 lg:block">
             <Suspense
               fallback={
-                <div className="h-96 w-full animate-pulse rounded-none border border-gray-100 bg-[var(--surface)]" />
+                <div className="h-96 w-full animate-pulse rounded-none border border-stone-200 bg-white" />
               }
             >
               <FilterSidebar
                 sizes={filterData.sizes}
                 colors={filterData.colors}
-                brands={filterData.brands}
                 priceRange={filterData.priceRange}
               />
             </Suspense>
           </div>
 
-          {/* Catalog List Display */}
+          {/* Catalog Products Area */}
           <div className="lg:col-span-3">
-            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-3">
-              <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
-                {productData.total}{" "}
-                {productData.total === 1 ? "Product" : "Products"} Available
-              </span>
+            {/* Top Controls Bar */}
+            <div className="mb-4 flex flex-col gap-3 rounded-none border-b border-stone-200/80 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+              {/* Product Count & Title */}
+              <div className="flex items-center justify-between gap-3 sm:justify-start">
+                <span className="text-xs font-bold tracking-wider text-stone-700 uppercase">
+                  {productData.total}{" "}
+                  {productData.total === 1 ? "Product" : "Products"}
+                </span>
+
+                {/* Mobile Filter Drawer Trigger */}
+                <MobileFilterDrawer
+                  sizes={filterData.sizes}
+                  colors={filterData.colors}
+                  priceRange={filterData.priceRange}
+                  totalProducts={productData.total}
+                />
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className="flex items-center justify-end">
+                <SortDropdown />
+              </div>
             </div>
 
+            {/* Active Filters Pills Bar */}
+            <ActiveFiltersBar className="mb-4" />
+
+            {/* Products Grid or Empty State */}
             {productData.products.length === 0 ? (
               <EmptyState
                 title="No products found"
-                description="Try clearing some filters or searching for something else."
+                description="Try clearing some filters or selecting a different category."
                 action={{ label: "Clear all filters", href: `/${slug}` }}
               />
             ) : (
               <div className="space-y-10">
                 <Suspense
                   fallback={
-                    <div className="h-96 w-full animate-pulse rounded-none bg-[var(--surface)]" />
+                    <div className="h-96 w-full animate-pulse rounded-none bg-stone-100" />
                   }
                 >
                   <ProductGrid
                     products={productData.products}
                     priorityCount={4}
+                    className="grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3"
                   />
                 </Suspense>
 
+                {/* Pagination */}
                 <Pagination
                   currentPage={page}
                   totalPages={productData.totalPages}
                   buildUrl={buildPageUrl}
-                  className="border-t border-gray-100 pt-8"
+                  className="border-t border-stone-200/80 pt-8"
                 />
               </div>
             )}

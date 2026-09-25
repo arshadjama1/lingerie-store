@@ -37,6 +37,7 @@ const sortOptionSchema = z.enum([
 const listProductsSchema = z.object({
   categoryPath: z.string().optional(),
   brandSlug: z.string().optional(),
+  brandSlugs: z.array(z.string()).optional(),
   sizes: z.array(z.string()).optional(),
   colors: z.array(z.string()).optional(),
   priceMin: z.number().nonnegative().optional(),

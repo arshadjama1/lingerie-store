@@ -20,10 +20,28 @@ export type DbInventory = InferSelectModel<typeof inventory>;
 
 export type ProductListItem = {
   id: string;
+  parentProductId?: string;
   slug: string;
   name: string;
+  selectedColor?: string;
+  colorName?: string;
   brandName: string | null;
   primaryImage: { url: string; alt: string | null } | null;
+  secondaryImage?: { url: string; alt: string | null } | null;
+  colors?: Array<{
+    color: string;
+    hex: string | null;
+    imageUrl?: string | null;
+    secondaryImageUrl?: string | null;
+  }>;
+  variants?: Array<{
+    id: string;
+    size: string;
+    color: string;
+    price: string;
+    isAvailable: boolean;
+  }>;
+  isFeatured?: boolean;
   minPrice: string; // decimal as string — JS number can't represent arbitrary precision
   minMrp: string;
   isInStock: boolean;
@@ -59,6 +77,7 @@ export type SortOption = "newest" | "price_asc" | "price_desc" | "popular";
 export type ListProductsParams = {
   categoryPath?: string;
   brandSlug?: string;
+  brandSlugs?: string[];
   sizes?: string[];
   colors?: string[];
   priceMin?: number;

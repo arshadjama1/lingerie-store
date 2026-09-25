@@ -5,6 +5,7 @@ import React, { Suspense } from "react";
 import { getCatalogProduct, getCatalogRelated } from "@/modules/catalog";
 
 import { Breadcrumb } from "@/components/common/breadcrumb";
+import { ProductDetailsAccordion } from "@/components/product/ProductDetailsAccordion";
 import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductGrid } from "@/components/product/product-grid";
@@ -17,6 +18,7 @@ interface ProductPageProps {
   }>;
   searchParams?: Promise<{
     reviewPage?: string;
+    color?: string;
   }>;
 }
 
@@ -127,70 +129,29 @@ export default async function ProductPage({
         <Breadcrumb items={breadcrumbs} className="mb-6" />
 
         {/* Product Top Fold Interactive Island */}
-        <ProductActions product={product} />
+        <ProductActions
+          product={product}
+          initialColor={resolvedSearchParams?.color}
+        />
 
-        {/* Product Bottom Fold Details */}
+        {/* Product Bottom Fold Details Accordions */}
         <div className="mt-16 border-t border-gray-100 pt-10">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Main Description Box */}
-            <div className="space-y-4 rounded-none border border-gray-100 bg-white p-6 shadow-xs sm:p-8 lg:col-span-2">
-              <h2 className="font-serif text-xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-2xl">
-                Product Details & Fabric Care
-              </h2>
-              <div className="space-y-4 text-xs leading-relaxed font-light text-gray-700 sm:text-sm">
-                {product.description ? (
-                  product.description
-                    .split("\n\n")
-                    .map((para, index) => <p key={index}>{para}</p>)
-                ) : (
-                  <p>
-                    Designed for all-day skin comfort with premium breathable
-                    fabric, shape retention, and precision support.
-                  </p>
-                )}
-              </div>
-
-              {product.hsnCode && (
-                <p className="mt-6 border-t border-gray-100 pt-2 font-mono text-xs text-gray-400">
-                  * HSN Code: {product.hsnCode} (tax inclusive pricing)
-                </p>
-              )}
-            </div>
-
-            {/* Specifications Box */}
-            <div className="rounded-none border border-pink-100 bg-[var(--surface)] p-6 shadow-xs">
-              <h2 className="mb-4 text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
-                Product Specifications
-              </h2>
-              {Object.keys(product.attributes || {}).length === 0 ? (
-                <p className="text-xs font-medium text-gray-500">
-                  Standard size fit & breathable fabric construction.
-                </p>
-              ) : (
-                <dl className="space-y-3 text-xs">
-                  {Object.entries(product.attributes || {}).map(
-                    ([key, val]) => (
-                      <div
-                        key={key}
-                        className="flex justify-between border-b border-gray-200/60 pb-2"
-                      >
-                        <dt className="font-medium text-gray-600 capitalize">
-                          {key.replace(/_/g, " ")}
-                        </dt>
-                        <dd className="text-right font-bold text-gray-900">
-                          {val}
-                        </dd>
-                      </div>
-                    )
-                  )}
-                </dl>
-              )}
-            </div>
+          <div className="mx-auto max-w-4xl">
+            <ProductDetailsAccordion
+              description={product.description}
+              fabric={product.attributes?.fabric}
+              careInstructions={product.attributes?.careInstructions}
+              attributes={product.attributes || {}}
+              hsnCode={product.hsnCode}
+            />
           </div>
         </div>
 
         {/* Reviews Section */}
-        <div className="mt-16 border-t border-gray-100 pt-10">
+        <div
+          id="reviews-section"
+          className="mt-16 scroll-mt-24 border-t border-gray-100 pt-10"
+        >
           <Suspense
             fallback={
               <div className="h-48 animate-pulse rounded-none bg-[var(--surface)]" />

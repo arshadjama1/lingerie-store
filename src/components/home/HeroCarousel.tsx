@@ -25,7 +25,7 @@ const SLIDES: Slide[] = [
       "95% Bamboo — our softest fabric ever. Wire-free bras & undies from ₹300.",
     ctaText: "SHOP BAMBOO RANGE",
     ctaLink: "/bras",
-    image: "/images/products/bamboo-bra-black.png",
+    image: "/images/home/slider-3.png",
   },
   {
     id: 2,
@@ -35,16 +35,17 @@ const SLIDES: Slide[] = [
       "Zero panty lines, zero compromise. Seamless Undie Pack of 3 at just ₹750.",
     ctaText: "SHOP SEAMLESS UNDIES",
     ctaLink: "/panties",
-    image: "/images/products/seamless-undie-pack.png",
+    image: "/images/home/slider-2.png",
   },
   {
     id: 3,
-    badge: "CURATED SETS",
-    title: "COORDINATED LUXURY LINGERIE SETS",
-    subtitle: "Bralette + Hipster sets in premium Modal fabric. From ₹650.",
-    ctaText: "EXPLORE SETS",
-    ctaLink: "/sets",
-    image: "/images/products/lingerie-set-olive.png",
+    badge: "EVERYDAY ESSENTIALS",
+    title: "LIGHTWEIGHT & SOFT CAMISOLES",
+    subtitle:
+      "Made for everyday lounging and effortless layering. 5 versatile colours at just ₹300.",
+    ctaText: "EXPLORE CAMISOLES",
+    ctaLink: "/loungewear",
+    image: "/images/home/slider-1.png",
   },
 ];
 
