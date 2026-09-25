@@ -89,10 +89,41 @@ export function Footer() {
 
         {/* Bottom Trust & Copyright */}
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-pink-900/60 pt-8 text-xs font-medium text-pink-200/90 sm:flex-row">
-          <p>
-            © {new Date().getFullYear()} Surekh Retail Pvt Ltd. All rights
-            reserved.
-          </p>
+          <div className="flex flex-col items-center gap-1.5 text-center sm:items-start sm:text-left">
+            <p>
+              © {new Date().getFullYear()} Surekh Retail Pvt Ltd. All rights
+              reserved.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-pink-300/80 sm:justify-start">
+              <Link
+                href="/about"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                About Us
+              </Link>
+              <span>•</span>
+              <Link
+                href="/legal/privacy"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Privacy Policy
+              </Link>
+              <span>•</span>
+              <Link
+                href="/legal/terms"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Terms of Service
+              </Link>
+              <span>•</span>
+              <Link
+                href="/legal/returns"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Return & Exchange Policy
+              </Link>
+            </div>
+          </div>
 
           <div className="flex flex-wrap items-center gap-5 font-semibold text-white">
             <span className="flex items-center gap-1.5">

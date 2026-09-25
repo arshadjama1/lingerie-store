@@ -135,7 +135,8 @@ export const FOOTER_LINK_GROUPS = {
   ],
   "About Surekh": [
     { label: "Our Story & Mission", href: "/about" },
-    { label: "Privacy & Data Policy", href: "/legal/privacy" },
+    { label: "Privacy Policy", href: "/legal/privacy" },
     { label: "Terms of Service", href: "/legal/terms" },
+    { label: "Return & Exchange Policy", href: "/legal/returns" },
   ],
 };
