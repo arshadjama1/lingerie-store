@@ -24,9 +24,10 @@ const schema = z.object({
   REVALIDATE_SECRET: z.string().min(32),
   NEXT_PUBLIC_APP_URL: z.string().url(),
 
-  // DTDC Express Logistics
-  DTDC_API_KEY: z.string().optional().default("ad2e54eabad12f21e624fcabf55ade"),
-  DTDC_CUSTOMER_CODE: z.string().optional().default("GL19550"),
+  // DTDC Express Logistics — credentials MUST be set in environment.
+  // No defaults for credentials or operator PII (never commit real values to source).
+  DTDC_API_KEY: z.string().min(1, "DTDC_API_KEY is required"),
+  DTDC_CUSTOMER_CODE: z.string().min(1, "DTDC_CUSTOMER_CODE is required"),
   DTDC_API_URL: z.string().url().optional().default("https://pxapi.dtdc.in"),
   DTDC_SERVICE_TYPE_ID: z.string().optional().default("B2C PRIORITY"),
   DTDC_COMMODITY_ID: z.string().optional().default("CLOTHING"),
@@ -44,20 +45,16 @@ const schema = z.object({
     .optional()
     .default("https://smarttrack-ctbsplus.dtdc.com/ratecalapi/PincodeApiCall"),
 
-  // DTDC Warehouse / Shipper Origin
-  DTDC_WAREHOUSE_NAME: z.string().optional().default("Surekh"),
-  DTDC_WAREHOUSE_PHONE: z.string().optional().default("9702150990"),
-  DTDC_WAREHOUSE_LINE1: z
+  // DTDC Warehouse / Shipper Origin — must be set in environment (operator PII).
+  DTDC_WAREHOUSE_NAME: z.string().min(1, "DTDC_WAREHOUSE_NAME is required"),
+  DTDC_WAREHOUSE_PHONE: z.string().min(1, "DTDC_WAREHOUSE_PHONE is required"),
+  DTDC_WAREHOUSE_LINE1: z.string().min(1, "DTDC_WAREHOUSE_LINE1 is required"),
+  DTDC_WAREHOUSE_LINE2: z.string().optional().default(""),
+  DTDC_WAREHOUSE_PINCODE: z
     .string()
-    .optional()
-    .default("Shop No 1, Raj Darshan Apartment"),
-  DTDC_WAREHOUSE_LINE2: z
-    .string()
-    .optional()
-    .default("In front of kajuwadi last bus stop, louiswadi"),
-  DTDC_WAREHOUSE_PINCODE: z.string().optional().default("400604"),
-  DTDC_WAREHOUSE_CITY: z.string().optional().default("Thane West"),
-  DTDC_WAREHOUSE_STATE: z.string().optional().default("Maharashtra"),
+    .min(1, "DTDC_WAREHOUSE_PINCODE is required"),
+  DTDC_WAREHOUSE_CITY: z.string().min(1, "DTDC_WAREHOUSE_CITY is required"),
+  DTDC_WAREHOUSE_STATE: z.string().min(1, "DTDC_WAREHOUSE_STATE is required"),
 });
 
 const parsed = schema.safeParse(process.env);
