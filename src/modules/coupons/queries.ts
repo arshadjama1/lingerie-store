@@ -185,6 +185,13 @@ export async function validateCoupon(
     discountAmount = Math.min(raw, cap);
   } else if (coupon.type === "fixed_amount") {
     discountAmount = Math.min(value, cartSubtotal);
+  } else if (coupon.type === "free_shipping") {
+    // Free-shipping coupons waive the shipping fee.
+    // The checkout calculations module applies the shipping cost separately;
+    // returning 0 here records the coupon as applied without reducing the
+    // subtotal. Shipping will be set to 0 by the caller when this coupon type
+    // is detected.
+    discountAmount = 0;
   } else {
     throw new CouponError("Unsupported coupon type");
   }

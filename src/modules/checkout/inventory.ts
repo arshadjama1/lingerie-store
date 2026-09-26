@@ -60,10 +60,26 @@ export async function deductInventory(
   items: { variantId: string; quantity: number }[]
 ) {
   for (const item of items) {
+    // Acquire a row-level lock so concurrent payment webhooks cannot both
+    // deduct the same stock simultaneously (prevents silent oversell).
+    const [inv] = await tx
+      .select()
+      .from(inventory)
+      .where(eq(inventory.variantId, item.variantId))
+      .for("update");
+
+    if (!inv) {
+      throw new InsufficientStockError(
+        `Inventory record not found for variant ${item.variantId}`
+      );
+    }
+
+    // Hard subtraction — the DB CHECK (quantity >= 0) will surface any
+    // negative stock as a constraint violation and roll back the transaction.
     await tx
       .update(inventory)
       .set({
-        quantity: sql`GREATEST(0, ${inventory.quantity} - ${item.quantity})`,
+        quantity: sql`${inventory.quantity} - ${item.quantity}`,
         reservedQuantity: sql`GREATEST(0, ${inventory.reservedQuantity} - ${item.quantity})`,
       })
       .where(eq(inventory.variantId, item.variantId));
