@@ -1,5 +1,6 @@
 export {
   listUserOrders,
+  getMostRecentActiveOrder,
   getOrderDetails,
   cancelOrder,
   createReturnRequest,

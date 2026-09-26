@@ -35,6 +35,9 @@ const schema = z.object({
     .url()
     .optional()
     .default("https://blktracksvc.dtdc.com"),
+  // Tracking API v4 uses separate username/password auth (not the api-key header)
+  DTDC_TRACK_USERNAME: z.string().optional().default(""),
+  DTDC_TRACK_PASSWORD: z.string().optional().default(""),
   DTDC_PINCODE_URL: z
     .string()
     .url()

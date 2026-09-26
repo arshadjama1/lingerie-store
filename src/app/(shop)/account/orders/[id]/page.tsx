@@ -1,7 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { ArrowLeft, CreditCard, MapPin, Package2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CreditCard,
+  History,
+  MapPin,
+  Package2,
+  Truck,
+} from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
@@ -9,8 +16,13 @@ import { formatPrice } from "@/lib/utils";
 import { getProductIdByVariantId } from "@/modules/catalog";
 import { getOrderDetails } from "@/modules/orders";
 import { hasUserReviewedProduct } from "@/modules/reviews";
+import {
+  estimatedDeliveryWindow,
+  formatDeliveryWindow,
+} from "@/modules/shipping";
 
 import { CancelOrderButton } from "@/components/orders/CancelOrderButton";
+import { FulfillmentStepper } from "@/components/orders/FulfillmentStepper";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTrackingTimeline } from "@/components/orders/OrderTrackingTimeline";
 import { ReturnRequestForm } from "@/components/orders/ReturnRequestForm";
@@ -106,6 +118,18 @@ export default async function OrderDetailPage({
 
   const address = order.shippingAddress;
 
+  // Compute estimated delivery window for pre-AWB states
+  const showPreAwbAdvisory =
+    !order.awbNumber &&
+    (order.status === "confirmed" || order.status === "processing");
+
+  const estimatedDelivery =
+    order.confirmedAt && address.pincode
+      ? formatDeliveryWindow(
+          estimatedDeliveryWindow(order.confirmedAt, address.pincode)
+        )
+      : null;
+
   return (
     <div className="min-h-screen bg-neutral-50/50 py-10">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
@@ -141,15 +165,57 @@ export default async function OrderDetailPage({
         </div>
 
         <div className="space-y-4">
-          {/* Status Timeline */}
-          <section className="rounded-2xl border border-neutral-200 bg-white p-6">
-            <h2 className="mb-5 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
-              Order Timeline
-            </h2>
-            <StatusTimeline entries={order.statusHistory} />
-          </section>
+          {/* ── Fulfillment Stepper (always shown) ── */}
+          <FulfillmentStepper
+            status={order.status}
+            confirmedAt={order.confirmedAt}
+            shippedAt={order.shippedAt}
+            deliveredAt={order.deliveredAt}
+            cancelledAt={order.cancelledAt}
+            awbNumber={order.awbNumber}
+            estimatedDelivery={estimatedDelivery}
+          />
 
-          {/* Items */}
+          {/* ── Pre-AWB Dispatch Advisory ── */}
+          {showPreAwbAdvisory && (
+            <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5">
+              <div className="flex items-start gap-3">
+                <Truck className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    Your order is being prepared
+                  </p>
+                  <p className="mt-1 text-xs leading-relaxed text-blue-700">
+                    Our team is carefully packing your items at the Thane
+                    warehouse. Your package will be shipped via{" "}
+                    <strong>DTDC Express</strong> within 24–48 hours of
+                    confirmation.
+                  </p>
+                  {estimatedDelivery && (
+                    <p className="mt-2 text-xs font-medium text-blue-800">
+                      📅 Estimated delivery:{" "}
+                      <span className="font-semibold">{estimatedDelivery}</span>
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs text-blue-600">
+                    You&apos;ll receive an SMS and email with your tracking
+                    number as soon as your package is dispatched.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ── DTDC Live Tracking (post-AWB) ── */}
+          {order.awbNumber && (
+            <OrderTrackingTimeline
+              orderId={order.id}
+              awbNumber={order.awbNumber}
+              orderStatus={order.status}
+            />
+          )}
+
+          {/* ── Items Ordered ── */}
           <section className="rounded-2xl border border-neutral-200 bg-white p-6">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
               <Package2 className="h-4 w-4" />
@@ -197,7 +263,7 @@ export default async function OrderDetailPage({
             </div>
           </section>
 
-          {/* Payment Summary */}
+          {/* ── Payment Summary ── */}
           <section className="rounded-2xl border border-neutral-200 bg-white p-6">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
               <CreditCard className="h-4 w-4" />
@@ -240,7 +306,7 @@ export default async function OrderDetailPage({
             </div>
           </section>
 
-          {/* Delivery Address */}
+          {/* ── Delivery Address ── */}
           <section className="rounded-2xl border border-neutral-200 bg-white p-6">
             <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
               <MapPin className="h-4 w-4" />
@@ -261,16 +327,26 @@ export default async function OrderDetailPage({
             </address>
           </section>
 
-          {/* DTDC Tracking */}
-          {order.awbNumber && (
-            <OrderTrackingTimeline
-              orderId={order.id}
-              awbNumber={order.awbNumber}
-              orderStatus={order.status}
-            />
+          {/* ── Order History (collapsed) ── */}
+          {order.statusHistory.length > 0 && (
+            <details className="group rounded-2xl border border-neutral-200 bg-white">
+              <summary className="flex cursor-pointer list-none items-center gap-2 p-6 text-sm font-semibold tracking-wider text-neutral-500 uppercase select-none hover:text-neutral-700">
+                <History className="h-4 w-4" />
+                Order History
+                <span className="ml-auto text-xs font-normal text-neutral-400 normal-case group-open:hidden">
+                  Show ↓
+                </span>
+                <span className="ml-auto hidden text-xs font-normal text-neutral-400 normal-case group-open:inline">
+                  Hide ↑
+                </span>
+              </summary>
+              <div className="border-t border-neutral-100 px-6 pt-4 pb-6">
+                <StatusTimeline entries={order.statusHistory} />
+              </div>
+            </details>
           )}
 
-          {/* Action Zone */}
+          {/* ── Action Zone ── */}
           {(canCancel || canReturn) && (
             <section className="rounded-2xl border border-neutral-200 bg-white p-6">
               <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">

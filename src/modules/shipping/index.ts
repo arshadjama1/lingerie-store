@@ -7,6 +7,15 @@ export {
   calculateDefaultPackageDimensions,
 } from "./dtdc";
 
+export {
+  isMetroPincode,
+  defaultTatDays,
+  estimatedDispatchDate,
+  estimatedDeliveryWindow,
+  formatDeliveryWindow,
+  formatDispatchEta,
+} from "./estimates";
+
 export type {
   DtdcPackageDimensions,
   DtdcShipmentResult,
@@ -14,4 +23,5 @@ export type {
   DtdcServiceabilityResult,
   DtdcTrackingCheckpoint,
   DtdcTrackingResult,
+  DeliveryWindow,
 } from "./types";

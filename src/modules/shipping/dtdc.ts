@@ -345,27 +345,211 @@ export async function checkDtdcPincodeServiceability(
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// DTDC Tracking API v4
+// Auth: 2-step — GET /authenticate → cache token → POST with x-access-token
+// Token never expires per official docs; safe to cache in module scope.
+// ─────────────────────────────────────────────────────────────────────
+
+/** Module-scope token cache — persists for the lifetime of the process. */
+let _cachedTrackToken: string | null = null;
+
 /**
- * Queries live tracking scans for an AWB number.
+ * Parses a DTDC date string ("DDMMYYYY") + optional time string ("HHMM")
+ * into an ISO 8601 string. Returns null on invalid input.
+ */
+function parseDtdcDateTime(date: string, time?: string): string | null {
+  if (!date || date.length < 8) return null;
+  const dd = date.slice(0, 2);
+  const mm = date.slice(2, 4);
+  const yyyy = date.slice(4, 8);
+  const hh = time && time.length >= 4 ? time.slice(0, 2) : "00";
+  const min = time && time.length >= 4 ? time.slice(2, 4) : "00";
+  const iso = `${yyyy}-${mm}-${dd}T${hh}:${min}:00+05:30`; // DTDC operates on IST
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Acquires (and caches) a DTDC tracking API access token.
+ * Token never expires — one call per process lifetime.
+ */
+async function getTrackToken(): Promise<string> {
+  if (_cachedTrackToken) return _cachedTrackToken;
+
+  const username = serverEnv.DTDC_TRACK_USERNAME;
+  const password = serverEnv.DTDC_TRACK_PASSWORD;
+  const baseUrl = serverEnv.DTDC_TRACKING_URL.replace(/\/+$/, "");
+
+  if (!username || !password) {
+    throw new Error(
+      "DTDC tracking credentials missing: set DTDC_TRACK_USERNAME and DTDC_TRACK_PASSWORD."
+    );
+  }
+
+  const url = `${baseUrl}/dtdc-api/api/dtdc/authenticate?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+
+  const res = await fetch(url, { method: "GET", cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(
+      `DTDC tracking auth failed with HTTP ${res.status}: ${res.statusText}`
+    );
+  }
+
+  // The API returns the raw token string as the response body (not JSON)
+  const token = (await res.text()).trim();
+  if (!token) {
+    throw new Error("DTDC tracking auth returned an empty token.");
+  }
+
+  _cachedTrackToken = token;
+  return token;
+}
+
+/** Maps DTDC status codes from the official Tracking Codes v1.2.0 reference. */
+const DTDC_CODE_TO_STATUS: Record<string, string> = {
+  PCAW: "Pickup Awaited",
+  PCSC: "Pickup Scheduled",
+  PCUP: "Picked Up",
+  PCNO: "Not Picked Up",
+  PCRA: "Pickup Reassigned",
+  BKD: "Booked",
+  IPMF: "In Transit",
+  OFD: "Out for Delivery",
+  OUTDLV: "Out for Delivery",
+  DLV: "Delivered",
+  NONDLV: "Delivery Attempted",
+  REG: "Return In Transit",
+  RTG: "Return Out for Delivery",
+  SRTS: "Return Delivered",
+  UIG: "Shipment Cancelled",
+  CAN: "Cancelled",
+  SDL: "Shipment Lost",
+};
+
+/**
+ * Fetches live DTDC tracking events for a given AWB number using
+ * the DTDC Tracking API v4 (JSON, Pull mode).
+ *
+ * Gracefully returns empty checkpoints when:
+ * - Tracking credentials are not yet configured
+ * - AWB has not been scanned yet (statusFlag === false)
  */
 export async function getDtdcTracking(
   awbNumber: string
 ): Promise<DtdcTrackingResult> {
-  const checkpoints: DtdcTrackingCheckpoint[] = [];
+  const username = serverEnv.DTDC_TRACK_USERNAME;
+  const password = serverEnv.DTDC_TRACK_PASSWORD;
 
-  // Initial checkpoint: Manifested / Dispatched
-  checkpoints.push({
-    statusCode: "BKD",
-    status: "Booked",
-    location: "Thane Hub, Mumbai",
-    timestamp: new Date().toISOString(),
-    remarks: "Consignment booked with DTDC",
-  });
+  // Credentials not yet configured — return empty result, do not throw
+  if (!username || !password) {
+    console.warn(
+      "[DTDC Tracking] DTDC_TRACK_USERNAME / DTDC_TRACK_PASSWORD not set — skipping live tracking."
+    );
+    return {
+      awbNumber,
+      currentStatus: "Tracking not yet configured",
+      destinationCity: undefined,
+      checkpoints: [],
+    };
+  }
 
-  return {
-    awbNumber,
-    currentStatus: "Booked",
-    destinationCity: undefined,
-    checkpoints,
-  };
+  try {
+    const token = await getTrackToken();
+    const baseUrl = serverEnv.DTDC_TRACKING_URL.replace(/\/+$/, "");
+    const endpoint = `${baseUrl}/dtdc-api/rest/JSONCnTrk/getTrackDetails`;
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-access-token": token, // NOTE: NOT "Authorization: Bearer"
+      },
+      body: JSON.stringify({
+        trkType: "cnno",
+        strcnno: awbNumber,
+        addtnlDtl: "Y",
+      }),
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`DTDC tracking HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const raw = (await res.json()) as {
+      statusCode?: number;
+      statusFlag?: boolean;
+      status?: string;
+      errorDetails?: Array<{ name: string; value: string }>;
+      trackHeader?: Record<string, string | null>;
+      trackDetails?: Array<Record<string, string | null>>;
+    };
+
+    // AWB not yet scanned — courier hasn't registered it yet
+    if (!raw.statusFlag || raw.status !== "SUCCESS") {
+      return {
+        awbNumber,
+        currentStatus: "Awaiting first courier scan",
+        destinationCity: undefined,
+        checkpoints: [],
+      };
+    }
+
+    const header = raw.trackHeader ?? {};
+    const scans = raw.trackDetails ?? [];
+
+    // Parse current status from latest scan code or header status
+    const latestCode = scans[scans.length - 1]?.strCode ?? "";
+    const currentStatus =
+      DTDC_CODE_TO_STATUS[latestCode] ??
+      header.strStatusRelName ??
+      header.strStatus ??
+      "In Transit";
+
+    // Parse DTDC expected delivery date (format: DDMMYYYY)
+    const rawEdd =
+      header.strRevExpectedDeliveryDate || header.strExpectedDeliveryDate;
+    const expectedDeliveryDate = rawEdd
+      ? (parseDtdcDateTime(rawEdd) ?? undefined)
+      : undefined;
+
+    const destinationCity = (header.strDestination ?? undefined) || undefined;
+
+    // Map scan events → DtdcTrackingCheckpoint[]
+    // ⚠️ DTDC uses 'sTrRemarks' (lowercase T) not 'strRemarks' — per official docs
+    const checkpoints: DtdcTrackingCheckpoint[] = scans
+      .filter((s) => s.strCode)
+      .map((s) => ({
+        statusCode: s.strCode ?? "",
+        status: DTDC_CODE_TO_STATUS[s.strCode ?? ""] ?? s.strAction ?? "",
+        location:
+          [s.strOrigin, s.strDestination].filter(Boolean).join(" → ") ||
+          "Unknown",
+        timestamp:
+          parseDtdcDateTime(s.strActionDate ?? "", s.strActionTime ?? "") ??
+          new Date().toISOString(),
+        remarks: (s.sTrRemarks ?? undefined) || undefined,
+      }));
+
+    return {
+      awbNumber,
+      currentStatus,
+      expectedDeliveryDate,
+      destinationCity,
+      checkpoints,
+    };
+  } catch (err) {
+    // If token is stale (can happen if DTDC revokes it), clear cache so next
+    // call re-authenticates
+    _cachedTrackToken = null;
+    console.error("[DTDC Tracking] Failed to fetch live tracking:", err);
+    return {
+      awbNumber,
+      currentStatus: "Tracking unavailable",
+      destinationCity: undefined,
+      checkpoints: [],
+    };
+  }
 }

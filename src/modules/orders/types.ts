@@ -10,6 +10,9 @@ export interface OrderSummary {
   total: string;
   itemCount: number;
   createdAt: Date;
+  awbNumber: string | null;
+  shippedAt: Date | null;
+  deliveredAt: Date | null;
 }
 
 export interface OrderItem {
