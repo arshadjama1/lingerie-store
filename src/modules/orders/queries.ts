@@ -46,6 +46,9 @@ export async function listUserOrders(
         status: orders.status,
         total: orders.total,
         createdAt: orders.createdAt,
+        awbNumber: orders.awbNumber,
+        shippedAt: orders.shippedAt,
+        deliveredAt: orders.deliveredAt,
         itemCount: sql<number>`(SELECT COUNT(*)::int FROM ${orderItems} oi WHERE oi.order_id = ${orders}.id)`,
       })
       .from(orders)
@@ -71,11 +74,70 @@ export async function listUserOrders(
         total: r.total,
         itemCount: r.itemCount,
         createdAt: r.createdAt,
+        awbNumber: r.awbNumber,
+        shippedAt: r.shippedAt,
+        deliveredAt: r.deliveredAt,
       })
     ),
     total,
     page,
     totalPages: Math.ceil(total / limit),
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// getMostRecentActiveOrder
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the single most recent order with an "active" fulfillment status
+ * (confirmed, processing, or shipped) for the given user.
+ * Returns null if no active orders exist.
+ * Used for the account hub "Active Order" highlight banner.
+ */
+export async function getMostRecentActiveOrder(
+  userId: string
+): Promise<OrderSummary | null> {
+  const ACTIVE_STATUSES = ["confirmed", "processing", "shipped"] as const;
+
+  const row = await db
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      status: orders.status,
+      total: orders.total,
+      createdAt: orders.createdAt,
+      awbNumber: orders.awbNumber,
+      shippedAt: orders.shippedAt,
+      deliveredAt: orders.deliveredAt,
+      itemCount: sql<number>`(SELECT COUNT(*)::int FROM ${orderItems} oi WHERE oi.order_id = ${orders}.id)`,
+    })
+    .from(orders)
+    .where(
+      and(
+        eq(orders.userId, userId),
+        sql`${orders.status} = ANY(ARRAY[${sql.join(
+          ACTIVE_STATUSES.map((s) => sql`${s}`),
+          sql`, `
+        )}]::text[])`
+      )
+    )
+    .orderBy(desc(orders.createdAt))
+    .limit(1);
+
+  if (!row[0]) return null;
+
+  const r = row[0];
+  return {
+    id: r.id,
+    orderNumber: r.orderNumber,
+    status: r.status,
+    total: r.total,
+    itemCount: r.itemCount,
+    createdAt: r.createdAt,
+    awbNumber: r.awbNumber,
+    shippedAt: r.shippedAt,
+    deliveredAt: r.deliveredAt,
   };
 }
 
