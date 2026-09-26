@@ -13,8 +13,10 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 
+import { getProfile } from "@/modules/auth";
 import { getMostRecentActiveOrder } from "@/modules/orders";
 
+import { LogoutButton } from "@/components/account/LogoutButton";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 
 export const dynamic = "force-dynamic";
@@ -64,17 +66,34 @@ export default async function AccountPage() {
     redirect("/login?redirect=/account");
   }
 
-  const activeOrder = await getMostRecentActiveOrder(user.id);
+  const [activeOrder, profile] = await Promise.all([
+    getMostRecentActiveOrder(user.id),
+    getProfile(user.id),
+  ]);
+
+  const displayName = profile?.firstName
+    ? `${profile.firstName} ${profile.lastName || ""}`.trim()
+    : null;
 
   return (
     <div className="min-h-screen bg-neutral-50/50 py-12">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        {/* Greeting */}
-        <div className="mb-8">
-          <h1 className="font-serif text-2xl font-bold text-neutral-900">
-            My Account
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">{user.email}</p>
+        {/* Greeting & Logout Header */}
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-neutral-900">
+              {displayName ? `Hello, ${displayName}` : "My Account"}
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500">
+              {profile?.email || user.email || profile?.phone || user.phone}
+            </p>
+            {profile && profile.loyaltyPoints > 0 && (
+              <span className="mt-2 inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-700">
+                ✨ {profile.loyaltyPoints} Loyalty Points
+              </span>
+            )}
+          </div>
+          <LogoutButton />
         </div>
 
         {/* Active Order Highlight Banner */}
