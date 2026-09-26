@@ -35,7 +35,13 @@ export function verifyPaymentSignature(
     .update(body)
     .digest("hex");
 
-  if (expectedSignature !== razorpaySignature) {
+  // Use timing-safe comparison to prevent timing-based side-channel attacks.
+  const expectedBuf = Buffer.from(expectedSignature, "hex");
+  const actualBuf = Buffer.from(razorpaySignature, "hex");
+  if (
+    expectedBuf.length !== actualBuf.length ||
+    !crypto.timingSafeEqual(expectedBuf, actualBuf)
+  ) {
     throw new InvalidSignatureError();
   }
 
@@ -51,7 +57,13 @@ export function verifyWebhookSignature(
     .update(bodyText)
     .digest("hex");
 
-  if (expectedSignature !== signature) {
+  // Use timing-safe comparison to prevent timing-based side-channel attacks.
+  const expectedBuf = Buffer.from(expectedSignature, "hex");
+  const actualBuf = Buffer.from(signature, "hex");
+  if (
+    expectedBuf.length !== actualBuf.length ||
+    !crypto.timingSafeEqual(expectedBuf, actualBuf)
+  ) {
     throw new InvalidSignatureError();
   }
 
