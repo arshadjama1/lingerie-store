@@ -41,9 +41,13 @@ export async function generateMetadata({
   return {
     title,
     description,
+    alternates: {
+      canonical: `/p/${slug}`,
+    },
     openGraph: {
       title,
       description,
+      type: "website",
       images: imageUrls.map((url) => ({ url })),
     },
   };

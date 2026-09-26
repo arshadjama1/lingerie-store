@@ -20,6 +20,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://www.surekh.co.in"
+  ),
   title: "Surekh | Premium Lingerie & Intimate Apparel",
   description:
     "Shop Bras, Panties, Nightwear, Activewear & Shapewear with perfect fit assurance.",

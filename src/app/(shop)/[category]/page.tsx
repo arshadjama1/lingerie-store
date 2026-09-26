@@ -69,6 +69,9 @@ export async function generateMetadata({
   return {
     title: `${category.name} | Surekh Storefront`,
     description: `Browse our elegant selection of ${category.name.toLowerCase()}. Handcrafted with signature support, luxury fabrics, and precision fit.`,
+    alternates: {
+      canonical: `/${slug}`,
+    },
   };
 }
 
