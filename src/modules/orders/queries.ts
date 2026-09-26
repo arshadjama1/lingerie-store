@@ -98,8 +98,6 @@ export async function listUserOrders(
 export async function getMostRecentActiveOrder(
   userId: string
 ): Promise<OrderSummary | null> {
-  const ACTIVE_STATUSES = ["confirmed", "processing", "shipped"] as const;
-
   const row = await db
     .select({
       id: orders.id,
@@ -116,10 +114,7 @@ export async function getMostRecentActiveOrder(
     .where(
       and(
         eq(orders.userId, userId),
-        sql`${orders.status} = ANY(ARRAY[${sql.join(
-          ACTIVE_STATUSES.map((s) => sql`${s}`),
-          sql`, `
-        )}]::text[])`
+        sql`${orders.status}::text in ('confirmed', 'processing', 'shipped')`
       )
     )
     .orderBy(desc(orders.createdAt))
