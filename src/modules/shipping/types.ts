@@ -180,3 +180,8 @@ export interface DtdcTrackingResult {
   destinationCity?: string;
   checkpoints: DtdcTrackingCheckpoint[];
 }
+
+export interface DeliveryWindow {
+  earliest: Date;
+  latest: Date;
+}
