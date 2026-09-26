@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { db } from "@/db";
-import { orderStatusHistory, orders } from "@/db/schema";
+import { inventory, orderStatusHistory, orders, payments } from "@/db/schema";
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { assertAdmin } from "@/lib/admin-auth";
@@ -19,6 +19,7 @@ import {
   sendOrderShippedSMS,
 } from "@/modules/notifications";
 import { VALID_TRANSITIONS } from "@/modules/orders";
+import { razorpayClient } from "@/modules/payments";
 
 const bodySchema = z.object({
   status: z.enum([
@@ -44,9 +45,10 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
 
   const { status: newStatus, note } = body.data;
 
-  // Fetch current order
+  // Fetch current order with items (needed for stock restoration)
   const order = await db.query.orders.findFirst({
     where: eq(orders.id, orderId),
+    with: { items: true },
   });
   if (!order) throw new NotFoundError("Order");
 
@@ -57,6 +59,29 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
       `Cannot transition from "${order.status}" to "${newStatus}". ` +
         `Allowed: ${allowed.length ? allowed.join(", ") : "none"}`
     );
+  }
+
+  // ── Refund: Call Razorpay BEFORE any DB write ────────────────────────────
+  // If the Razorpay API fails, we throw immediately and the DB status is never
+  // updated — preventing a false "refunded" label with no money returned.
+  if (newStatus === "refunded") {
+    const payment = await db.query.payments.findFirst({
+      where: eq(payments.orderId, orderId),
+    });
+
+    if (payment?.razorpayPaymentId) {
+      try {
+        await razorpayClient.payments.refund(payment.razorpayPaymentId, {
+          amount: Math.round(Number(order.total) * 100), // full refund in paise
+          notes: { reason: note ?? "Admin initiated refund", orderId },
+        });
+      } catch (refundErr) {
+        console.error("[refund] Razorpay refund API failed:", refundErr);
+        throw new ValidationError(
+          "Razorpay refund failed — check the Razorpay Dashboard. Order status was not changed."
+        );
+      }
+    }
   }
 
   // Update status + timestamp fields
@@ -85,6 +110,18 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
       note: note ?? null,
       changedBy: admin.id,
     });
+
+    // Restore inventory when an order is refunded so items can be resold.
+    if (newStatus === "refunded" && order.items.length > 0) {
+      for (const item of order.items) {
+        await tx
+          .update(inventory)
+          .set({
+            quantity: sql`${inventory.quantity} + ${item.quantity}`,
+          })
+          .where(eq(inventory.variantId, item.variantId));
+      }
+    }
   });
 
   // Fire-and-forget shipped notifications

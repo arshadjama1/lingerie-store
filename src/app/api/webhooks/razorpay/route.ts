@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 
 import { withErrorHandling } from "@/lib/errors";
 
+import { expireCheckoutSession } from "@/modules/checkout";
 import {
   processPaymentSuccess,
   verifyWebhookSignature,
@@ -23,7 +24,7 @@ export const POST = withErrorHandling(async (req: Request) => {
 
   const event = JSON.parse(rawBody);
 
-  // We only process payment.captured event
+  // Process successful payment capture
   if (event.event === "payment.captured") {
     const entity = event.payload?.payment?.entity;
     if (entity) {
@@ -44,6 +45,21 @@ export const POST = withErrorHandling(async (req: Request) => {
             method,
           });
         }
+      }
+    }
+  }
+
+  // Release reserved inventory immediately on payment failure so other
+  // customers can purchase the items without waiting for the 15-min timeout.
+  if (event.event === "payment.failed") {
+    const entity = event.payload?.payment?.entity;
+    const razorpayOrderId = entity?.order_id;
+    if (razorpayOrderId) {
+      const session = await db.query.checkoutSessions.findFirst({
+        where: eq(checkoutSessions.razorpayOrderId, razorpayOrderId),
+      });
+      if (session && session.status === "active") {
+        await expireCheckoutSession(session.id);
       }
     }
   }
