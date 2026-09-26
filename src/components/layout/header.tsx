@@ -18,6 +18,7 @@ import {
 
 import { cn } from "@/lib/utils";
 
+import { LogoutButton } from "@/components/account/LogoutButton";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
@@ -49,6 +50,7 @@ export function Header() {
 
   const wishlistItems = useWishlistStore((state) => state.items);
   const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
+  const isAuthenticated = useWishlistStore((state) => state.isAuthenticated);
   const wishlistCount = wishlistItems.length;
 
   useEffect(() => {
@@ -305,6 +307,15 @@ export function Header() {
                     </span>
                   </Link>
                 </li>
+                {isAuthenticated && (
+                  <li>
+                    <LogoutButton
+                      variant="menu-item"
+                      className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-rose-50 hover:text-rose-700"
+                      onSuccess={() => setMobileOpen(false)}
+                    />
+                  </li>
+                )}
               </ul>
 
               {/* Mobile combo deals */}
