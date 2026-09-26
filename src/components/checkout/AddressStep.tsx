@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 
 import type { Address } from "@/db/schema";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Edit2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import type { CreateAddressInput } from "@/modules/addresses";
+
+import { AddressFormModal } from "@/components/addresses/AddressFormModal";
 
 interface AddressStepProps {
   selectedAddressId: string | null;
@@ -21,6 +23,8 @@ export function AddressStep({
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const [formData, setFormData] = useState<CreateAddressInput>({
     label: "home",
@@ -135,6 +139,12 @@ export function AddressStep({
       console.error("[AddressStep] Set default error:", err);
       toast.error("Failed to set default address");
     }
+  };
+
+  const handleEditAddress = (address: Address, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingAddress(address);
+    setIsEditModalOpen(true);
   };
 
   if (isLoading) {
@@ -366,7 +376,15 @@ export function AddressStep({
                     Set as Default
                   </button>
                 )}
-                <div className="ml-auto">
+                <div className="ml-auto flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={(e) => handleEditAddress(address, e)}
+                    className="flex items-center gap-1 font-medium text-neutral-500 hover:text-rose-600"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" />
+                    <span>Edit</span>
+                  </button>
                   <button
                     type="button"
                     onClick={(e) => handleDeleteAddress(address.id, e)}
@@ -381,6 +399,21 @@ export function AddressStep({
           );
         })}
       </div>
+
+      <AddressFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingAddress(null);
+        }}
+        initialData={editingAddress}
+        onSuccess={async (updated) => {
+          await fetchAddresses();
+          if (selectedAddressId === updated.id) {
+            onSelectAddress(updated);
+          }
+        }}
+      />
     </div>
   );
 }
