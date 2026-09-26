@@ -26,6 +26,7 @@ export async function proxy(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 30, // 30 days
       httpOnly: false,
       sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
     });
     return redirectRes;
   }
@@ -132,6 +133,18 @@ export async function proxy(request: NextRequest) {
     if (!role || !["admin", "staff"].includes(role)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
+  }
+
+  // Re-stamp bypass cookie so Supabase's setAll (which replaces the response
+  // object entirely) can never silently drop it from the Set-Cookie headers.
+  if (hasBypass) {
+    response.cookies.set("linge_preview_access", "true", {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      httpOnly: false,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
   }
 
   return response;
