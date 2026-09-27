@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { useWishlistStore } from "@/stores/useWishlistStore";
 import {
   ArrowLeft,
   Heart,
   Menu,
+  Package,
+  Ruler,
   Search,
   ShoppingBag,
   User,
@@ -19,9 +22,11 @@ import {
 import { cn } from "@/lib/utils";
 
 import { LogoutButton } from "@/components/account/LogoutButton";
+import { LogoutModal } from "@/components/account/LogoutModal";
 import { CartDrawer } from "@/components/cart/cart-drawer";
 import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
+import { UserDropdown } from "./UserDropdown";
 import {
   COMBO_QUICK_LINKS,
   MARQUEE_ANNOUNCEMENTS,
@@ -50,8 +55,14 @@ export function Header() {
 
   const wishlistItems = useWishlistStore((state) => state.items);
   const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
-  const isAuthenticated = useWishlistStore((state) => state.isAuthenticated);
   const wishlistCount = wishlistItems.length;
+
+  const { isAuthenticated, profile, init } = useAuthStore();
+
+  useEffect(() => {
+    const unsub = init();
+    return unsub;
+  }, [init]);
 
   useEffect(() => {
     fetchWishlist();
@@ -123,13 +134,7 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </button>
 
-              <Link
-                href="/account"
-                className="hidden h-9 w-9 items-center justify-center rounded-full text-gray-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] sm:flex"
-                aria-label="Account"
-              >
-                <User className="h-5 w-5" />
-              </Link>
+              <UserDropdown className="hidden sm:block" />
 
               <Link
                 href="/wishlist"
@@ -295,26 +300,111 @@ export function Header() {
                     )}
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    href="/account"
-                    className="flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <User className="h-4 w-4 text-gray-500" />
-                      My Account
-                    </span>
-                  </Link>
-                </li>
-                {isAuthenticated && (
-                  <li>
-                    <LogoutButton
-                      variant="menu-item"
-                      className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-rose-50 hover:text-rose-700"
-                      onSuccess={() => setMobileOpen(false)}
-                    />
-                  </li>
+                {isAuthenticated ? (
+                  <>
+                    <li className="pt-2">
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] font-serif text-xs font-bold text-white">
+                            {profile?.firstName ? (
+                              profile.firstName[0].toUpperCase()
+                            ) : (
+                              <User className="h-4 w-4" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-bold text-neutral-900">
+                              {profile?.firstName
+                                ? `${profile.firstName} ${profile.lastName || ""}`.trim()
+                                : "Valued Customer"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <Link
+                        href="/account"
+                        className="flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <User className="h-4 w-4 text-gray-500" />
+                          Account Dashboard
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/account/orders"
+                        className="flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Package className="h-4 w-4 text-gray-500" />
+                          My Orders
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/size-calculator"
+                        className="flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Ruler className="h-4 w-4 text-gray-500" />
+                          FitCode™ Bra Calculator
+                        </span>
+                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
+                          Quiz
+                        </span>
+                      </Link>
+                    </li>
+                    <li>
+                      <LogoutButton
+                        variant="menu-item"
+                        className="w-full rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-800 hover:bg-rose-50 hover:text-rose-700"
+                        onSuccess={() => setMobileOpen(false)}
+                      />
+                    </li>
+                  </>
+                ) : (
+                  <>
+                    <li className="pt-2">
+                      <div className="rounded-xl border border-rose-100 bg-rose-50/50 p-3.5 text-center">
+                        <p className="font-serif text-sm font-bold text-[var(--accent-plum)]">
+                          Welcome to Surekh
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-gray-500">
+                          Sign in for express checkout, order tracking &
+                          rewards.
+                        </p>
+                        <Link
+                          href="/login"
+                          onClick={() => setMobileOpen(false)}
+                          className="mt-3 flex w-full items-center justify-center rounded-xl bg-[var(--accent)] py-2 text-xs font-bold tracking-wider text-white uppercase shadow-xs transition-colors hover:bg-[var(--accent-dark)]"
+                        >
+                          Sign In / Register
+                        </Link>
+                      </div>
+                    </li>
+                    <li>
+                      <Link
+                        href="/size-calculator"
+                        className="flex items-center justify-between rounded-lg px-4 py-2.5 text-sm font-semibold text-gray-800 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Ruler className="h-4 w-4 text-gray-500" />
+                          FitCode™ Bra Calculator
+                        </span>
+                        <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
+                          Free
+                        </span>
+                      </Link>
+                    </li>
+                  </>
                 )}
               </ul>
 
@@ -369,6 +459,9 @@ export function Header() {
 
       {/* Cart Drawer Overlay */}
       <CartDrawer />
+
+      {/* Global Sign Out Confirmation Modal */}
+      <LogoutModal />
     </header>
   );
 }
