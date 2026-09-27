@@ -2,14 +2,17 @@
 
 import React, { useState } from "react";
 
-import { CheckCircle2, Ruler, Sparkles, X } from "lucide-react";
+import { CheckCircle2, Ruler, Sparkles, Table, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+
+import { SizeCalculatorWizard } from "@/components/size-calculator/SizeCalculatorWizard";
 
 interface SizeGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
   categoryName?: string;
+  onSelectSize?: (size: string) => void;
 }
 
 type Unit = "in" | "cm";
@@ -118,7 +121,11 @@ export function SizeGuideModal({
   isOpen,
   onClose,
   categoryName = "Apparel",
+  onSelectSize,
 }: SizeGuideModalProps) {
+  const [activeTab, setActiveTab] = useState<"calculator" | "chart">(
+    "calculator"
+  );
   const [unit, setUnit] = useState<Unit>("in");
 
   if (!isOpen) return null;
@@ -147,7 +154,7 @@ export function SizeGuideModal({
               </span>
             </div>
             <h2 className="mt-1 font-serif text-xl font-black text-gray-900 sm:text-2xl">
-              Size & Fit Measurement Guide
+              Size Finder & Measurement Guide
             </h2>
           </div>
           <button
@@ -159,122 +166,194 @@ export function SizeGuideModal({
           </button>
         </div>
 
-        {/* Unit Toggle */}
-        <div className="mt-5 flex items-center justify-between">
-          <p className="text-xs text-gray-600">
-            Measurements are body dimensions in{" "}
-            <strong>{unit === "in" ? "Inches" : "Centimeters"}</strong>.
-          </p>
-          <div className="flex rounded-none border border-gray-200 bg-gray-50 p-0.5">
-            <button
-              onClick={() => setUnit("in")}
-              className={cn(
-                "px-3 py-1 text-xs font-bold transition",
-                unit === "in"
-                  ? "bg-[var(--accent)] text-white shadow-xs"
-                  : "cursor-pointer text-gray-600 hover:text-black"
-              )}
-            >
-              Inches (in)
-            </button>
-            <button
-              onClick={() => setUnit("cm")}
-              className={cn(
-                "px-3 py-1 text-xs font-bold transition",
-                unit === "cm"
-                  ? "bg-[var(--accent)] text-white shadow-xs"
-                  : "cursor-pointer text-gray-600 hover:text-black"
-              )}
-            >
-              Centimeters (cm)
-            </button>
-          </div>
+        {/* Tab switcher */}
+        <div className="mt-4 flex border-b border-gray-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab("calculator")}
+            className={cn(
+              "flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-black tracking-wider uppercase transition",
+              activeTab === "calculator"
+                ? "border-[var(--accent)] text-[var(--accent)]"
+                : "border-transparent text-gray-500 hover:text-gray-900"
+            )}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Size Calculator
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("chart")}
+            className={cn(
+              "flex cursor-pointer items-center gap-2 border-b-2 px-4 py-2.5 text-xs font-black tracking-wider uppercase transition",
+              activeTab === "chart"
+                ? "border-[var(--accent)] text-[var(--accent)]"
+                : "border-transparent text-gray-500 hover:text-gray-900"
+            )}
+          >
+            <Table className="h-3.5 w-3.5" />
+            Size Chart
+          </button>
         </div>
 
-        {/* Size Chart Table */}
-        <div className="mt-4 overflow-x-auto border border-gray-200">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-gray-200 bg-gray-50 font-black tracking-wider text-gray-700 uppercase">
-              <tr>
-                <th className="p-3">Size</th>
-                <th className="p-3">Bust</th>
-                <th className="p-3">Underbust</th>
-                <th className="p-3">Waist</th>
-                <th className="p-3">Hips</th>
-                <th className="hidden p-3 sm:table-cell">Sister Cups</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 font-medium">
-              {SIZE_DATA.map((row) => (
-                <tr key={row.size} className="transition hover:bg-pink-50/40">
-                  <td className="bg-gray-50/60 p-3 font-bold text-gray-900">
-                    {row.size}
-                  </td>
-                  <td className="p-3">
-                    {unit === "in" ? row.bustIn : row.bustCm}
-                  </td>
-                  <td className="p-3">
-                    {unit === "in" ? row.underbustIn : row.underbustCm}
-                  </td>
-                  <td className="p-3">
-                    {unit === "in" ? row.waistIn : row.waistCm}
-                  </td>
-                  <td className="p-3">
-                    {unit === "in" ? row.hipsIn : row.hipsCm}
-                  </td>
-                  <td className="hidden p-3 text-[11px] text-gray-500 sm:table-cell">
-                    {row.cup}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* How to Measure Guidelines */}
-        <div className="mt-6 space-y-3 rounded-none border border-pink-100 bg-[var(--surface)] p-4">
-          <div className="flex items-center gap-2 text-xs font-black tracking-wider text-[var(--accent-plum)] uppercase">
-            <Ruler className="h-4 w-4 text-[var(--accent)]" />
-            How to Measure for Perfect Fit
+        {/* Tab 1: Live Size Calculator */}
+        {activeTab === "calculator" && (
+          <div className="mt-6">
+            <SizeCalculatorWizard
+              isModalMode={true}
+              onApplySize={(size) => {
+                onSelectSize?.(size);
+                onClose();
+              }}
+            />
           </div>
-          <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-2">
-            <div>
-              <strong className="mb-0.5 block text-gray-900">
-                1. Bust / Chest:
-              </strong>
-              Measure around the fullest part of your bust with a relaxed tape,
-              keeping it parallel to the floor.
+        )}
+
+        {/* Tab 2: Measurement Table */}
+        {activeTab === "chart" && (
+          <div className="mt-5 space-y-5">
+            {/* Unit Toggle */}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-gray-600">
+                Measurements are body dimensions in{" "}
+                <strong>{unit === "in" ? "Inches" : "Centimeters"}</strong>.
+              </p>
+              <div className="flex rounded-none border border-gray-200 bg-gray-50 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setUnit("in")}
+                  className={cn(
+                    "px-3 py-1 text-xs font-bold transition",
+                    unit === "in"
+                      ? "bg-[var(--accent)] text-white shadow-xs"
+                      : "cursor-pointer text-gray-600 hover:text-black"
+                  )}
+                >
+                  Inches (in)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUnit("cm")}
+                  className={cn(
+                    "px-3 py-1 text-xs font-bold transition",
+                    unit === "cm"
+                      ? "bg-[var(--accent)] text-white shadow-xs"
+                      : "cursor-pointer text-gray-600 hover:text-black"
+                  )}
+                >
+                  Centimeters (cm)
+                </button>
+              </div>
             </div>
-            <div>
-              <strong className="mb-0.5 block text-gray-900">
-                2. Underbust / Band:
-              </strong>
-              Measure directly beneath your bustline where the bra band sits
-              snugly.
+
+            {/* Size Chart Table */}
+            <div className="overflow-x-auto border border-gray-200">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-gray-200 bg-gray-50 font-black tracking-wider text-gray-700 uppercase">
+                  <tr>
+                    <th className="p-3">Size</th>
+                    <th className="p-3">Bust</th>
+                    <th className="p-3">Underbust</th>
+                    <th className="p-3">Waist</th>
+                    <th className="p-3">Hips</th>
+                    <th className="hidden p-3 sm:table-cell">Sister Cups</th>
+                    {onSelectSize && <th className="p-3 text-right">Action</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 font-medium">
+                  {SIZE_DATA.map((row) => (
+                    <tr
+                      key={row.size}
+                      className="transition hover:bg-pink-50/40"
+                    >
+                      <td className="bg-gray-50/60 p-3 font-bold text-gray-900">
+                        {row.size}
+                      </td>
+                      <td className="p-3">
+                        {unit === "in" ? row.bustIn : row.bustCm}
+                      </td>
+                      <td className="p-3">
+                        {unit === "in" ? row.underbustIn : row.underbustCm}
+                      </td>
+                      <td className="p-3">
+                        {unit === "in" ? row.waistIn : row.waistCm}
+                      </td>
+                      <td className="p-3">
+                        {unit === "in" ? row.hipsIn : row.hipsCm}
+                      </td>
+                      <td className="hidden p-3 text-[11px] text-gray-500 sm:table-cell">
+                        {row.cup}
+                      </td>
+                      {onSelectSize && (
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onSelectSize(row.size);
+                              onClose();
+                            }}
+                            className="cursor-pointer bg-gray-900 px-2.5 py-1 text-[11px] font-bold text-white hover:bg-black"
+                          >
+                            Select
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <div>
-              <strong className="mb-0.5 block text-gray-900">3. Waist:</strong>
-              Measure around your natural waistline (narrowest part of torso),
-              breathing naturally.
+
+            {/* How to Measure Guidelines */}
+            <div className="space-y-3 rounded-none border border-pink-100 bg-[var(--surface)] p-4">
+              <div className="flex items-center gap-2 text-xs font-black tracking-wider text-[var(--accent-plum)] uppercase">
+                <Ruler className="h-4 w-4 text-[var(--accent)]" />
+                How to Measure for Perfect Fit
+              </div>
+              <div className="grid grid-cols-1 gap-3 text-xs text-gray-600 sm:grid-cols-2">
+                <div>
+                  <strong className="mb-0.5 block text-gray-900">
+                    1. Bust / Chest:
+                  </strong>
+                  Measure around the fullest part of your bust with a relaxed
+                  tape, keeping it parallel to the floor.
+                </div>
+                <div>
+                  <strong className="mb-0.5 block text-gray-900">
+                    2. Underbust / Band:
+                  </strong>
+                  Measure directly beneath your bustline where the bra band sits
+                  snugly.
+                </div>
+                <div>
+                  <strong className="mb-0.5 block text-gray-900">
+                    3. Waist:
+                  </strong>
+                  Measure around your natural waistline (narrowest part of
+                  torso), breathing naturally.
+                </div>
+                <div>
+                  <strong className="mb-0.5 block text-gray-900">
+                    4. Hips:
+                  </strong>
+                  Measure around the fullest part of your hips and rear,
+                  standing with feet together.
+                </div>
+              </div>
             </div>
-            <div>
-              <strong className="mb-0.5 block text-gray-900">4. Hips:</strong>
-              Measure around the fullest part of your hips and rear, standing
-              with feet together.
+
+            {/* Fit Guarantee Tip */}
+            <div className="flex items-center gap-2.5 border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+              <span>
+                <strong>Pre-Purchase Sizing Tip:</strong> Between two sizes? If
+                you prefer a relaxed lounge feel, choose the larger size. If you
+                need help finding the right size, our support team is happy to
+                assist prior to purchase!
+              </span>
             </div>
           </div>
-        </div>
-
-        {/* Fit Guarantee Tip */}
-        <div className="mt-5 flex items-center gap-2.5 border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-          <span>
-            <strong>Pre-Purchase Sizing Tip:</strong> Between two sizes? If you
-            prefer a relaxed lounge feel, choose the larger size. If you need
-            help finding the right size, our support team is happy to assist
-            prior to purchase!
-          </span>
-        </div>
+        )}
       </div>
     </div>
   );
