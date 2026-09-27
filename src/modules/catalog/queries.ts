@@ -829,7 +829,7 @@ export async function getSearchSuggestions(
       .catch(() => []),
   ]);
 
-  // 1. Scoped Category suggestions (Zivame pattern: e.g. "bras upto 60% off in SALE")
+  // 1. Scoped Category suggestions (e.g. "bras upto 60% off in SALE")
   const categorySuggestions: SearchSuggestionsResult["categories"] = [
     {
       label: `${q} upto 65% off`,

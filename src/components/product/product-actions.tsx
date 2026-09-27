@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
+import { useFitStore } from "@/stores/useFitStore";
 import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
 import {
   Check,
@@ -34,6 +35,7 @@ interface ProductActionsProps {
 export function ProductActions({ product, initialColor }: ProductActionsProps) {
   const { addItem, isLoading: isCartLoading } = useCartStore();
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
+  const fitResult = useFitStore((state) => state.result);
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -215,6 +217,14 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
     }
   };
 
+  // Calculate if the user has a matching FitCode recommended size
+  const recommendedSize = useMemo(() => {
+    if (!fitResult) return null;
+    if (allSizes.includes(fitResult.alphaSize)) return fitResult.alphaSize;
+    if (allSizes.includes(fitResult.fullSize)) return fitResult.fullSize;
+    return null;
+  }, [allSizes, fitResult]);
+
   return (
     <div className="grid grid-cols-1 gap-x-12 gap-y-10 lg:grid-cols-12">
       {/* 1. Gallery Column (7 cols on desktop) */}
@@ -372,10 +382,38 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
               </button>
             </div>
 
+            {/* FitCode Recommendation Banner */}
+            {recommendedSize && (
+              <div className="flex items-center justify-between rounded-none border border-pink-200 bg-pink-50/60 px-3 py-1.5 text-xs">
+                <span className="flex items-center gap-1.5 font-bold text-gray-800">
+                  <Sparkles className="h-3.5 w-3.5 text-[var(--accent)]" />
+                  Your FitCode™ size:{" "}
+                  <strong className="text-[var(--accent)]">
+                    {recommendedSize}
+                  </strong>
+                  {fitResult && fitResult.fullSize !== recommendedSize && (
+                    <span className="font-normal text-gray-500">
+                      ({fitResult.fullSize})
+                    </span>
+                  )}
+                </span>
+                {selectedSize !== recommendedSize && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSize(recommendedSize)}
+                    className="cursor-pointer text-[11px] font-black text-[var(--accent)] uppercase hover:underline"
+                  >
+                    Select {recommendedSize}
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
               {allSizes.map((size) => {
                 const isSelected = selectedSize === size;
                 const isAvailable = sizeAvailability[size];
+                const isRecommended = recommendedSize === size;
                 return (
                   <button
                     key={size}
@@ -386,11 +424,18 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
                       isSelected
                         ? "border-2 border-[var(--accent)] bg-[var(--accent)] text-white shadow-md"
                         : isAvailable
-                          ? "border border-gray-300 bg-white text-gray-900 hover:border-gray-900 hover:shadow-xs"
+                          ? isRecommended
+                            ? "border-2 border-pink-300 bg-pink-50/40 text-gray-900 hover:border-gray-900"
+                            : "border border-gray-300 bg-white text-gray-900 hover:border-gray-900 hover:shadow-xs"
                           : "cursor-not-allowed border border-dashed border-gray-200 bg-gray-50 text-gray-300"
                     )}
                   >
                     {size}
+                    {isRecommended && !isSelected && (
+                      <span className="absolute -top-1.5 -right-1 flex h-3.5 items-center bg-[var(--accent)] px-1 text-[8px] font-bold text-white uppercase shadow-xs">
+                        Fit
+                      </span>
+                    )}
                     {!isAvailable && (
                       <svg
                         className="absolute inset-0 h-full w-full stroke-gray-300"
@@ -560,6 +605,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
         isOpen={sizeGuideOpen}
         onClose={() => setSizeGuideOpen(false)}
         categoryName={product.category?.name}
+        onSelectSize={(size) => setSelectedSize(size)}
       />
 
       {/* Sticky Mobile Buy Bar */}

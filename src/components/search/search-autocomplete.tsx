@@ -283,7 +283,7 @@ export function SearchAutocomplete({
         </div>
       </div>
 
-      {/* ── Zivame-style Floating / Mobile Overlay Autocomplete Dropdown ─────────── */}
+      {/* ── Floating / Mobile Overlay Autocomplete Dropdown ─────────── */}
       {isOpen && (
         <div
           className={cn(
@@ -301,7 +301,7 @@ export function SearchAutocomplete({
                   : "max-h-[440px] overflow-y-auto"
               )}
             >
-              {/* 1. Scoped Category suggestions (Zivame top section) */}
+              {/* 1. Scoped Category suggestions (top section) */}
               {suggestions.categories.length > 0 && (
                 <div className="py-1">
                   {suggestions.categories.map((cat, idx) => {
@@ -333,7 +333,7 @@ export function SearchAutocomplete({
                 </div>
               )}
 
-              {/* 2. Keyword suggestions (Zivame middle section) */}
+              {/* 2. Keyword suggestions (middle section) */}
               {suggestions.suggestions.length > 0 && (
                 <div className="border-t border-gray-100/80 py-1">
                   {suggestions.suggestions.map((item, idx) => {

@@ -46,7 +46,8 @@ export const FOOTER_LINK_GROUPS = {
     { label: "Loungewear & Camisoles", href: "/loungewear" },
   ],
   "Fit & Care": [
-    { label: "Size Guide", href: "/size-guide" },
+    { label: "Bra Size Calculator & FitCode™", href: "/size-calculator" },
+    { label: "Size & Measurement Guide", href: "/size-calculator" },
     { label: "Lingerie Care Guide", href: "/care-guide" },
     { label: "Find Your Style Quiz", href: "/quiz" },
   ],
