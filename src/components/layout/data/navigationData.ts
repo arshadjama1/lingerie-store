@@ -21,7 +21,7 @@ export const COMBO_QUICK_LINKS = [
   },
   {
     label: "Lingerie Sets",
-    href: "/p/overlap-bralette-hipster-set",
+    href: "/sets",
   },
   {
     label: "Bamboo Bras",

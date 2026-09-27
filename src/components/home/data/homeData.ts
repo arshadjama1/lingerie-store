@@ -46,7 +46,7 @@ export const COMBO_DEALS_DATA = [
     price: "₹650",
     original: "₹850",
     saving: "24% OFF",
-    href: "/p/overlap-bralette-hipster-set",
+    href: "/p/luxuria-pad-lingerie-set",
     color: "from-black/80 via-rose-950/45 to-transparent",
     image: "/images/products/lingerie-set-olive.png",
   },
