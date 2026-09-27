@@ -80,6 +80,6 @@
     "tsx": "^4.22.4",
     "typescript": "^5",
     "typescript-eslint": "^8.61.0",
-    "@netlify/plugin-nextjs": "^5.10.1"
+    "@netlify/plugin-nextjs": "^5.16.0"
   }
 }
