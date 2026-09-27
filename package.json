@@ -14,6 +14,7 @@
     "db:check": "drizzle-kit check",
     "lint": "eslint . --max-warnings=0 --no-warn-ignored",
     "type-check": "tsc --noEmit",
+    "test:core": "tsx scripts/verify-store.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"

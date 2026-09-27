@@ -38,6 +38,12 @@ const COLOR_HEX: Record<string, string> = {
   White: "#ffffff",
   Wine: "#722f37",
   Aqua: "#00bcd4",
+  Blue: "#2563eb",
+  Brown: "#6e473b",
+  Burgundy: "#6b1d2f",
+  Grey: "#71717a",
+  "Berry Pink": "#be185d",
+  Coffee: "#543d2b",
 };
 
 async function seed() {
@@ -93,7 +99,7 @@ async function seed() {
       slug: "bras",
       path: "bras",
       parentId: null,
-      imageUrl: `${IMG}/bamboo-bra-black.png`,
+      imageUrl: `${IMG}/bamboo-bra-black-1.png`,
       isActive: true,
       sortOrder: 1,
     },
@@ -103,7 +109,7 @@ async function seed() {
       slug: "panties",
       path: "panties",
       parentId: null,
-      imageUrl: `${IMG}/bamboo-undie-black.png`,
+      imageUrl: `${IMG}/bamboo-undie-black-1.png`,
       isActive: true,
       sortOrder: 2,
     },
@@ -113,7 +119,7 @@ async function seed() {
       slug: "sets",
       path: "sets",
       parentId: null,
-      imageUrl: `${IMG}/lingerie-set-olive.png`,
+      imageUrl: `${IMG}/lingerie-set-olive-1.png`,
       isActive: true,
       sortOrder: 3,
     },
@@ -143,7 +149,7 @@ async function seed() {
       slug: "loungewear",
       path: "loungewear",
       parentId: null,
-      imageUrl: `${IMG}/camisole-pink.png`,
+      imageUrl: `${IMG}/camisole-pink-1.png`,
       isActive: true,
       sortOrder: 6,
     },
@@ -219,13 +225,23 @@ The classic **black finish** makes it an effortless everyday essential, while th
       isBestSeller: true,
       productImages: [
         {
-          url: `${IMG}/bamboo-undie-black.png`,
-          alt: "Bamboo Fabric Undie – Black",
+          url: `${IMG}/bamboo-undie-black-1.png`,
+          alt: "Bamboo Fabric Undie – Black Studio Front",
           isPrimary: true,
         },
         {
-          url: `${IMG}/seamless-undie-navy.png`,
-          alt: "Bamboo Fabric Undie – Navy Blue",
+          url: `${IMG}/bamboo-undie-black-2.png`,
+          alt: "Bamboo Fabric Undie – Black Lifestyle",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/bamboo-undie-navy-1.png`,
+          alt: "Bamboo Fabric Undie – Navy Blue Studio",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/bamboo-undie-navy-2.png`,
+          alt: "Bamboo Fabric Undie – Navy Blue Lifestyle",
           isPrimary: false,
         },
       ],
@@ -237,9 +253,14 @@ The classic **black finish** makes it an effortless everyday essential, while th
           mrp: 300,
           images: [
             {
-              url: `${IMG}/bamboo-undie-black.png`,
-              alt: "Bamboo Fabric Undie Black",
+              url: `${IMG}/bamboo-undie-black-1.png`,
+              alt: "Bamboo Fabric Undie Black Studio",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/bamboo-undie-black-2.png`,
+              alt: "Bamboo Fabric Undie Black Lifestyle",
+              isPrimary: false,
             },
           ],
         },
@@ -250,9 +271,14 @@ The classic **black finish** makes it an effortless everyday essential, while th
           mrp: 300,
           images: [
             {
-              url: `${IMG}/seamless-undie-navy.png`,
-              alt: "Bamboo Fabric Undie Navy Blue",
+              url: `${IMG}/bamboo-undie-navy-1.png`,
+              alt: "Bamboo Fabric Undie Navy Blue Studio",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/bamboo-undie-navy-2.png`,
+              alt: "Bamboo Fabric Undie Navy Blue Lifestyle",
+              isPrimary: false,
             },
           ],
         },
@@ -300,18 +326,23 @@ The classic **black finish** makes it a versatile everyday essential, designed t
       isBestSeller: true,
       productImages: [
         {
-          url: `${IMG}/bamboo-bra-black.png`,
+          url: `${IMG}/bamboo-bra-black-1.png`,
           alt: "Bamboo Fabric Bra – Black Front",
           isPrimary: true,
         },
         {
-          url: `${IMG}/bamboo-bra-cinder.png`,
-          alt: "Bamboo Fabric Bra – Cinder",
+          url: `${IMG}/bamboo-bra-navy-1.png`,
+          alt: "Bamboo Fabric Bra – Navy Blue Front",
           isPrimary: false,
         },
         {
-          url: `${IMG}/bamboo-bra-navy.png`,
-          alt: "Bamboo Fabric Bra – Navy Front",
+          url: `${IMG}/bamboo-bra-cinder-1.png`,
+          alt: "Bamboo Fabric Bra – Cinder Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/bamboo-bra-black-2.png`,
+          alt: "Bamboo Fabric Bra – Black Detail",
           isPrimary: false,
         },
       ],
@@ -323,12 +354,22 @@ The classic **black finish** makes it a versatile everyday essential, designed t
           mrp: 400,
           images: [
             {
-              url: `${IMG}/bamboo-bra-black.png`,
+              url: `${IMG}/bamboo-bra-black-1.png`,
               alt: "Bamboo Fabric Bra Black Front",
               isPrimary: true,
             },
             {
-              url: `${IMG}/bamboo-bra-black-back.png`,
+              url: `${IMG}/bamboo-bra-black-2.png`,
+              alt: "Bamboo Fabric Bra Black Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-black-3.png`,
+              alt: "Bamboo Fabric Bra Black Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-black-4.png`,
               alt: "Bamboo Fabric Bra Black Back",
               isPrimary: false,
             },
@@ -341,13 +382,23 @@ The classic **black finish** makes it a versatile everyday essential, designed t
           mrp: 400,
           images: [
             {
-              url: `${IMG}/bamboo-bra-navy.png`,
-              alt: "Bamboo Fabric Bra Navy Front",
+              url: `${IMG}/bamboo-bra-navy-1.png`,
+              alt: "Bamboo Fabric Bra Navy Blue Front",
               isPrimary: true,
             },
             {
-              url: `${IMG}/bamboo-bra-navy-back.png`,
-              alt: "Bamboo Fabric Bra Navy Back",
+              url: `${IMG}/bamboo-bra-navy-2.png`,
+              alt: "Bamboo Fabric Bra Navy Blue Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-navy-3.png`,
+              alt: "Bamboo Fabric Bra Navy Blue Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-navy-4.png`,
+              alt: "Bamboo Fabric Bra Navy Blue Back",
               isPrimary: false,
             },
           ],
@@ -359,9 +410,24 @@ The classic **black finish** makes it a versatile everyday essential, designed t
           mrp: 400,
           images: [
             {
-              url: `${IMG}/bamboo-bra-cinder.png`,
-              alt: "Bamboo Fabric Bra Cinder",
+              url: `${IMG}/bamboo-bra-cinder-1.png`,
+              alt: "Bamboo Fabric Bra Cinder Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/bamboo-bra-cinder-2.png`,
+              alt: "Bamboo Fabric Bra Cinder Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-cinder-3.png`,
+              alt: "Bamboo Fabric Bra Cinder Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/bamboo-bra-cinder-4.png`,
+              alt: "Bamboo Fabric Bra Cinder Model",
+              isPrimary: false,
             },
           ],
         },
@@ -414,8 +480,8 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/mischief-lounge-bra-pink.png`,
-          alt: "Overlap Bralette with Hipster Set – Maroon",
+          url: `${IMG}/overlap-bralette-placeholder.png`,
+          alt: "Overlap Bralette with Hipster Set – Imagery Coming Soon",
           isPrimary: true,
         },
       ],
@@ -427,8 +493,8 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
           mrp: 750,
           images: [
             {
-              url: `${IMG}/mischief-lounge-bra-pink.png`,
-              alt: "Overlap Bralette Hipster Set Maroon",
+              url: `${IMG}/overlap-bralette-placeholder.png`,
+              alt: "Overlap Bralette Hipster Set Maroon – Imagery Coming Soon",
               isPrimary: true,
             },
           ],
@@ -477,9 +543,24 @@ The playful **pink finish** adds a fresh, cheerful touch, making it an effortles
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/mischief-lounge-bra-pink.png`,
-          alt: "Mischief Lounge Bra – Pink",
+          url: `${IMG}/mischief-lounge-bra-1.png`,
+          alt: "Mischief Lounge Bra – Pink Front",
           isPrimary: true,
+        },
+        {
+          url: `${IMG}/mischief-lounge-bra-2.png`,
+          alt: "Mischief Lounge Bra – Pink Side",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/mischief-lounge-bra-3.png`,
+          alt: "Mischief Lounge Bra – Pink Detail",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/mischief-lounge-bra-4.png`,
+          alt: "Mischief Lounge Bra – Pink Back",
+          isPrimary: false,
         },
       ],
       variants: [
@@ -490,9 +571,24 @@ The playful **pink finish** adds a fresh, cheerful touch, making it an effortles
           mrp: 300,
           images: [
             {
-              url: `${IMG}/mischief-lounge-bra-pink.png`,
-              alt: "Mischief Lounge Bra Pink",
+              url: `${IMG}/mischief-lounge-bra-1.png`,
+              alt: "Mischief Lounge Bra Pink Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/mischief-lounge-bra-2.png`,
+              alt: "Mischief Lounge Bra Pink Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/mischief-lounge-bra-3.png`,
+              alt: "Mischief Lounge Bra Pink Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/mischief-lounge-bra-4.png`,
+              alt: "Mischief Lounge Bra Pink Back",
+              isPrimary: false,
             },
           ],
         },
@@ -545,18 +641,23 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/floral-undie-navy.png`,
-          alt: "Pack of 3 Floral Undie – Navy Blue",
+          url: `${IMG}/floral-undie-navy-1.png`,
+          alt: "Pack of 3 Floral Undie – Navy Blue Front",
           isPrimary: true,
         },
         {
-          url: `${IMG}/floral-undie-pink.png`,
-          alt: "Pack of 3 Floral Undie – Pink",
+          url: `${IMG}/floral-undie-pink-1.png`,
+          alt: "Pack of 3 Floral Undie – Pink Front",
           isPrimary: false,
         },
         {
-          url: `${IMG}/floral-undie-green.png`,
-          alt: "Pack of 3 Floral Undie – Green",
+          url: `${IMG}/floral-undie-green-1.png`,
+          alt: "Pack of 3 Floral Undie – Green Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/floral-undie-navy-2.png`,
+          alt: "Pack of 3 Floral Undie – Navy Blue Angle",
           isPrimary: false,
         },
       ],
@@ -568,13 +669,23 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
           mrp: 750,
           images: [
             {
-              url: `${IMG}/floral-undie-navy.png`,
+              url: `${IMG}/floral-undie-navy-1.png`,
               alt: "Pack of 3 Floral Undie Navy Blue Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/floral-undie-navy-2.png`,
-              alt: "Pack of 3 Floral Undie Navy Blue Angle",
+              alt: "Pack of 3 Floral Undie Navy Blue Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/floral-undie-navy-3.png`,
+              alt: "Pack of 3 Floral Undie Navy Blue Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/floral-undie-navy-4.png`,
+              alt: "Pack of 3 Floral Undie Navy Blue Back",
               isPrimary: false,
             },
           ],
@@ -586,13 +697,23 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
           mrp: 750,
           images: [
             {
-              url: `${IMG}/floral-undie-pink.png`,
+              url: `${IMG}/floral-undie-pink-1.png`,
               alt: "Pack of 3 Floral Undie Pink Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/floral-undie-pink-2.png`,
-              alt: "Pack of 3 Floral Undie Pink Angle",
+              alt: "Pack of 3 Floral Undie Pink Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/floral-undie-pink-3.png`,
+              alt: "Pack of 3 Floral Undie Pink Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/floral-undie-pink-4.png`,
+              alt: "Pack of 3 Floral Undie Pink Back",
               isPrimary: false,
             },
           ],
@@ -604,13 +725,18 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
           mrp: 750,
           images: [
             {
-              url: `${IMG}/floral-undie-green.png`,
+              url: `${IMG}/floral-undie-green-1.png`,
               alt: "Pack of 3 Floral Undie Green Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/floral-undie-green-2.png`,
-              alt: "Pack of 3 Floral Undie Green Angle",
+              alt: "Pack of 3 Floral Undie Green Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/floral-undie-green-3.png`,
+              alt: "Pack of 3 Floral Undie Green Detail",
               isPrimary: false,
             },
           ],
@@ -669,13 +795,18 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
           isPrimary: true,
         },
         {
-          url: `${IMG}/seamless-undie-navy.png`,
+          url: `${IMG}/seamless-undie-navy-1.png`,
           alt: "Seamless Undie – Navy Blue Front",
           isPrimary: false,
         },
         {
-          url: `${IMG}/seamless-undie-navy-2.png`,
-          alt: "Seamless Undie – Navy Blue Detail",
+          url: `${IMG}/seamless-undie-black-1.png`,
+          alt: "Seamless Undie – Black Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/seamless-undie-maroon-1.png`,
+          alt: "Seamless Undie – Maroon Front",
           isPrimary: false,
         },
       ],
@@ -687,9 +818,24 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
           mrp: 750,
           images: [
             {
-              url: `${IMG}/seamless-undie-pack.png`,
-              alt: "Seamless Undie Pack Black",
+              url: `${IMG}/seamless-undie-black-1.png`,
+              alt: "Seamless Undie Pack Black Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/seamless-undie-black-2.png`,
+              alt: "Seamless Undie Pack Black Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/seamless-undie-black-3.png`,
+              alt: "Seamless Undie Pack Black Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/seamless-undie-black-4.png`,
+              alt: "Seamless Undie Pack Black Flat",
+              isPrimary: false,
             },
           ],
         },
@@ -700,18 +846,23 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
           mrp: 750,
           images: [
             {
-              url: `${IMG}/seamless-undie-navy.png`,
+              url: `${IMG}/seamless-undie-navy-1.png`,
               alt: "Seamless Undie Pack Navy Blue Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/seamless-undie-navy-2.png`,
-              alt: "Seamless Undie Pack Navy Blue Close-up",
+              alt: "Seamless Undie Pack Navy Blue Side",
               isPrimary: false,
             },
             {
               url: `${IMG}/seamless-undie-navy-3.png`,
-              alt: "Seamless Undie Pack Navy Blue Angle",
+              alt: "Seamless Undie Pack Navy Blue Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/seamless-undie-navy-4.png`,
+              alt: "Seamless Undie Pack Navy Blue Back",
               isPrimary: false,
             },
           ],
@@ -723,9 +874,24 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
           mrp: 750,
           images: [
             {
-              url: `${IMG}/seamless-undie-pack.png`,
-              alt: "Seamless Undie Pack Maroon",
+              url: `${IMG}/seamless-undie-maroon-1.png`,
+              alt: "Seamless Undie Pack Maroon Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/seamless-undie-maroon-2.png`,
+              alt: "Seamless Undie Pack Maroon Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/seamless-undie-maroon-3.png`,
+              alt: "Seamless Undie Pack Maroon Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/seamless-undie-maroon-4.png`,
+              alt: "Seamless Undie Pack Maroon Flat",
+              isPrimary: false,
             },
           ],
         },
@@ -773,13 +939,23 @@ Designed with **padded support**, the set offers a comfortable fit while creatin
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/lingerie-set-olive.png`,
-          alt: "Luxuria Pad Lingerie Set – Olive Standing",
+          url: `${IMG}/lingerie-set-olive-1.png`,
+          alt: "Luxuria Pad Lingerie Set – Olive Front",
           isPrimary: true,
         },
         {
+          url: `${IMG}/lingerie-set-maroon-1.png`,
+          alt: "Luxuria Pad Lingerie Set – Maroon Front",
+          isPrimary: false,
+        },
+        {
           url: `${IMG}/lingerie-set-olive-2.png`,
-          alt: "Luxuria Pad Lingerie Set – Olive Sitting",
+          alt: "Luxuria Pad Lingerie Set – Olive Side",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/lingerie-set-maroon-2.png`,
+          alt: "Luxuria Pad Lingerie Set – Maroon Side",
           isPrimary: false,
         },
       ],
@@ -791,12 +967,22 @@ Designed with **padded support**, the set offers a comfortable fit while creatin
           mrp: 700,
           images: [
             {
-              url: `${IMG}/lingerie-set-olive.png`,
+              url: `${IMG}/lingerie-set-olive-1.png`,
               alt: "Luxuria Pad Lingerie Set Olive Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/lingerie-set-olive-2.png`,
+              alt: "Luxuria Pad Lingerie Set Olive Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/lingerie-set-olive-3.png`,
+              alt: "Luxuria Pad Lingerie Set Olive Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/lingerie-set-olive-4.png`,
               alt: "Luxuria Pad Lingerie Set Olive Pose",
               isPrimary: false,
             },
@@ -804,14 +990,29 @@ Designed with **padded support**, the set offers a comfortable fit while creatin
         },
         {
           color: "Maroon",
-          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 650,
-          mrp: 650,
+          sizes: ["32", "34", "36"],
+          price: 700,
+          mrp: 700,
           images: [
             {
-              url: `${IMG}/lingerie-set-olive.png`,
-              alt: "Luxuria Pad Lingerie Set Maroon",
+              url: `${IMG}/lingerie-set-maroon-1.png`,
+              alt: "Luxuria Pad Lingerie Set Maroon Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/lingerie-set-maroon-2.png`,
+              alt: "Luxuria Pad Lingerie Set Maroon Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/lingerie-set-maroon-3.png`,
+              alt: "Luxuria Pad Lingerie Set Maroon Detail",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/lingerie-set-maroon-4.png`,
+              alt: "Luxuria Pad Lingerie Set Maroon Back",
+              isPrimary: false,
             },
           ],
         },
@@ -855,18 +1056,23 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/camisole-black.png`,
-          alt: "Camisole – Black",
+          url: `${IMG}/camisole-black-1.png`,
+          alt: "Camisole – Black Front",
           isPrimary: true,
         },
         {
-          url: `${IMG}/camisole-pink.png`,
+          url: `${IMG}/camisole-pink-1.png`,
           alt: "Camisole – Pink Front",
           isPrimary: false,
         },
         {
-          url: `${IMG}/camisole-pink-2.png`,
-          alt: "Camisole – Pink Pose",
+          url: `${IMG}/camisole-white-1.png`,
+          alt: "Camisole – White Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/camisole-wine-1.png`,
+          alt: "Camisole – Wine Front",
           isPrimary: false,
         },
       ],
@@ -878,9 +1084,24 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           mrp: 300,
           images: [
             {
-              url: `${IMG}/camisole-black.png`,
-              alt: "Camisole Black",
+              url: `${IMG}/camisole-black-1.png`,
+              alt: "Camisole Black Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/camisole-black-2.png`,
+              alt: "Camisole Black Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-black-3.png`,
+              alt: "Camisole Black Model",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-black-4.png`,
+              alt: "Camisole Black Detail",
+              isPrimary: false,
             },
           ],
         },
@@ -891,13 +1112,23 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           mrp: 300,
           images: [
             {
-              url: `${IMG}/camisole-pink.png`,
+              url: `${IMG}/camisole-pink-1.png`,
               alt: "Camisole Pink Front",
               isPrimary: true,
             },
             {
               url: `${IMG}/camisole-pink-2.png`,
-              alt: "Camisole Pink Angle",
+              alt: "Camisole Pink Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-pink-3.png`,
+              alt: "Camisole Pink Model",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-pink-4.png`,
+              alt: "Camisole Pink Detail",
               isPrimary: false,
             },
           ],
@@ -909,9 +1140,24 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           mrp: 300,
           images: [
             {
-              url: `${IMG}/camisole-black.png`,
-              alt: "Camisole Skin",
+              url: `${IMG}/camisole-skin-1.png`,
+              alt: "Camisole Skin Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/camisole-skin-2.png`,
+              alt: "Camisole Skin Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-skin-3.png`,
+              alt: "Camisole Skin Model",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-skin-4.png`,
+              alt: "Camisole Skin Detail",
+              isPrimary: false,
             },
           ],
         },
@@ -922,9 +1168,24 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           mrp: 300,
           images: [
             {
-              url: `${IMG}/camisole-black.png`,
-              alt: "Camisole White",
+              url: `${IMG}/camisole-white-1.png`,
+              alt: "Camisole White Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/camisole-white-2.png`,
+              alt: "Camisole White Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-white-3.png`,
+              alt: "Camisole White Model",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-white-4.png`,
+              alt: "Camisole White Detail",
+              isPrimary: false,
             },
           ],
         },
@@ -935,9 +1196,480 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           mrp: 300,
           images: [
             {
-              url: `${IMG}/camisole-black.png`,
-              alt: "Camisole Wine",
+              url: `${IMG}/camisole-wine-1.png`,
+              alt: "Camisole Wine Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/camisole-wine-2.png`,
+              alt: "Camisole Wine Side",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-wine-3.png`,
+              alt: "Camisole Wine Model",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/camisole-wine-4.png`,
+              alt: "Camisole Wine Detail",
+              isPrimary: false,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── 9. Boyleg Undies ─────────────────────────────────────────────────────
+    {
+      name: "Boyleg Undies",
+      slug: "boyleg",
+      categorySlug: "panties",
+      description: `# SUREK Seamless Boyleg Undies
+
+**Full coverage comfort, designed for effortless movement.**
+
+Meet the **SUREK Seamless Boyleg Undies**, designed to deliver maximum comfort with a supportive, smooth fit. Offering full rear and hip coverage with a non-chafing leg cut, these boyleg undies provide confidence under fitted clothes, loungewear, or athletic wear.
+
+Crafted from ultra-soft stretch fabric with flexible elasticity that hugs your curves without pinching or rolling.
+
+### Key Features
+
+* **Boyleg Cut:** Full hip and cheek coverage preventing ride-up and chafing.
+* **Ultra-Soft Stretch:** Smooth, breathable fabric that moves naturally with your body.
+* **Stay-Put Waistband:** Gentle, dig-free band designed to stay in place all day.
+* **Versatile Everyday Wear:** Perfect under activewear, dresses, or for comfortable sleep and lounging.
+* **Inclusive Sizing:** Available in **XS, S, M, L, XL, and XXL**.
+
+### Fabric Composition
+
+**95% Micro Modal / Bamboo | 5% Elastane**
+
+### Available Sizes
+
+**XS | S | M | L | XL | XXL**
+
+**SUREK — Everyday comfort, naturally.**`,
+      fabric: "95% Micro Modal, 5% Elastane",
+      tags: ["boyleg", "undie", "panty", "coverage", "seamless", "best-seller"],
+      isFeatured: true,
+      isBestSeller: true,
+      productImages: [
+        {
+          url: `${IMG}/boyleg-black-1.png`,
+          alt: "Boyleg Undies – Black Front",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/boyleg-blue-1.png`,
+          alt: "Boyleg Undies – Blue Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/boyleg-burgundy-1.png`,
+          alt: "Boyleg Undies – Burgundy Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/boyleg-grey-1.png`,
+          alt: "Boyleg Undies – Grey Front",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-black-1.png`,
+              alt: "Boyleg Undies Black Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-black-2.png`,
+              alt: "Boyleg Undies Black Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-black-3.png`,
+              alt: "Boyleg Undies Black Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-black-4.png`,
+              alt: "Boyleg Undies Black Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Blue",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-blue-1.png`,
+              alt: "Boyleg Undies Blue Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-blue-2.png`,
+              alt: "Boyleg Undies Blue Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-blue-3.png`,
+              alt: "Boyleg Undies Blue Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-blue-4.png`,
+              alt: "Boyleg Undies Blue Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Brown",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-brown-1.png`,
+              alt: "Boyleg Undies Brown Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-brown-2.png`,
+              alt: "Boyleg Undies Brown Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-brown-3.png`,
+              alt: "Boyleg Undies Brown Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-brown-4.png`,
+              alt: "Boyleg Undies Brown Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Burgundy",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-burgundy-1.png`,
+              alt: "Boyleg Undies Burgundy Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-burgundy-2.png`,
+              alt: "Boyleg Undies Burgundy Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-burgundy-3.png`,
+              alt: "Boyleg Undies Burgundy Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-burgundy-4.png`,
+              alt: "Boyleg Undies Burgundy Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Grey",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-grey-1.png`,
+              alt: "Boyleg Undies Grey Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-grey-2.png`,
+              alt: "Boyleg Undies Grey Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-grey-3.png`,
+              alt: "Boyleg Undies Grey Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-grey-4.png`,
+              alt: "Boyleg Undies Grey Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Berry Pink",
+          sizes: ["XS", "S", "M", "L", "XL", "XXL"],
+          price: 320,
+          mrp: 320,
+          images: [
+            {
+              url: `${IMG}/boyleg-berry-pink-1.png`,
+              alt: "Boyleg Undies Berry Pink Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/boyleg-berry-pink-2.png`,
+              alt: "Boyleg Undies Berry Pink Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-berry-pink-3.png`,
+              alt: "Boyleg Undies Berry Pink Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/boyleg-berry-pink-4.png`,
+              alt: "Boyleg Undies Berry Pink Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+      ],
+    },
+
+    // ── 10. Padded Lycra Bra ─────────────────────────────────────────────────
+    {
+      name: "Padded Lycra Bra",
+      slug: "padded-bra",
+      categorySlug: "bras",
+      description: `# SUREK Padded Lycra Bra
+
+**Smooth contour support meets ultra-soft luxury.**
+
+Meet the **SUREK Padded Lycra Bra**, expertly constructed with light contoured cups and premium high-recovery Lycra. Designed to offer gentle lift, seamless shape, and full-day comfort without digging or underwire discomfort.
+
+The smooth outer finish creates an invisible profile under tight tees and silky dresses, making it your go-to everyday essential.
+
+### Key Features
+
+* **Light Contoured Padding:** Delivers flattering shape, natural lift, and gentle modesty.
+* **Premium Lycra Blend:** High elasticity and resilient shape retention wash after wash.
+* **Wireless All-Day Support:** Comfortable freedom without restrictive wires.
+* **Smooth Seamless Cups:** Clean, invisible look under thin fabrics and t-shirts.
+* **Inclusive Sizing:** Available in **32, 34, 36, and 38**.
+
+### Fabric Composition
+
+**85% Polyamide Lycra | 15% Elastane**
+
+### Available Sizes
+
+**32 | 34 | 36 | 38**
+
+**SUREK — Everyday comfort, naturally.**`,
+      fabric: "85% Polyamide Lycra, 15% Elastane",
+      tags: ["bra", "padded", "lycra", "t-shirt-bra", "smooth", "best-seller"],
+      isFeatured: true,
+      isBestSeller: true,
+      productImages: [
+        {
+          url: `${IMG}/padded-bra-black-1.png`,
+          alt: "Padded Lycra Bra – Black Front",
+          isPrimary: true,
+        },
+        {
+          url: `${IMG}/padded-bra-blue-1.png`,
+          alt: "Padded Lycra Bra – Blue Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/padded-bra-pink-1.png`,
+          alt: "Padded Lycra Bra – Pink Front",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/padded-bra-olive-1.png`,
+          alt: "Padded Lycra Bra – Olive Front",
+          isPrimary: false,
+        },
+      ],
+      variants: [
+        {
+          color: "Black",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-black-1.png`,
+              alt: "Padded Lycra Bra Black Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-black-2.png`,
+              alt: "Padded Lycra Bra Black Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-black-3.png`,
+              alt: "Padded Lycra Bra Black Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-black-4.png`,
+              alt: "Padded Lycra Bra Black Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Blue",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-blue-1.png`,
+              alt: "Padded Lycra Bra Blue Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-blue-2.png`,
+              alt: "Padded Lycra Bra Blue Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-blue-3.png`,
+              alt: "Padded Lycra Bra Blue Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-blue-4.png`,
+              alt: "Padded Lycra Bra Blue Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Coffee",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-coffee-1.png`,
+              alt: "Padded Lycra Bra Coffee Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-coffee-2.png`,
+              alt: "Padded Lycra Bra Coffee Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-coffee-3.png`,
+              alt: "Padded Lycra Bra Coffee Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-coffee-4.png`,
+              alt: "Padded Lycra Bra Coffee Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Grey",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-grey-1.png`,
+              alt: "Padded Lycra Bra Grey Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-grey-2.png`,
+              alt: "Padded Lycra Bra Grey Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-grey-3.png`,
+              alt: "Padded Lycra Bra Grey Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-grey-4.png`,
+              alt: "Padded Lycra Bra Grey Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Olive",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-olive-1.png`,
+              alt: "Padded Lycra Bra Olive Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-olive-2.png`,
+              alt: "Padded Lycra Bra Olive Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-olive-3.png`,
+              alt: "Padded Lycra Bra Olive Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-olive-4.png`,
+              alt: "Padded Lycra Bra Olive Lifestyle",
+              isPrimary: false,
+            },
+          ],
+        },
+        {
+          color: "Pink",
+          sizes: ["32", "34", "36", "38"],
+          price: 450,
+          mrp: 450,
+          images: [
+            {
+              url: `${IMG}/padded-bra-pink-1.png`,
+              alt: "Padded Lycra Bra Pink Front",
+              isPrimary: true,
+            },
+            {
+              url: `${IMG}/padded-bra-pink-2.png`,
+              alt: "Padded Lycra Bra Pink Flat",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-pink-3.png`,
+              alt: "Padded Lycra Bra Pink Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/padded-bra-pink-4.png`,
+              alt: "Padded Lycra Bra Pink Lifestyle",
+              isPrimary: false,
             },
           ],
         },
@@ -985,7 +1717,7 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
       metaDesc: `Buy ${p.name} online at Surekh.${p.fabric ? ` Made from ${p.fabric}.` : ""} Shop premium innerwear with fast delivery.`,
     });
 
-    // Insert product-level images
+    // Insert product-level images (exactly 4 images)
     let imgSortOrder = 1;
     for (const img of p.productImages) {
       await db.insert(schema.productImages).values({
@@ -999,7 +1731,7 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
       });
     }
 
-    // Insert variants
+    // Insert variants & variant-level images
     let variantSortOrder = 0;
     for (const v of p.variants) {
       for (const size of v.sizes) {
@@ -1031,7 +1763,7 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
           lowStockAlert: 5,
         });
 
-        // Variant-level images
+        // Variant-level images (4 images per variant)
         let vImgSort = 1;
         for (const img of v.images) {
           await db.insert(schema.productImages).values({
@@ -1047,7 +1779,9 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
       }
     }
 
-    console.log(`  ✅ ${p.name} — ${p.variants.length} colour(s)`);
+    console.log(
+      `  ✅ ${p.name} — ${p.variants.length} colour(s) (4 product images, 4 images/colour)`
+    );
   }
 
   console.log("\n✅ Seed complete!");

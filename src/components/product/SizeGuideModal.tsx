@@ -269,9 +269,10 @@ export function SizeGuideModal({
         <div className="mt-5 flex items-center gap-2.5 border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
           <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
           <span>
-            <strong>Surekh Fit Guarantee:</strong> Between two sizes? If you
-            prefer a relaxed lounge feel, choose the larger size. Free exchanges
-            within 15 days if the fit isn't flawless!
+            <strong>Pre-Purchase Sizing Tip:</strong> Between two sizes? If you
+            prefer a relaxed lounge feel, choose the larger size. If you need
+            help finding the right size, our support team is happy to assist
+            prior to purchase!
           </span>
         </div>
       </div>

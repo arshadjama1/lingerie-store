@@ -1,12 +1,12 @@
 // ── Header Marquee Announcements ────────────────────────────────────
 export const MARQUEE_ANNOUNCEMENTS = [
-  "Free Returns on All Orders",
+  "Tamper-Proof Hygiene Seals",
   "100% Privacy Guaranteed",
   "Cash on Delivery Available",
-  "Free Shipping Above ₹999",
+  "Free Shipping Above ₹1,299",
   "Bamboo Fabric – Softest You'll Ever Wear",
   "Discreet Packaging, Always",
-  "15-Day Easy Exchange Policy",
+  "Hygiene & Quality Assured",
 ];
 
 // ── Header Quick Offer Links ──────────────────────────────────────────
@@ -21,7 +21,7 @@ export const COMBO_QUICK_LINKS = [
   },
   {
     label: "Lingerie Sets",
-    href: "/p/overlap-bralette-hipster-set",
+    href: "/sets",
   },
   {
     label: "Bamboo Bras",

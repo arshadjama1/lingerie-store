@@ -7,6 +7,7 @@ import {
   Mail,
   RotateCcw,
   ShieldCheck,
+  Truck,
 } from "lucide-react";
 
 import {
@@ -18,7 +19,7 @@ interface LegalShellProps {
   title: string;
   subtitle: string;
   lastUpdated?: string;
-  activeTab: "privacy" | "terms" | "returns";
+  activeTab: "privacy" | "terms" | "returns" | "shipping";
   breadcrumbItems: BreadcrumbItem[];
   children: React.ReactNode;
 }
@@ -41,6 +42,12 @@ const POLICY_TABS = [
     label: "Return & Exchange Policy",
     href: "/legal/returns",
     icon: RotateCcw,
+  },
+  {
+    id: "shipping",
+    label: "Shipping & Delivery",
+    href: "/shipping",
+    icon: Truck,
   },
 ] as const;
 

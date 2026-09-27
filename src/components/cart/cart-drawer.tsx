@@ -76,8 +76,8 @@ export function CartDrawer() {
       ? Math.round(((originalMrp - subtotal) / originalMrp) * 100)
       : 0;
 
-  // Free shipping milestone (₹999)
-  const freeShippingThreshold = 999;
+  // Free shipping milestone (₹1,299)
+  const freeShippingThreshold = 1299;
   const isFreeShipping = subtotal >= freeShippingThreshold;
 
   const progressPercent = Math.min(
@@ -159,8 +159,8 @@ export function CartDrawer() {
                     <div className="mt-1.5 flex justify-between text-[10px] font-semibold text-neutral-500">
                       <span>₹0</span>
                       <span className="flex items-center gap-1">
-                        <Truck className="h-3 w-3 text-[var(--accent)]" /> ₹999
-                        Free Shipping
+                        <Truck className="h-3 w-3 text-[var(--accent)]" />{" "}
+                        ₹1,299 Free Shipping
                       </span>
                     </div>
                   </div>

@@ -8,7 +8,6 @@ import {
   Check,
   Heart,
   Lock,
-  RefreshCw,
   Share2,
   ShieldCheck,
   ShoppingBag,
@@ -530,14 +529,14 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
           <div className="flex items-center gap-2.5 font-medium">
             <Truck className="h-4 w-4 shrink-0 text-[var(--accent)]" />
             <span>
-              <strong>Free Express Shipping</strong> in India on orders above
-              ₹999
+              <strong>Free Express Shipping</strong> in India on orders above{" "}
+              ₹1,299
             </span>
           </div>
           <div className="flex items-center gap-2.5 font-medium">
-            <RefreshCw className="h-4 w-4 shrink-0 text-sky-600" />
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
             <span>
-              <strong>15-Day Hassle-Free Returns</strong> & easy size exchange
+              <strong>Hygiene Assured</strong> &amp; 48-hr damage replacement
             </span>
           </div>
           <div className="flex items-center gap-2.5 font-medium">

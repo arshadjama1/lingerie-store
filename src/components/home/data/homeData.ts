@@ -1,12 +1,4 @@
-import {
-  Lock,
-  RefreshCw,
-  ShieldCheck,
-  Star,
-  Tag,
-  Truck,
-  Users,
-} from "lucide-react";
+import { Lock, ShieldCheck, Star, Tag, Truck, Users } from "lucide-react";
 
 // ── Super Saver Combo Deals Strip ────────────────────────────────────
 export const COMBO_DEALS_DATA = [
@@ -46,7 +38,7 @@ export const COMBO_DEALS_DATA = [
     price: "₹650",
     original: "₹850",
     saving: "24% OFF",
-    href: "/p/overlap-bralette-hipster-set",
+    href: "/p/luxuria-pad-lingerie-set",
     color: "from-black/80 via-rose-950/45 to-transparent",
     image: "/images/products/lingerie-set-olive.png",
   },
@@ -278,13 +270,13 @@ export const TESTIMONIALS_DATA = [
 export const TRUST_ITEMS_DATA = [
   {
     title: "Free Express Shipping",
-    desc: "On all orders above ₹999",
+    desc: "On all orders above ₹1,299",
     icon: Truck,
   },
   {
-    title: "15-Day Easy Returns",
-    desc: "Hassle-free size exchanges",
-    icon: RefreshCw,
+    title: "Hygiene & Quality Assured",
+    desc: "48-hr damage replacement",
+    icon: ShieldCheck,
   },
   {
     title: "100% Discreet Packaging",
@@ -292,9 +284,9 @@ export const TRUST_ITEMS_DATA = [
     icon: Lock,
   },
   {
-    title: "Perfect Fit Guaranteed",
-    desc: "Expert sizing & support",
-    icon: ShieldCheck,
+    title: "Pre-Purchase Fit Guidance",
+    desc: "Detailed sizing & support",
+    icon: Users,
   },
 ];
 
