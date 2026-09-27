@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CreditCard,
   History,
+  Mail,
   MapPin,
   Package2,
   Truck,
@@ -392,10 +393,21 @@ export default async function OrderDetailPage({
                 <p className="mt-1 text-xs leading-relaxed text-neutral-600">
                   This shipment has been processed and handed over to our
                   logistics partner <strong>DTDC Express</strong>. In-transit
-                  orders cannot be cancelled or rerouted. Once delivered, if
-                  there is any defect or transit damage, you can report it
-                  within 48 hours for a replacement.
+                  orders cannot be self-cancelled or rerouted online.
                 </p>
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-200/70 pt-2.5 text-xs text-neutral-600">
+                  <span>
+                    Need urgent help or wish to request cancellation? Contact
+                    Customer Support at
+                  </span>
+                  <a
+                    href={`mailto:support@surekh.co.in?subject=Cancellation%20Request%20-%20Order%20${encodeURIComponent(order.orderNumber)}`}
+                    className="inline-flex items-center gap-1 font-semibold text-rose-700 hover:text-rose-800 hover:underline"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    support@surekh.co.in
+                  </a>
+                </div>
               </div>
             </section>
           ) : null}
