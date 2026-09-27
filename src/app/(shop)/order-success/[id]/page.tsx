@@ -190,6 +190,18 @@ export default async function OrderSuccessPage({
               Continue Shopping
             </Link>
           </div>
+
+          {/* Cancellation reassurance note */}
+          <p className="mt-5 text-center text-xs text-neutral-400">
+            Need to change your mind? Free cancellation is available from your{" "}
+            <Link
+              href={`/account/orders/${order.id}`}
+              className="text-neutral-600 underline hover:text-neutral-900"
+            >
+              order details
+            </Link>{" "}
+            before warehouse dispatch.
+          </p>
         </div>
       </div>
     </div>

@@ -347,22 +347,58 @@ export default async function OrderDetailPage({
           )}
 
           {/* ── Action Zone ── */}
-          {(canCancel || canReturn) && (
+          {canCancel ? (
             <section className="rounded-2xl border border-neutral-200 bg-white p-6">
               <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
                 Order Actions
               </h2>
-              {canCancel && <CancelOrderButton orderId={order.id} />}
-              {canReturn && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="mb-3 text-sm font-medium text-neutral-800">
-                    Request a Return
-                  </h3>
-                  <ReturnRequestForm orderId={order.id} />
+                  <p className="text-sm font-medium text-neutral-800">
+                    Need to cancel this order?
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    Free cancellation is available before warehouse dispatch. A
+                    full refund will be processed to your original payment
+                    method.
+                  </p>
                 </div>
-              )}
+                <div className="shrink-0">
+                  <CancelOrderButton orderId={order.id} />
+                </div>
+              </div>
             </section>
-          )}
+          ) : canReturn ? (
+            <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+              <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
+                Order Actions
+              </h2>
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-neutral-800">
+                  Request a Return
+                </h3>
+                <ReturnRequestForm orderId={order.id} />
+              </div>
+            </section>
+          ) : order.status === "processing" || order.status === "shipped" ? (
+            <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+              <h2 className="mb-3 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
+                Order Actions
+              </h2>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50/70 p-4">
+                <p className="text-xs font-semibold text-neutral-800">
+                  Cancellation window closed
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-600">
+                  This shipment has been processed and handed over to our
+                  logistics partner <strong>DTDC Express</strong>. In-transit
+                  orders cannot be cancelled or rerouted. Once delivered, if
+                  there is any defect or transit damage, you can report it
+                  within 48 hours for a replacement.
+                </p>
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>

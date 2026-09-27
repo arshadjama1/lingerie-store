@@ -54,7 +54,7 @@ export const FOOTER_LINK_GROUPS = {
   "Customer Support": [
     { label: "Track Your Order", href: "/account/orders" },
     { label: "Shipping & Delivery Policy", href: "/shipping" },
-    { label: "Return & Exchange Policy", href: "/legal/returns" },
+    { label: "Cancellation & Return Policy", href: "/legal/returns" },
     { label: "Contact Customer Care", href: "/contact" },
     { label: "FAQs", href: "/faqs" },
   ],
@@ -62,6 +62,6 @@ export const FOOTER_LINK_GROUPS = {
     { label: "Our Story & Mission", href: "/about" },
     { label: "Privacy Policy", href: "/legal/privacy" },
     { label: "Terms of Service", href: "/legal/terms" },
-    { label: "Return & Exchange Policy", href: "/legal/returns" },
+    { label: "Cancellation & Return Policy", href: "/legal/returns" },
   ],
 };
