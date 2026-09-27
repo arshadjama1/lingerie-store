@@ -1,14 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
 
-import { useCartStore } from "@/stores/useCartStore";
-import { useWishlistStore } from "@/stores/useWishlistStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { LogOut } from "lucide-react";
-import { toast } from "sonner";
 
-import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface LogoutButtonProps {
@@ -16,6 +12,7 @@ interface LogoutButtonProps {
   variant?: "button" | "card" | "menu-item" | "ghost";
   showIcon?: boolean;
   label?: string;
+  confirm?: boolean;
   onSuccess?: () => void;
 }
 
@@ -24,62 +21,26 @@ export function LogoutButton({
   variant = "button",
   showIcon = true,
   label = "Sign Out",
+  confirm = true,
   onSuccess,
 }: LogoutButtonProps) {
-  const router = useRouter();
+  const { openSignOutModal, signOut } = useAuthStore();
   const [isPending, setIsPending] = useState(false);
 
-  const handleLogout = async (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isPending) return;
+    if (confirm) {
+      if (onSuccess) onSuccess();
+      openSignOutModal();
+      return;
+    }
 
     try {
       setIsPending(true);
-
-      // 1. Sign out on the server
-      const res = await fetch("/api/auth/signout", {
-        method: "POST",
-      });
-
-      // 2. Also sign out on the client Supabase instance
-      try {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-      } catch (clientErr) {
-        console.warn("[LogoutButton] Client signOut warning:", clientErr);
-      }
-
-      // 3. Clear client stores
-      useCartStore.setState({
-        cart: null,
-        isOpen: false,
-        isFastCheckoutOpen: false,
-      });
-      useWishlistStore.setState({ isAuthenticated: false });
-
-      // Trigger wishlist reload to restore local guest storage
-      useWishlistStore
-        .getState()
-        .fetchWishlist()
-        .catch(() => {});
-
-      if (!res.ok) {
-        console.warn("[LogoutButton] Server signout returned non-OK status");
-      }
-
-      toast.success("Signed out successfully");
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      router.push("/");
-      router.refresh();
-    } catch (err) {
-      console.error("[LogoutButton] Signout error:", err);
-      toast.error("Failed to sign out. Please try again.");
+      await signOut();
+      if (onSuccess) onSuccess();
     } finally {
       setIsPending(false);
     }
@@ -89,10 +50,10 @@ export function LogoutButton({
     return (
       <button
         type="button"
-        onClick={handleLogout}
+        onClick={handleClick}
         disabled={isPending}
         className={cn(
-          "group flex w-full flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 text-left shadow-sm transition-all hover:border-rose-200 hover:bg-rose-50/20 hover:shadow-md disabled:opacity-50",
+          "group flex w-full flex-col gap-4 rounded-2xl border border-neutral-200 bg-white p-6 text-left shadow-xs transition-all hover:border-rose-200 hover:bg-rose-50/20 hover:shadow-md disabled:opacity-50",
           className
         )}
       >
@@ -115,10 +76,10 @@ export function LogoutButton({
     return (
       <button
         type="button"
-        onClick={handleLogout}
+        onClick={handleClick}
         disabled={isPending}
         className={cn(
-          "flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-600 transition-colors hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50",
+          "flex w-full cursor-pointer items-center gap-2.5 px-4 py-2.5 text-left text-xs font-semibold text-neutral-600 transition-colors hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50",
           className
         )}
       >
@@ -134,10 +95,10 @@ export function LogoutButton({
     return (
       <button
         type="button"
-        onClick={handleLogout}
+        onClick={handleClick}
         disabled={isPending}
         className={cn(
-          "flex items-center gap-2 text-xs font-medium text-neutral-500 transition-colors hover:text-rose-700 disabled:opacity-50",
+          "flex cursor-pointer items-center gap-2 text-xs font-medium text-neutral-500 transition-colors hover:text-rose-700 disabled:opacity-50",
           className
         )}
       >
@@ -150,10 +111,10 @@ export function LogoutButton({
   return (
     <button
       type="button"
-      onClick={handleLogout}
+      onClick={handleClick}
       disabled={isPending}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 shadow-xs transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 disabled:opacity-50",
+        "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 shadow-xs transition-colors hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 disabled:opacity-50",
         className
       )}
     >
