@@ -247,7 +247,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: authPhone,
-          token: otpValue,
+          otp: otpValue,
         }),
       });
 
