@@ -153,7 +153,7 @@ export function PincodeChecker() {
                     : "💳 Online Payment Only"}
                 </span>
                 <span>•</span>
-                <span>Free Express Shipping on orders over ₹999</span>
+                <span>Free Express Shipping on orders over ₹1,299</span>
               </div>
             </>
           ) : (

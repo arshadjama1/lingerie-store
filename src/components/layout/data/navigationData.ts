@@ -1,12 +1,12 @@
 // ── Header Marquee Announcements ────────────────────────────────────
 export const MARQUEE_ANNOUNCEMENTS = [
-  "Free Returns on All Orders",
+  "15-Day Fit Exchange on Bras",
   "100% Privacy Guaranteed",
   "Cash on Delivery Available",
-  "Free Shipping Above ₹999",
+  "Free Shipping Above ₹1,299",
   "Bamboo Fabric – Softest You'll Ever Wear",
   "Discreet Packaging, Always",
-  "15-Day Easy Exchange Policy",
+  "Hygiene & Quality Assured",
 ];
 
 // ── Header Quick Offer Links ──────────────────────────────────────────

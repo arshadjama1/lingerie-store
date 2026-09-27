@@ -51,17 +51,36 @@ export default function ReturnsPolicyPage() {
               Hygiene & Personal Health Standard
             </span>
             <h2 className="font-serif text-xl font-black text-[var(--accent-plum)] sm:text-2xl">
-              1. General No Return & Exchange Policy
+              1. 15-Day Fit Exchange & Intimate Hygiene Standards
             </h2>
             <p className="text-sm leading-relaxed text-gray-700">
-              Because of hygiene and health regulations associated with
-              innerwear items,{" "}
-              <strong>
-                we do not accept returns, replacements, or exchanges for
-                products once they have been purchased
-              </strong>
-              , unless they arrive damaged or incorrect (as outlined below).
+              At Surekh, we want you to feel completely comfortable and
+              supported. Because intimate apparel requires strict personal
+              hygiene safeguards, our return and exchange guidelines are
+              tailored to the category of product:
             </p>
+            <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 sm:text-sm">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+                <strong className="block font-bold text-emerald-950">
+                  ✓ Bras, Camisoles & Lounge Sets
+                </strong>
+                <p className="mt-1 text-xs text-emerald-900/90">
+                  Eligible for a <strong>15-day size exchange</strong> provided
+                  the items are unworn, unwashed, unaltered, and all original
+                  tags remain securely attached.
+                </p>
+              </div>
+              <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-4">
+                <strong className="block font-bold text-rose-950">
+                  ✕ Panties & Undies Multi-Packs
+                </strong>
+                <p className="mt-1 text-xs text-rose-900/90">
+                  For sanitary and health regulations, panties and undie packs
+                  are <strong>final sale</strong> and non-exchangeable once the
+                  outer hygiene seal or packaging is opened.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

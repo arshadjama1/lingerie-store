@@ -278,12 +278,12 @@ export const TESTIMONIALS_DATA = [
 export const TRUST_ITEMS_DATA = [
   {
     title: "Free Express Shipping",
-    desc: "On all orders above ₹999",
+    desc: "On all orders above ₹1,299",
     icon: Truck,
   },
   {
-    title: "15-Day Easy Returns",
-    desc: "Hassle-free size exchanges",
+    title: "15-Day Fit Exchange",
+    desc: "Size exchange on bras & sets",
     icon: RefreshCw,
   },
   {

@@ -152,9 +152,9 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const couponDiscount = appliedCoupon?.discountAmount || 0;
   const totalSavings = couponDiscount;
 
-  // Shipping (Free above ₹999 or with promo)
+  // Shipping (Free above ₹1,299 or with promo)
   const isFreeShipping =
-    rawSubtotal >= 999 || appliedCoupon?.code === "FREESHIP";
+    rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP";
   const shippingFee = isFreeShipping ? 0 : 99;
 
   // Final Payable Total (No GST added per client pricing instructions)
@@ -503,14 +503,22 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                         </div>
 
                         <div className="mt-3 flex items-center justify-between border-t border-neutral-100 pt-2.5 text-xs">
-                          <div className="flex items-center gap-1.5 text-emerald-700">
+                          <div
+                            className={`flex items-center gap-1.5 ${
+                              isFreeShipping
+                                ? "text-emerald-700"
+                                : "text-neutral-700"
+                            }`}
+                          >
                             <Truck className="h-3.5 w-3.5" />
                             <span className="font-semibold">
-                              Free Shipping: Free
+                              {isFreeShipping
+                                ? "Free Shipping: FREE"
+                                : `Discreet Delivery: ₹${shippingFee}`}
                             </span>
                           </div>
                           <span className="text-[11px] text-neutral-400">
-                            Est. 6-8 business days
+                            Est. 2-5 business days
                           </span>
                         </div>
                       </div>

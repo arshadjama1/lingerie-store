@@ -45,7 +45,7 @@ export function calculateCheckoutTotals(
 
   const taxAmount = 0;
 
-  const shippingAmount = subtotal >= 999 ? 0 : 99;
+  const shippingAmount = subtotal >= 1299 ? 0 : 99;
 
   const total = Number(
     Math.max(0, subtotal - discountAmount + shippingAmount).toFixed(2)
