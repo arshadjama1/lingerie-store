@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ArrowLeft, Package, Truck } from "lucide-react";
+import { Package, Truck } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
 import { buildQueryString, formatPrice } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { buildQueryString, formatPrice } from "@/lib/utils";
 import { listUserOrders } from "@/modules/orders";
 import type { OrderStatus } from "@/modules/orders";
 
+import { AccountShell } from "@/components/account/AccountShell";
 import { Pagination } from "@/components/common/pagination";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 
@@ -127,47 +128,25 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const page = Math.max(1, Number(resolvedSearchParams.page ?? "1"));
   const filter = (resolvedSearchParams.filter ?? "all") as FilterTab;
 
-  // Fetch all orders (client-side filter is fine at this scale;
-  // server-side status filter can be added to listUserOrders later if needed)
   const { orders, total, totalPages } = await listUserOrders(user.id, { page });
-
   const filteredOrders = orders.filter((o) => matchesFilter(o.status, filter));
 
   return (
-    <div className="min-h-screen bg-neutral-50/50 py-10">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <Link
-            href="/account"
-            className="flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Account
-          </Link>
-        </div>
-
-        <div className="mb-5 flex items-center justify-between">
-          <h1 className="font-serif text-2xl font-bold text-neutral-900">
-            My Orders
-          </h1>
-          {total > 0 && (
-            <span className="text-sm text-neutral-500">
-              {total} {total === 1 ? "order" : "orders"}
-            </span>
-          )}
-        </div>
-
+    <AccountShell
+      title="My Orders"
+      subtitle="View order status, tracking timeline, invoices, and initiate size exchanges."
+    >
+      <div className="space-y-4">
         {/* Filter tabs */}
-        {total > 0 && (
-          <div className="mb-5 flex gap-2">
+        <div className="flex items-center justify-between gap-2 border-b border-neutral-200/80 pb-3">
+          <div className="flex gap-1.5">
             {FILTER_TABS.map((tab) => (
               <Link
                 key={tab.value}
                 href={`/account/orders${buildQueryString({ filter: tab.value, page: 1 })}`}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                   filter === tab.value
-                    ? "bg-neutral-900 text-white"
+                    ? "bg-neutral-900 text-white shadow-xs"
                     : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
                 }`}
               >
@@ -175,28 +154,34 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
               </Link>
             ))}
           </div>
-        )}
+
+          {total > 0 && (
+            <span className="text-xs font-medium text-neutral-500">
+              {total} {total === 1 ? "order" : "orders"}
+            </span>
+          )}
+        </div>
 
         {/* Empty state */}
         {filteredOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-20 text-center">
-            <Package className="mb-3 h-12 w-12 text-neutral-300" />
-            <h2 className="text-base font-semibold text-neutral-700">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-white py-16 text-center">
+            <Package className="mb-3 h-10 w-10 text-neutral-300" />
+            <h2 className="text-sm font-semibold text-neutral-700">
               {filter === "all"
-                ? "No orders yet"
+                ? "No orders found"
                 : "No orders in this category"}
             </h2>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 max-w-sm text-xs text-neutral-500">
               {filter === "all"
-                ? "When you place your first order, it will appear here."
-                : "Try switching the filter above."}
+                ? "When you purchase your first intimates set, your order details will be tracked here."
+                : "Try switching the filter above to view all orders."}
             </p>
             {filter === "all" && (
               <Link
                 href="/"
-                className="mt-6 rounded-xl bg-[var(--accent)] px-6 py-2.5 text-sm font-semibold text-white hover:bg-rose-800"
+                className="mt-5 rounded-xl bg-[var(--accent)] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[var(--accent-dark)]"
               >
-                Start Shopping
+                Explore Collection
               </Link>
             )}
           </div>
@@ -205,21 +190,25 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             {filteredOrders.map((order) => (
               <div
                 key={order.id}
-                className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm"
+                className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs transition-shadow hover:shadow-md"
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   {/* Left: order info */}
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium tracking-widest text-neutral-400 uppercase">
-                      {formatDate(order.createdAt)}
-                    </p>
-                    <p className="mt-0.5 font-mono text-sm font-bold text-neutral-900">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-medium tracking-wider text-neutral-400 uppercase">
+                        {formatDate(order.createdAt)}
+                      </p>
+                      <span className="text-neutral-300">•</span>
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                    <p className="mt-1 font-mono text-sm font-bold text-neutral-900">
                       {order.orderNumber}
                     </p>
-                    <p className="mt-1 text-xs text-neutral-500">
+                    <p className="mt-0.5 text-xs text-neutral-500">
                       {order.itemCount}{" "}
                       {order.itemCount === 1 ? "item" : "items"} ·{" "}
-                      <span className="font-medium text-neutral-800">
+                      <span className="font-semibold text-neutral-800">
                         {formatPrice(order.total)}
                       </span>
                     </p>
@@ -232,12 +221,11 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
                     />
                   </div>
 
-                  {/* Right: status + link */}
-                  <div className="flex shrink-0 flex-col items-end gap-3">
-                    <OrderStatusBadge status={order.status} />
+                  {/* Right: Actions */}
+                  <div className="flex shrink-0 items-center gap-2 sm:flex-col sm:items-end sm:gap-3">
                     <Link
                       href={`/account/orders/${order.id}`}
-                      className="text-xs font-medium text-rose-700 hover:text-rose-900 hover:underline"
+                      className="inline-flex items-center rounded-xl bg-neutral-900 px-3.5 py-2 text-xs font-semibold text-white shadow-2xs transition-colors hover:bg-neutral-800"
                     >
                       View Details →
                     </Link>
@@ -261,6 +249,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           </div>
         )}
       </div>
-    </div>
+    </AccountShell>
   );
 }
