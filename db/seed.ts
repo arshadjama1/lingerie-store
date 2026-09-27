@@ -200,6 +200,40 @@ async function seed() {
   }
 
   const products: ProductDef[] = [
+    // ── 0. Live ₹1 Demo Payment Test Item ────────────────────────────────────
+    {
+      name: "Surekh Live Demo Test Item (₹1)",
+      slug: "surekh-test-item-1rs",
+      categorySlug: "panties",
+      description:
+        "Surekh ₹1 Live Production Payment Testing Item. Used exclusively for end-to-end verification of payment gateway integration.",
+      fabric: "100% Cotton",
+      tags: ["demo", "test", "surekh"],
+      isFeatured: false,
+      isBestSeller: false,
+      productImages: [
+        {
+          url: `${IMG}/bamboo-undie-black-1.png`,
+          alt: "Surekh ₹1 Test Product",
+          isPrimary: true,
+        },
+      ],
+      variants: [
+        {
+          color: "Rose",
+          sizes: ["Standard"],
+          price: 1.0,
+          mrp: 1.0,
+          images: [
+            {
+              url: `${IMG}/bamboo-undie-black-1.png`,
+              alt: "Surekh ₹1 Test Product",
+              isPrimary: true,
+            },
+          ],
+        },
+      ],
+    },
     // ── 1. Bamboo Fabric Undie ───────────────────────────────────────────────
     {
       name: "Bamboo Fabric Undie",
@@ -1759,7 +1793,9 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
         skuCounter++;
         const variantId = createId();
         const colorSlug = v.color.toLowerCase().replace(/\s+/g, "-");
-        const sku = `SRK-${p.slug.substring(0, 6).toUpperCase().replace(/-/g, "")}-${colorSlug.substring(0, 3).toUpperCase()}-${size}-${skuCounter}`;
+        const sku = p.slug.startsWith("surekh-test")
+          ? "DEMO-TEST-01"
+          : `SRK-${p.slug.substring(0, 6).toUpperCase().replace(/-/g, "")}-${colorSlug.substring(0, 3).toUpperCase()}-${size}-${skuCounter}`;
 
         allVariantsToInsert.push({
           id: variantId,

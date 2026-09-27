@@ -45,7 +45,14 @@ export function calculateCheckoutTotals(
 
   const taxAmount = 0;
 
-  const shippingAmount = subtotal >= 1299 ? 0 : 99;
+  // Waive shipping fee if order is exclusively a demo/testing product (SKU starts with DEMO- or unitPrice <= 1)
+  const isDemoOrder =
+    lineItems.length > 0 &&
+    lineItems.every(
+      (item) => item.snapshot?.sku?.startsWith("DEMO-") || item.unitPrice <= 1
+    );
+
+  const shippingAmount = subtotal >= 1299 || isDemoOrder ? 0 : 99;
 
   const total = Number(
     Math.max(0, subtotal - discountAmount + shippingAmount).toFixed(2)

@@ -9,21 +9,24 @@ import {
   HelpCircle,
   Mail,
   Package,
+  RotateCcw,
   Ruler,
   ShieldAlert,
   Sparkles,
+  Truck,
+  XCircle,
 } from "lucide-react";
 
 import { LegalShell } from "@/components/legal/LegalShell";
 
 export const metadata: Metadata = {
-  title: "Return & Exchange Policy | Surekh",
+  title: "Cancellation & Return Policy | Surekh",
   description:
-    "Review Surekh's official Return & Exchange Policy. Learn about our intimate hygiene standards, 48-hour damaged or incorrect item reporting, and fit assistance.",
+    "Review Surekh's official Cancellation, Return & Exchange Policy. Learn about free pre-dispatch cancellation, DTDC in-transit guidelines, intimate hygiene standards, and 48-hour damaged item claims.",
   openGraph: {
-    title: "Return & Exchange Policy | Surekh",
+    title: "Cancellation & Return Policy | Surekh",
     description:
-      "Important hygiene and return policy guidelines for Surekh innerwear orders.",
+      "Important guidelines regarding order cancellation before dispatch, in-transit status with DTDC Express, and intimate hygiene return policies.",
     type: "website",
   },
 };
@@ -31,15 +34,111 @@ export const metadata: Metadata = {
 export default function ReturnsPolicyPage() {
   return (
     <LegalShell
-      title="Return & Exchange Policy"
-      subtitle="Hygiene standards, size guidance, and resolution procedures for damaged or incorrect deliveries."
+      title="Cancellation & Return Policy"
+      subtitle="Clear guidelines for cancelling before dispatch, courier transit handoff, and hygiene-compliant returns."
       activeTab="returns"
       breadcrumbItems={[
         { label: "Home", href: "/" },
         { label: "Legal", href: "/legal/returns" },
-        { label: "Return & Exchange Policy" },
+        { label: "Cancellation & Returns" },
       ]}
     >
+      {/* ── 1. Order Cancellation Policy (Pre-Dispatch vs In-Transit) ── */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-xs sm:p-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)]">
+            <XCircle className="h-4 w-4" />
+          </div>
+          <h2 className="font-serif text-xl font-bold text-[var(--accent-plum)]">
+            1. Order Cancellation Policy
+          </h2>
+        </div>
+
+        <p className="mt-4 text-sm leading-relaxed text-gray-700">
+          We want your shopping experience to be completely worry-free. Because
+          we process orders swiftly to ensure fast delivery across India,
+          cancellation availability depends on where your order is in the
+          fulfillment lifecycle:
+        </p>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Case 1: Pre-Dispatch (Allowed) */}
+          <div className="flex flex-col justify-between rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
+            <div>
+              <div className="flex items-center gap-2 text-emerald-900">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <h3 className="text-sm font-bold">Pre-Dispatch Window</h3>
+              </div>
+              <span className="mt-1 inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-emerald-800 uppercase">
+                Free Cancellation
+              </span>
+              <p className="mt-2 text-xs leading-relaxed text-emerald-950/80">
+                You can cancel your order free of charge directly from{" "}
+                <Link
+                  href="/account/orders"
+                  className="font-semibold underline"
+                >
+                  My Orders
+                </Link>{" "}
+                as long as the status is <strong>Pending</strong> or{" "}
+                <strong>Confirmed</strong>.
+              </p>
+            </div>
+            <p className="mt-3 border-t border-emerald-200/60 pt-2 text-[11px] text-emerald-800">
+              ✓ Full refund to original payment method within 5–7 business days.
+              Inventory is immediately released.
+            </p>
+          </div>
+
+          {/* Case 2: In-Transit / Dispatched (Locked) */}
+          <div className="flex flex-col justify-between rounded-xl border border-blue-200 bg-blue-50/40 p-5">
+            <div>
+              <div className="flex items-center gap-2 text-blue-900">
+                <Truck className="h-4 w-4 text-blue-600" />
+                <h3 className="text-sm font-bold">
+                  In-Transit / Courier Handoff
+                </h3>
+              </div>
+              <span className="mt-1 inline-block rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-blue-800 uppercase">
+                Cannot Be Cancelled
+              </span>
+              <p className="mt-2 text-xs leading-relaxed text-blue-950/80">
+                Once an order transitions to <strong>Processing</strong> or{" "}
+                <strong>Shipped</strong>, the consignment has been booked and
+                manifests with our logistics partner{" "}
+                <strong>DTDC Express</strong>.
+              </p>
+            </div>
+            <p className="mt-3 border-t border-blue-200/60 pt-2 text-[11px] text-blue-800">
+              ℹ Packages in transit cannot be modified or rerouted. If no longer
+              required, delivery may be declined at your doorstep.
+            </p>
+          </div>
+
+          {/* Case 3: Post-Delivery (Returns & Hygiene) */}
+          <div className="flex flex-col justify-between rounded-xl border border-pink-200 bg-pink-50/40 p-5">
+            <div>
+              <div className="flex items-center gap-2 text-pink-900">
+                <RotateCcw className="h-4 w-4 text-[var(--accent)]" />
+                <h3 className="text-sm font-bold">Post-Delivery Stage</h3>
+              </div>
+              <span className="mt-1 inline-block rounded-full bg-pink-100 px-2.5 py-0.5 text-[10px] font-bold tracking-wider text-[var(--accent-dark)] uppercase">
+                Hygiene Policy Applies
+              </span>
+              <p className="mt-2 text-xs leading-relaxed text-pink-950/80">
+                Once delivered, intimate apparel cannot be returned or exchanged
+                due to sanitary hygiene regulations, unless defective or
+                damaged.
+              </p>
+            </div>
+            <p className="mt-3 border-t border-pink-200/60 pt-2 text-[11px] text-pink-800">
+              ℹ Damaged or incorrect shipments must be reported within 48 hours
+              of delivery (see Section 3).
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Hygiene Notice Callout */}
       <div className="rounded-2xl border-2 border-pink-300 bg-gradient-to-br from-[#fff5f8] via-white to-pink-50/50 p-6 shadow-xs sm:p-8">
         <div className="flex items-start gap-4">
@@ -51,7 +150,7 @@ export default function ReturnsPolicyPage() {
               Hygiene & Personal Health Standard
             </span>
             <h2 className="font-serif text-xl font-black text-[var(--accent-plum)] sm:text-2xl">
-              1. General No Return & Exchange Policy
+              2. General No Return & Exchange Policy
             </h2>
             <p className="text-sm leading-relaxed text-gray-700">
               Because of hygiene and health regulations associated with
@@ -95,14 +194,14 @@ export default function ReturnsPolicyPage() {
         </div>
       </div>
 
-      {/* 2. Damaged or Incorrect Items */}
+      {/* 3. Damaged or Incorrect Items */}
       <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-xs sm:p-8">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--accent-subtle)] text-[var(--accent)]">
             <Package className="h-4 w-4" />
           </div>
           <h2 className="font-serif text-xl font-bold text-[var(--accent-plum)]">
-            2. Damaged or Incorrect Items
+            3. Damaged or Incorrect Items
           </h2>
         </div>
 

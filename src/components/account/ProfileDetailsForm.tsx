@@ -3,15 +3,8 @@
 import React, { useState } from "react";
 
 import type { Profile } from "@/db/schema";
-import {
-  Check,
-  Info,
-  Loader2,
-  Lock,
-  Shield,
-  Sparkles,
-  User,
-} from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Check, Info, Loader2, Lock, Shield, User } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfileDetailsFormProps {
@@ -90,6 +83,7 @@ export function ProfileDetailsForm({
       }
 
       setProfile(data.profile);
+      useAuthStore.getState().setProfile(data.profile);
       setSavedSuccess(true);
       toast.success("Profile updated successfully");
       setTimeout(() => setSavedSuccess(false), 3000);
@@ -137,12 +131,6 @@ export function ProfileDetailsForm({
         </div>
 
         <div className="flex items-center gap-3">
-          {profile && profile.loyaltyPoints > 0 && (
-            <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800">
-              <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-              <span>{profile.loyaltyPoints} Points</span>
-            </div>
-          )}
           {memberSince && (
             <div className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-600">
               <Shield className="h-3.5 w-3.5 text-neutral-400" />

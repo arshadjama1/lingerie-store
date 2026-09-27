@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useRef, useState, useTransition } from "react";
 
-import { AlertCircle, ShieldCheck } from "lucide-react";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { AlertCircle, Edit2, RefreshCw, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
 
 export function VerifyForm() {
   const router = useRouter();
@@ -17,6 +20,7 @@ export function VerifyForm() {
   const [isPending, startTransition] = useTransition();
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const { fetchUser } = useAuthStore();
 
   // Cooldown countdown logic
   useEffect(() => {
@@ -94,6 +98,8 @@ export function VerifyForm() {
           throw new Error(data.error || "Verification failed");
         }
 
+        await fetchUser();
+        toast.success("Verified successfully!");
         router.replace(redirect);
       } catch (err) {
         const errMsg =
@@ -125,6 +131,8 @@ export function VerifyForm() {
       if (!response.ok) {
         throw new Error(data.error || "Failed to resend OTP");
       }
+      toast.success("Verification code resent!");
+      inputRefs.current[0]?.focus();
     } catch (err) {
       const errMsg =
         err instanceof Error ? err.message : "Failed to resend code";
@@ -136,24 +144,38 @@ export function VerifyForm() {
     <div className="flex flex-col gap-6">
       {/* Title */}
       <div className="text-center">
-        <h1 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase">
-          Security Check
+        <h1 className="font-serif text-2xl font-bold tracking-tight text-[var(--accent-plum)]">
+          Verify Your Mobile Number
         </h1>
-        <p className="mt-1.5 text-xs leading-relaxed font-light text-gray-500">
-          Enter the 6-digit verification code sent to <br />
-          <strong className="font-bold text-gray-900">+91 {phone}</strong>
+        <p className="mt-1.5 text-xs text-neutral-500">
+          Enter the 6-digit code sent to
         </p>
       </div>
 
+      {/* Phone summary + Edit */}
+      <div className="flex items-center justify-between rounded-xl border border-rose-100 bg-rose-50/50 p-3">
+        <div className="text-xs">
+          <p className="font-medium text-neutral-500">Sent code to</p>
+          <p className="font-bold text-neutral-900">+91 {phone}</p>
+        </div>
+        <Link
+          href={`/login?redirect=${encodeURIComponent(redirect)}`}
+          className="flex items-center gap-1 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-[var(--accent)] shadow-2xs hover:bg-rose-50"
+        >
+          <Edit2 className="h-3 w-3" />
+          <span>Edit Number</span>
+        </Link>
+      </div>
+
       {error && (
-        <div className="flex items-center gap-2 rounded-none border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
-          <AlertCircle className="h-4 w-4 shrink-0" />
+        <div className="animate-in fade-in flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700">
+          <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
 
       {/* 6-box OTP digits */}
-      <div className="flex justify-between gap-2">
+      <div className="flex justify-between gap-1.5 sm:gap-2">
         {otp.map((digit, index) => (
           <input
             key={index}
@@ -168,33 +190,37 @@ export function VerifyForm() {
               inputRefs.current[index] = el;
             }}
             disabled={isPending}
-            className="h-13 w-12 rounded-none border border-gray-200 bg-white text-center font-serif text-xl font-black text-gray-900 shadow-xs focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:opacity-50"
+            className="h-12 w-11 rounded-xl border border-neutral-300 bg-white text-center font-serif text-lg font-bold text-neutral-900 shadow-2xs focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:opacity-50 sm:h-13 sm:w-12"
           />
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-3 text-center">
+      <div className="flex flex-col items-center gap-2.5 text-center">
         <button
+          type="button"
           onClick={handleResend}
-          disabled={cooldown > 0}
-          className="cursor-pointer text-xs font-bold tracking-wider text-[var(--accent)] uppercase hover:underline disabled:opacity-50 disabled:hover:no-underline"
+          disabled={cooldown > 0 || isPending}
+          className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50 disabled:hover:no-underline"
         >
-          {cooldown > 0
-            ? `Resend code in ${cooldown}s`
-            : "Resend Verification Code"}
+          <RefreshCw className="h-3 w-3" />
+          <span>
+            {cooldown > 0
+              ? `Resend code in ${cooldown}s`
+              : "Resend Verification Code"}
+          </span>
         </button>
 
         {isPending && (
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-600">
+          <div className="flex items-center gap-2 text-xs font-medium text-neutral-600">
             <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
-            Verifying token...
+            <span>Verifying code...</span>
           </div>
         )}
       </div>
 
-      <div className="flex items-center justify-center gap-2 rounded-none border border-pink-100 bg-pink-50/70 p-3 text-[11px] font-medium text-gray-700">
+      <div className="flex items-center justify-center gap-2 rounded-xl border border-rose-100/80 bg-rose-50/40 p-3 text-[11px] text-neutral-600">
         <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
-        <span>256-Bit End-to-End SSL Encrypted Security</span>
+        <span>Discreet SMS • 256-Bit SSL Encrypted Security</span>
       </div>
     </div>
   );

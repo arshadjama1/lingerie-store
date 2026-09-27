@@ -151,6 +151,26 @@ console.log(
     totalsDiscounted.total >= 0,
     "Discount cannot cause negative order total"
   );
+
+  // Test Case E: ₹1 Demo / Test item waives shipping for live production testing
+  const demoItem: CheckoutLineItem = {
+    variantId: "v-demo",
+    quantity: 1,
+    unitPrice: 1,
+    taxAmount: 0,
+    total: 1,
+    snapshot: {
+      productName: "Surekh Live Demo Test Item (₹1)",
+      sku: "DEMO-TEST-01",
+    },
+  };
+  const totalsDemo = calculateCheckoutTotals([demoItem], 0);
+  assert(totalsDemo.subtotal === 1, "Demo subtotal is ₹1");
+  assert(
+    totalsDemo.shippingAmount === 0,
+    "Demo test item waives ₹99 shipping fee"
+  );
+  assert(totalsDemo.total === 1, "Demo total payable is exactly ₹1");
 }
 
 // ─── 3. ORDER STATE MACHINE INTEGRITY ─────────────────────────────

@@ -16,8 +16,8 @@ export default function AuthLayout({
         Surekh<span className="text-[var(--accent)]">.</span>
       </Link>
 
-      {/* Main Sharp Card */}
-      <div className="shadow-floating w-full max-w-md rounded-none border border-pink-100 bg-white p-8 sm:p-10">
+      {/* Main Luxury Auth Card */}
+      <div className="w-full max-w-md rounded-2xl border border-rose-100/90 bg-white p-7 shadow-xl sm:p-9">
         {children}
       </div>
 

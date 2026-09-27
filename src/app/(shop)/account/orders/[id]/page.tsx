@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   CreditCard,
   History,
+  Mail,
   MapPin,
   Package2,
   Truck,
@@ -347,22 +348,69 @@ export default async function OrderDetailPage({
           )}
 
           {/* ── Action Zone ── */}
-          {(canCancel || canReturn) && (
+          {canCancel ? (
             <section className="rounded-2xl border border-neutral-200 bg-white p-6">
               <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
                 Order Actions
               </h2>
-              {canCancel && <CancelOrderButton orderId={order.id} />}
-              {canReturn && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h3 className="mb-3 text-sm font-medium text-neutral-800">
-                    Request a Return
-                  </h3>
-                  <ReturnRequestForm orderId={order.id} />
+                  <p className="text-sm font-medium text-neutral-800">
+                    Need to cancel this order?
+                  </p>
+                  <p className="text-xs text-neutral-500">
+                    Free cancellation is available before warehouse dispatch. A
+                    full refund will be processed to your original payment
+                    method.
+                  </p>
                 </div>
-              )}
+                <div className="shrink-0">
+                  <CancelOrderButton orderId={order.id} />
+                </div>
+              </div>
             </section>
-          )}
+          ) : canReturn ? (
+            <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+              <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
+                Order Actions
+              </h2>
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-neutral-800">
+                  Request a Return
+                </h3>
+                <ReturnRequestForm orderId={order.id} />
+              </div>
+            </section>
+          ) : order.status === "processing" || order.status === "shipped" ? (
+            <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+              <h2 className="mb-3 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
+                Order Actions
+              </h2>
+              <div className="rounded-xl border border-neutral-200 bg-neutral-50/70 p-4">
+                <p className="text-xs font-semibold text-neutral-800">
+                  Cancellation window closed
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-neutral-600">
+                  This shipment has been processed and handed over to our
+                  logistics partner <strong>DTDC Express</strong>. In-transit
+                  orders cannot be self-cancelled or rerouted online.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-neutral-200/70 pt-2.5 text-xs text-neutral-600">
+                  <span>
+                    Need urgent help or wish to request cancellation? Contact
+                    Customer Support at
+                  </span>
+                  <a
+                    href={`mailto:support@surekh.co.in?subject=Cancellation%20Request%20-%20Order%20${encodeURIComponent(order.orderNumber)}`}
+                    className="inline-flex items-center gap-1 font-semibold text-rose-700 hover:text-rose-800 hover:underline"
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    support@surekh.co.in
+                  </a>
+                </div>
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </div>

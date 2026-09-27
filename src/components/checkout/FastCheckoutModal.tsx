@@ -204,9 +204,16 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const couponDiscount = appliedCoupon?.discountAmount || 0;
   const totalSavings = couponDiscount;
 
-  // Shipping (Free above ₹1,299 or with promo)
+  // Shipping (Free above ₹1,299, promo code, or ₹1 demo test items)
+  const isDemoOrder =
+    items.length > 0 &&
+    items.every(
+      (item) =>
+        item.variant?.sku?.startsWith("DEMO-") ||
+        Number(item.variant?.price ?? 0) <= 1
+    );
   const isFreeShipping =
-    rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP";
+    rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
   const shippingFee = isFreeShipping ? 0 : 99;
 
   // Final Payable Total (No GST added per client pricing instructions)
