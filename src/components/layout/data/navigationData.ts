@@ -1,6 +1,6 @@
 // ── Header Marquee Announcements ────────────────────────────────────
 export const MARQUEE_ANNOUNCEMENTS = [
-  "15-Day Fit Exchange on Bras",
+  "Tamper-Proof Hygiene Seals",
   "100% Privacy Guaranteed",
   "Cash on Delivery Available",
   "Free Shipping Above ₹1,299",

@@ -161,11 +161,13 @@ export function ProductDetailsAccordion({
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
               <div>
                 <strong className="block text-gray-900">
-                  15-Day Exchange & Easy Returns
+                  Intimate Hygiene &amp; 48-Hour Damage Guarantee
                 </strong>
                 <p className="text-xs leading-relaxed text-gray-600">
-                  Bras and sets are eligible for 15-day size exchange. For
-                  hygiene reasons, panties must have intact hygiene seals.
+                  Due to strict personal hygiene regulations, all innerwear
+                  purchases are final. If an item arrives damaged, defective, or
+                  incorrect, notify us within 48 hours with unboxing photos for
+                  an immediate replacement.
                 </p>
               </div>
             </div>

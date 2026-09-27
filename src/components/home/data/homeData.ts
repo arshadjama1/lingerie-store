@@ -1,12 +1,4 @@
-import {
-  Lock,
-  RefreshCw,
-  ShieldCheck,
-  Star,
-  Tag,
-  Truck,
-  Users,
-} from "lucide-react";
+import { Lock, ShieldCheck, Star, Tag, Truck, Users } from "lucide-react";
 
 // ── Super Saver Combo Deals Strip ────────────────────────────────────
 export const COMBO_DEALS_DATA = [
@@ -282,9 +274,9 @@ export const TRUST_ITEMS_DATA = [
     icon: Truck,
   },
   {
-    title: "15-Day Fit Exchange",
-    desc: "Size exchange on bras & sets",
-    icon: RefreshCw,
+    title: "Hygiene & Quality Assured",
+    desc: "48-hr damage replacement",
+    icon: ShieldCheck,
   },
   {
     title: "100% Discreet Packaging",
@@ -292,9 +284,9 @@ export const TRUST_ITEMS_DATA = [
     icon: Lock,
   },
   {
-    title: "Perfect Fit Guaranteed",
-    desc: "Expert sizing & support",
-    icon: ShieldCheck,
+    title: "Pre-Purchase Fit Guidance",
+    desc: "Detailed sizing & support",
+    icon: Users,
   },
 ];
 

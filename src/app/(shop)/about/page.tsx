@@ -435,7 +435,7 @@ export default function AboutUsPage() {
               <div className="flex flex-wrap items-center gap-6 pt-2 text-xs font-semibold text-gray-800">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-[var(--accent)]" />
-                  <span>15-Day Easy Fit Exchange</span>
+                  <span>48-Hour Damage Replacement</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[var(--accent)]" />

@@ -87,7 +87,7 @@ export default async function SalePage() {
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-pink-400" />
-              15-Day Fit & Exchange Assurance
+              100% Quality &amp; Hygiene Assurance
             </span>
           </div>
         </div>

@@ -8,7 +8,6 @@ import {
   Check,
   Heart,
   Lock,
-  RefreshCw,
   Share2,
   ShieldCheck,
   ShoppingBag,
@@ -535,9 +534,9 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
             </span>
           </div>
           <div className="flex items-center gap-2.5 font-medium">
-            <RefreshCw className="h-4 w-4 shrink-0 text-sky-600" />
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
             <span>
-              <strong>15-Day Fit Exchange</strong> & easy size exchange
+              <strong>Hygiene Assured</strong> &amp; 48-hr damage replacement
             </span>
           </div>
           <div className="flex items-center gap-2.5 font-medium">
