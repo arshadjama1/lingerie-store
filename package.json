@@ -11,6 +11,8 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx db/seed.ts",
     "db:seed:prod": "tsx db/seed.ts --prod",
+    "create:demo-product": "tsx scripts/create-demo-product.ts",
+    "create:demo-product:prod": "tsx scripts/create-demo-product.ts --prod",
     "db:studio": "drizzle-kit studio",
     "db:check": "drizzle-kit check",
     "lint": "eslint . --max-warnings=0 --no-warn-ignored",

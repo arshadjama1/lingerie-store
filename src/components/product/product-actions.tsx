@@ -79,7 +79,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
     matchedInitialColor
   );
   const [selectedSize, setSelectedSize] = useState<string | undefined>(
-    undefined
+    allSizes.length === 1 ? allSizes[0] : undefined
   );
 
   // Filter variants matching selected color
