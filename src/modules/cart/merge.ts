@@ -18,18 +18,31 @@ export async function mergeGuestCartToUser(
 
   const userCart = await getOrCreateCart({ userId });
 
+  // If the guest cart is already the user's cart, no merge needed
+  if (guestCart.id === userCart.id) {
+    return userCart;
+  }
+
   for (const guestItem of guestCart.items) {
     const existingUserItem = userCart.items.find(
       (item) => item.variantId === guestItem.variantId
     );
 
     const inv = guestItem.variant?.inventory;
-    const availableStock = inv ? inv.quantity - inv.reservedQuantity : 999;
+    const availableStock =
+      inv && typeof inv.quantity === "number"
+        ? Math.max(0, inv.quantity - (inv.reservedQuantity || 0))
+        : 999;
 
     if (existingUserItem) {
-      const mergedQuantity = Math.min(
-        existingUserItem.quantity + guestItem.quantity,
-        availableStock
+      const mergedQuantity = Math.max(
+        1,
+        Math.min(
+          existingUserItem.quantity + guestItem.quantity,
+          availableStock > 0
+            ? availableStock
+            : existingUserItem.quantity + guestItem.quantity
+        )
       );
 
       await db
@@ -37,7 +50,10 @@ export async function mergeGuestCartToUser(
         .set({ quantity: mergedQuantity })
         .where(eq(cartItems.id, existingUserItem.id));
     } else {
-      const initialQuantity = Math.min(guestItem.quantity, availableStock);
+      const initialQuantity =
+        availableStock > 0
+          ? Math.min(guestItem.quantity, availableStock)
+          : guestItem.quantity;
 
       if (initialQuantity > 0) {
         await db.insert(cartItems).values({
@@ -45,14 +61,16 @@ export async function mergeGuestCartToUser(
           cartId: userCart.id,
           variantId: guestItem.variantId,
           quantity: initialQuantity,
-          priceAtAddition: guestItem.priceAtAddition,
+          priceAtAddition: String(guestItem.priceAtAddition || "0"),
         });
       }
     }
   }
 
-  // Delete guest cart container (cascades items)
-  await db.delete(carts).where(eq(carts.id, guestCart.id));
+  // Delete guest cart container only if it is a different cart
+  if (guestCart.id !== userCart.id) {
+    await db.delete(carts).where(eq(carts.id, guestCart.id));
+  }
 
   const updatedUserCart = await getCart({ userId });
   return updatedUserCart!;

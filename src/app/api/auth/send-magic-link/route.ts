@@ -1,3 +1,5 @@
+import { cookies } from "next/headers";
+
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -5,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 const schema = z.object({
   email: z.string().email(),
   redirectTo: z.string().optional(),
+  cartSession: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -25,16 +28,28 @@ export async function POST(req: Request) {
     );
   }
 
+  const cookieStore = await cookies();
+  const sessionCookie =
+    result.data.cartSession || cookieStore.get("cart_session")?.value;
+
+  const origin =
+    req.headers.get("origin") ||
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    "http://localhost:3000";
+
+  const nextPath = result.data.redirectTo || "/";
+  const callbackUrl = new URL(`${origin}/auth/callback`);
+  callbackUrl.searchParams.set("next", nextPath);
+  if (sessionCookie) {
+    callbackUrl.searchParams.set("cart_session", sessionCookie);
+  }
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: result.data.email,
     options: {
       shouldCreateUser: true,
-      emailRedirectTo: result.data.redirectTo
-        ? `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(
-            result.data.redirectTo
-          )}`
-        : `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
+      emailRedirectTo: callbackUrl.toString(),
     },
   });
 

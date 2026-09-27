@@ -6,9 +6,16 @@ import postgres from "postgres";
 
 import * as schema from "./schema";
 
-dotenv.config({ path: ".env.local" });
-if (!process.env.DATABASE_DIRECT_URL && !process.env.DATABASE_URL) {
-  dotenv.config({ path: ".env" });
+const isProd =
+  process.argv.includes("--prod") || process.env.SEED_TARGET === "prod";
+
+if (isProd) {
+  dotenv.config({ path: ".env", override: true });
+} else {
+  dotenv.config({ path: ".env.local" });
+  if (!process.env.DATABASE_DIRECT_URL && !process.env.DATABASE_URL) {
+    dotenv.config({ path: ".env" });
+  }
 }
 
 const databaseUrl = process.env.DATABASE_DIRECT_URL || process.env.DATABASE_URL;
@@ -17,6 +24,15 @@ if (!databaseUrl) {
     "❌ DATABASE_DIRECT_URL or DATABASE_URL is not set in environment."
   );
   process.exit(1);
+}
+
+try {
+  const hostMatch = databaseUrl.match(/@([^:/]+)/);
+  console.log(
+    `📡 Target database host: ${hostMatch ? hostMatch[1] : "unknown"}`
+  );
+} catch {
+  // ignore
 }
 
 const client = postgres(databaseUrl, { max: 1 });
@@ -1678,8 +1694,16 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
   ];
 
   // ── 5. Insert products, variants, inventory & images ─────────────────────────
-  console.log(`🛍️  Seeding ${products.length} real products...`);
+  console.log(`🛍️  Preparing ${products.length} real products...`);
   let skuCounter = 1000;
+
+  const allProductsToInsert: Array<typeof schema.products.$inferInsert> = [];
+  const allVariantsToInsert: Array<typeof schema.productVariants.$inferInsert> =
+    [];
+  const allInventoryToInsert: Array<typeof schema.inventory.$inferInsert> = [];
+  const allProductImagesToInsert: Array<
+    typeof schema.productImages.$inferInsert
+  > = [];
 
   for (const p of products) {
     const cat = catBySlug[p.categorySlug];
@@ -1690,8 +1714,7 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
 
     const productId = createId();
 
-    // Insert product
-    await db.insert(schema.products).values({
+    allProductsToInsert.push({
       id: productId,
       name: p.name,
       slug: p.slug,
@@ -1717,10 +1740,9 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
       metaDesc: `Buy ${p.name} online at Surekh.${p.fabric ? ` Made from ${p.fabric}.` : ""} Shop premium innerwear with fast delivery.`,
     });
 
-    // Insert product-level images (exactly 4 images)
     let imgSortOrder = 1;
     for (const img of p.productImages) {
-      await db.insert(schema.productImages).values({
+      allProductImagesToInsert.push({
         id: createId(),
         productId,
         variantId: null,
@@ -1731,7 +1753,6 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
       });
     }
 
-    // Insert variants & variant-level images
     let variantSortOrder = 0;
     for (const v of p.variants) {
       for (const size of v.sizes) {
@@ -1740,7 +1761,7 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
         const colorSlug = v.color.toLowerCase().replace(/\s+/g, "-");
         const sku = `SRK-${p.slug.substring(0, 6).toUpperCase().replace(/-/g, "")}-${colorSlug.substring(0, 3).toUpperCase()}-${size}-${skuCounter}`;
 
-        await db.insert(schema.productVariants).values({
+        allVariantsToInsert.push({
           id: variantId,
           productId,
           sku,
@@ -1754,8 +1775,7 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
           weightGrams: 120,
         });
 
-        // Inventory
-        await db.insert(schema.inventory).values({
+        allInventoryToInsert.push({
           id: createId(),
           variantId,
           quantity: 50,
@@ -1763,10 +1783,9 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
           lowStockAlert: 5,
         });
 
-        // Variant-level images (4 images per variant)
         let vImgSort = 1;
         for (const img of v.images) {
-          await db.insert(schema.productImages).values({
+          allProductImagesToInsert.push({
             id: createId(),
             productId,
             variantId,
@@ -1778,10 +1797,23 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
         }
       }
     }
+  }
 
-    console.log(
-      `  ✅ ${p.name} — ${p.variants.length} colour(s) (4 product images, 4 images/colour)`
-    );
+  console.log(`📦 Inserting ${allProductsToInsert.length} products...`);
+  await db.insert(schema.products).values(allProductsToInsert);
+
+  console.log(`🎨 Inserting ${allVariantsToInsert.length} variants...`);
+  await db.insert(schema.productVariants).values(allVariantsToInsert);
+
+  console.log(
+    `📊 Inserting ${allInventoryToInsert.length} inventory records...`
+  );
+  await db.insert(schema.inventory).values(allInventoryToInsert);
+
+  console.log(`🖼️  Inserting ${allProductImagesToInsert.length} images...`);
+  for (let i = 0; i < allProductImagesToInsert.length; i += 100) {
+    const chunk = allProductImagesToInsert.slice(i, i + 100);
+    await db.insert(schema.productImages).values(chunk);
   }
 
   console.log("\n✅ Seed complete!");

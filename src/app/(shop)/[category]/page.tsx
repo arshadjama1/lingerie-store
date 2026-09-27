@@ -22,6 +22,7 @@ import { SortDropdown } from "@/components/filters/sort-dropdown";
 import { ProductGrid } from "@/components/product/product-grid";
 
 export const revalidate = 300;
+export const dynamicParams = true;
 
 interface CategoryPageProps {
   params: Promise<{

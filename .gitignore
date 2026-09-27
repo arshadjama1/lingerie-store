@@ -23,3 +23,5 @@ next-env.d.ts
 # Local Netlify folder
 .netlify
 deno.lock
+.zip
+.xlsx

@@ -9,12 +9,15 @@ import { useCartStore } from "@/stores/useCartStore";
 import {
   ArrowLeft,
   Check,
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   CreditCard,
   Lock,
+  Mail,
   MapPin,
   Package,
+  Phone,
   ShieldCheck,
   ShoppingBag,
   ShoppingCart,
@@ -70,35 +73,71 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // UI States
-  const [isSummaryExpanded, setIsSummaryExpanded] = useState(false);
+  const [isSummaryExpanded, setIsSummaryExpanded] = useState(true);
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Inline Phone Auth
+  // Inline Auth (Phone OTP & Email Magic Link)
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
   const [authPhone, setAuthPhone] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpValue, setOtpValue] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [optInUpdates, setOptInUpdates] = useState(true);
 
   // Check auth & fetch addresses
   const loadUserAndAddresses = useCallback(async () => {
     try {
       setIsAuthLoading(true);
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      if (user) {
-        setCurrentUser({
-          id: user.id,
-          phone: user.phone,
-          email: user.email,
-        });
+      let authenticatedUser: {
+        id: string;
+        phone?: string | null;
+        email?: string | null;
+      } | null = null;
 
-        // Fetch addresses
+      // 1. Primary check: /api/profile endpoint (reads server HTTP-only SSR session cookies)
+      try {
+        const profileRes = await fetch("/api/profile");
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData?.profile) {
+            authenticatedUser = {
+              id: profileData.profile.id,
+              phone: profileData.profile.phone,
+              email: profileData.profile.email,
+            };
+          }
+        }
+      } catch (err) {
+        console.warn("[FastCheckoutModal] /api/profile check error:", err);
+      }
+
+      // 2. Secondary fallback: client SDK
+      if (!authenticatedUser) {
+        try {
+          const supabase = createClient();
+          const { data } = await supabase.auth.getUser();
+          if (data?.user) {
+            authenticatedUser = {
+              id: data.user.id,
+              phone: data.user.phone,
+              email: data.user.email,
+            };
+          }
+        } catch (err) {
+          console.warn("[FastCheckoutModal] supabase.auth.getUser error:", err);
+        }
+      }
+
+      if (authenticatedUser) {
+        setCurrentUser(authenticatedUser);
+
+        // Fetch user addresses
         const addrRes = await fetch("/api/addresses");
         if (addrRes.ok) {
           const addrData = await addrRes.json();
@@ -107,6 +146,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
           if (list.length > 0) {
             const def = list.find((a) => a.isDefault) || list[0];
             setSelectedAddress(def);
+          } else {
+            setSelectedAddress(null);
           }
         }
       } else {
@@ -120,12 +161,22 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     }
   }, []);
 
-  // Load Razorpay SDK
+  // Load Razorpay SDK & listen for auth state changes
   useEffect(() => {
     if (!isOpen) return;
 
     loadUserAndAddresses();
     fetchCart();
+
+    const supabase = createClient();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await loadUserAndAddresses();
+        await fetchCart();
+      }
+    });
 
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -135,6 +186,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     document.body.appendChild(script);
 
     return () => {
+      subscription.unsubscribe();
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
@@ -247,7 +299,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phone: authPhone,
-          token: otpValue,
+          otp: otpValue,
         }),
       });
 
@@ -267,10 +319,46 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     }
   };
 
+  // Inline Email Magic Link Handler
+  const handleSendMagicLink = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const cleanEmail = authEmail.trim().toLowerCase();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      setIsSendingMagicLink(true);
+      const res = await fetch("/api/auth/send-magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: cleanEmail,
+          redirectTo: "/checkout",
+          cartSession: cart?.sessionId || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send magic link");
+        return;
+      }
+
+      setMagicLinkSent(true);
+      toast.success("Magic sign-in link sent to your email!");
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setIsSendingMagicLink(false);
+    }
+  };
+
   // Payment Execution (Razorpay)
   const handlePayment = async () => {
     if (!currentUser) {
-      toast.error("Please enter your mobile number to continue");
+      toast.error("Please log in with your mobile number or email to continue");
       return;
     }
 
@@ -539,39 +627,174 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                     )}
                   </div>
                 ) : (
-                  /* Unauthenticated: Inline Phone Auth Card (Matching Screenshot 2) */
-                  <div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50/30 p-4">
-                    <div className="flex items-center gap-2 text-amber-800">
-                      <User className="h-4 w-4" />
-                      <span className="text-xs font-bold">
-                        Login to continue
+                  /* Unauthenticated: Inline Phone / Email Auth Card */
+                  <div className="space-y-3.5 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-amber-900">
+                        <User className="h-4 w-4" />
+                        <span className="text-xs font-bold">
+                          Login to continue
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-amber-800/80">
+                        Fast 1-Click Checkout
                       </span>
                     </div>
 
-                    {!otpSent ? (
-                      <form onSubmit={handleSendOtp} className="space-y-3">
-                        <div>
-                          <label className="block text-[11px] font-medium text-neutral-600">
-                            Enter Mobile Number
-                          </label>
-                          <div className="mt-1 flex rounded-xl border border-neutral-300 bg-white focus-within:border-[var(--accent)]">
-                            <span className="flex items-center border-r border-neutral-200 px-3 text-xs font-bold text-neutral-600">
-                              +91
-                            </span>
+                    {/* Auth Method Tabs: Mobile OTP vs Email Magic Link */}
+                    <div className="flex rounded-xl bg-amber-100/70 p-1 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMethod("phone");
+                        }}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs transition-all ${
+                          authMethod === "phone"
+                            ? "bg-white font-bold text-neutral-900 shadow-xs"
+                            : "text-neutral-600 hover:text-neutral-900"
+                        }`}
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>Mobile OTP</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthMethod("email");
+                        }}
+                        className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs transition-all ${
+                          authMethod === "email"
+                            ? "bg-white font-bold text-neutral-900 shadow-xs"
+                            : "text-neutral-600 hover:text-neutral-900"
+                        }`}
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        <span>Email Link</span>
+                      </button>
+                    </div>
+
+                    {authMethod === "phone" ? (
+                      /* Mobile OTP Auth Form */
+                      !otpSent ? (
+                        <form onSubmit={handleSendOtp} className="space-y-3">
+                          <div>
+                            <label className="block text-[11px] font-medium text-neutral-600">
+                              Enter Mobile Number
+                            </label>
+                            <div className="mt-1 flex rounded-xl border border-neutral-300 bg-white focus-within:border-[var(--accent)]">
+                              <span className="flex items-center border-r border-neutral-200 px-3 text-xs font-bold text-neutral-600">
+                                +91
+                              </span>
+                              <input
+                                type="tel"
+                                required
+                                maxLength={10}
+                                value={authPhone}
+                                onChange={(e) =>
+                                  setAuthPhone(
+                                    e.target.value
+                                      .replace(/\D/g, "")
+                                      .slice(0, 10)
+                                  )
+                                }
+                                placeholder="79924 80412"
+                                className="w-full px-3 py-2.5 text-sm font-medium focus:outline-none"
+                              />
+                            </div>
+                          </div>
+
+                          <label className="flex cursor-pointer items-center gap-2 text-[11px] text-neutral-600">
                             <input
-                              type="tel"
-                              required
-                              maxLength={10}
-                              value={authPhone}
+                              type="checkbox"
+                              checked={optInUpdates}
                               onChange={(e) =>
-                                setAuthPhone(
-                                  e.target.value.replace(/\D/g, "").slice(0, 10)
+                                setOptInUpdates(e.target.checked)
+                              }
+                              className="rounded accent-neutral-900"
+                            />
+                            <span>
+                              Send me order updates & offers - (no spam)
+                            </span>
+                          </label>
+
+                          <button
+                            type="submit"
+                            disabled={isSendingOtp || authPhone.length < 10}
+                            className="w-full rounded-2xl bg-black py-3 text-xs font-bold tracking-wider text-white uppercase hover:bg-neutral-800 disabled:opacity-50"
+                          >
+                            {isSendingOtp
+                              ? "Sending OTP..."
+                              : "Continue with OTP"}
+                          </button>
+                        </form>
+                      ) : (
+                        <form onSubmit={handleVerifyOtp} className="space-y-3">
+                          <div>
+                            <label className="block text-[11px] font-medium text-neutral-600">
+                              Enter 6-digit OTP sent to +91 {authPhone}
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              maxLength={6}
+                              value={otpValue}
+                              onChange={(e) =>
+                                setOtpValue(
+                                  e.target.value.replace(/\D/g, "").slice(0, 6)
                                 )
                               }
-                              placeholder="79924 80412"
+                              placeholder="123456"
+                              className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-center font-mono text-base font-bold tracking-widest focus:border-[var(--accent)] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setOtpSent(false)}
+                              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-600"
+                            >
+                              Change Number
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={isVerifyingOtp || otpValue.length < 6}
+                              className="flex-1 rounded-xl bg-black py-2.5 text-xs font-bold tracking-wider text-white uppercase disabled:opacity-50"
+                            >
+                              {isVerifyingOtp
+                                ? "Verifying..."
+                                : "Verify & Continue"}
+                            </button>
+                          </div>
+                        </form>
+                      )
+                    ) : /* Email Magic Link Auth Form */
+                    !magicLinkSent ? (
+                      <form
+                        onSubmit={handleSendMagicLink}
+                        className="space-y-3"
+                      >
+                        <div>
+                          <label className="block text-[11px] font-medium text-neutral-600">
+                            Enter Email Address
+                          </label>
+                          <div className="mt-1 flex rounded-xl border border-neutral-300 bg-white focus-within:border-[var(--accent)]">
+                            <span className="flex items-center pl-3 text-neutral-400">
+                              <Mail className="h-4 w-4" />
+                            </span>
+                            <input
+                              type="email"
+                              required
+                              value={authEmail}
+                              onChange={(e) => setAuthEmail(e.target.value)}
+                              placeholder="name@example.com"
                               className="w-full px-3 py-2.5 text-sm font-medium focus:outline-none"
                             />
                           </div>
+                          <p className="mt-1 text-[10px] text-neutral-500">
+                            We&apos;ll send an instant passwordless sign-in link
+                            to your inbox.
+                          </p>
                         </div>
 
                         <label className="flex cursor-pointer items-center gap-2 text-[11px] text-neutral-600">
@@ -588,52 +811,53 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
 
                         <button
                           type="submit"
-                          disabled={isSendingOtp || authPhone.length < 10}
+                          disabled={isSendingMagicLink || !authEmail.trim()}
                           className="w-full rounded-2xl bg-black py-3 text-xs font-bold tracking-wider text-white uppercase hover:bg-neutral-800 disabled:opacity-50"
                         >
-                          {isSendingOtp ? "Sending OTP..." : "Continue"}
+                          {isSendingMagicLink
+                            ? "Sending Magic Link..."
+                            : "Send Magic Link"}
                         </button>
                       </form>
                     ) : (
-                      <form onSubmit={handleVerifyOtp} className="space-y-3">
-                        <div>
-                          <label className="block text-[11px] font-medium text-neutral-600">
-                            Enter 6-digit OTP sent to +91 {authPhone}
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            maxLength={6}
-                            value={otpValue}
-                            onChange={(e) =>
-                              setOtpValue(
-                                e.target.value.replace(/\D/g, "").slice(0, 6)
-                              )
-                            }
-                            placeholder="123456"
-                            className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-center font-mono text-base font-bold tracking-widest focus:border-[var(--accent)] focus:outline-none"
-                          />
+                      <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs">
+                        <div className="flex items-start gap-2.5">
+                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                          <div className="space-y-1">
+                            <p className="font-bold text-emerald-900">
+                              Magic Link Sent!
+                            </p>
+                            <p className="text-[11px] leading-relaxed text-emerald-800">
+                              We sent a secure sign-in link to{" "}
+                              <strong className="font-bold text-neutral-900">
+                                {authEmail}
+                              </strong>
+                              . Click the link in your email to log in and
+                              return directly to checkout.
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2 border-t border-emerald-200/60 pt-2.5">
                           <button
                             type="button"
-                            onClick={() => setOtpSent(false)}
-                            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-600"
+                            onClick={() => setMagicLinkSent(false)}
+                            className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50"
                           >
-                            Change Number
+                            Change Email
                           </button>
                           <button
-                            type="submit"
-                            disabled={isVerifyingOtp || otpValue.length < 6}
-                            className="flex-1 rounded-xl bg-black py-2.5 text-xs font-bold tracking-wider text-white uppercase disabled:opacity-50"
+                            type="button"
+                            disabled={isSendingMagicLink}
+                            onClick={() => handleSendMagicLink()}
+                            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
                           >
-                            {isVerifyingOtp
-                              ? "Verifying..."
-                              : "Verify & Continue"}
+                            {isSendingMagicLink
+                              ? "Resending..."
+                              : "Resend Link"}
                           </button>
                         </div>
-                      </form>
+                      </div>
                     )}
                   </div>
                 )}
@@ -858,7 +1082,9 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                   <span className="text-sm tracking-wider uppercase">
                     {isProcessingPayment
                       ? "Processing Payment..."
-                      : `Pay ₹${finalPayable.toLocaleString("en-IN")}`}
+                      : currentUser
+                        ? `Pay ₹${finalPayable.toLocaleString("en-IN")}`
+                        : `Login & Pay ₹${finalPayable.toLocaleString("en-IN")}`}
                   </span>
                 </div>
 

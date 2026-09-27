@@ -13,19 +13,16 @@ interface CartLookup {
   sessionId?: string | null;
 }
 
-export async function getCart(
-  lookup: CartLookup
-): Promise<HydratedCart | null> {
+async function fetchCartRecord(lookup: {
+  userId?: string;
+  sessionId?: string;
+}) {
   const { userId, sessionId } = lookup;
-  if (!userId && !sessionId) return null;
-
-  const cartRecord = await db.query.carts.findFirst({
-    where: (cartsTable, { eq, or }) => {
-      const conditions = [];
-      if (userId) conditions.push(eq(cartsTable.userId, userId));
-      if (sessionId) conditions.push(eq(cartsTable.sessionId, sessionId));
-      return or(...conditions);
-    },
+  return await db.query.carts.findFirst({
+    where: (cartsTable, { eq }) =>
+      userId
+        ? eq(cartsTable.userId, userId)
+        : eq(cartsTable.sessionId, sessionId!),
     with: {
       items: {
         with: {
@@ -46,9 +43,11 @@ export async function getCart(
       },
     },
   });
+}
 
-  if (!cartRecord) return null;
+type RawCartRecord = NonNullable<Awaited<ReturnType<typeof fetchCartRecord>>>;
 
+function formatHydratedCart(cartRecord: RawCartRecord): HydratedCart {
   const items = cartRecord.items || [];
   const subtotal = items.reduce((acc, item) => {
     const itemPrice = Number(item.variant?.price ?? item.priceAtAddition ?? 0);
@@ -63,6 +62,37 @@ export async function getCart(
     subtotal,
     itemCount,
   } as HydratedCart;
+}
+
+export async function getCart(
+  lookup: CartLookup
+): Promise<HydratedCart | null> {
+  const { userId, sessionId } = lookup;
+  if (!userId && !sessionId) return null;
+
+  if (userId && sessionId) {
+    const userCart = await fetchCartRecord({ userId });
+    if (userCart && userCart.items && userCart.items.length > 0) {
+      return formatHydratedCart(userCart);
+    }
+
+    const guestCart = await fetchCartRecord({ sessionId });
+    if (guestCart && guestCart.items && guestCart.items.length > 0) {
+      return formatHydratedCart(guestCart);
+    }
+
+    if (userCart) return formatHydratedCart(userCart);
+    if (guestCart) return formatHydratedCart(guestCart);
+    return null;
+  }
+
+  const cartRecord = await fetchCartRecord({
+    userId: userId ?? undefined,
+    sessionId: sessionId ?? undefined,
+  });
+
+  if (!cartRecord) return null;
+  return formatHydratedCart(cartRecord);
 }
 
 export async function getOrCreateCart(
