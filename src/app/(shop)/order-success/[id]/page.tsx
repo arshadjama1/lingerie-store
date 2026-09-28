@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { db } from "@/db";
-import { orders } from "@/db/schema";
+import { orders, payments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { CheckCircle2, Home, MapPin, Truck } from "lucide-react";
 
@@ -33,16 +33,23 @@ export default async function OrderSuccessPage({
     notFound();
   }
 
-  const order = await db.query.orders.findFirst({
-    where: eq(orders.id, orderId),
-    with: {
-      items: true,
-    },
-  });
+  const [order, payment] = await Promise.all([
+    db.query.orders.findFirst({
+      where: eq(orders.id, orderId),
+      with: {
+        items: true,
+      },
+    }),
+    db.query.payments.findFirst({
+      where: eq(payments.orderId, orderId),
+    }),
+  ]);
 
   if (!order || order.userId !== user.id) {
     notFound();
   }
+
+  const isCod = payment?.method === "cod";
 
   const address = order.shippingAddress as {
     fullName?: string;
@@ -166,12 +173,25 @@ export default async function OrderSuccessPage({
           </div>
 
           {/* Payment Summary */}
-          <div className="mt-6 flex justify-between border-t border-neutral-200 pt-4 text-sm font-bold text-neutral-900">
-            <span>Total Paid</span>
-            <span className="text-rose-600">
-              ₹{Number(order.total).toLocaleString("en-IN")}
-            </span>
-          </div>
+          {isCod ? (
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+              <div className="flex items-center justify-between text-sm font-bold text-amber-900">
+                <span>Amount to Pay on Delivery</span>
+                <span>₹{Number(order.total).toLocaleString("en-IN")}</span>
+              </div>
+              <p className="mt-1 text-xs text-amber-700">
+                Please keep exact change ready. Our courier will collect this
+                amount when delivering your order.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-6 flex justify-between border-t border-neutral-200 pt-4 text-sm font-bold text-neutral-900">
+              <span>Total Paid</span>
+              <span className="text-rose-600">
+                ₹{Number(order.total).toLocaleString("en-IN")}
+              </span>
+            </div>
+          )}
 
           {/* CTAs */}
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
