@@ -2,6 +2,8 @@ import "server-only";
 
 import { serverEnv } from "@/config/env.server";
 
+import { AppError } from "@/lib/errors";
+
 import type { OrderDetails } from "@/modules/orders";
 
 import type {
@@ -57,8 +59,10 @@ export async function createDtdcShipment(
   const apiUrl = serverEnv.DTDC_API_URL.replace(/\/+$/, "");
 
   if (!apiKey || !customerCode) {
-    throw new Error(
-      "DTDC credentials missing: DTDC_API_KEY and DTDC_CUSTOMER_CODE must be configured."
+    throw new AppError(
+      "DTDC credentials missing: DTDC_API_KEY and DTDC_CUSTOMER_CODE must be configured.",
+      500,
+      "DTDC_CONFIG_ERROR"
     );
   }
 
@@ -83,12 +87,13 @@ export async function createDtdcShipment(
     weight_unit: "kg",
     weight: String(dimensions.weightKg),
     num_pieces: "1",
-    declared_value: String(Math.round(Math.max(0, Number(order.total) || 0))),
+    declared_value: String(Math.max(1, Math.round(Number(order.total) || 0))),
     customer_reference_number: order.orderNumber,
     commodity_id: serverEnv.DTDC_COMMODITY_ID || "CLOTHING",
     is_risk_surcharge_applicable: false,
-    cod_amount: isCod ? String(Math.round(Number(order.total))) : "0",
-    cod_collection_mode: isCod ? "CASH" : "PREPAID",
+    cod_amount: isCod ? String(Math.round(Number(order.total))) : "",
+    cod_collection_mode: isCod ? "CASH" : "",
+    cod_favor_of: isCod ? serverEnv.DTDC_WAREHOUSE_NAME || "" : "",
     origin_details: {
       name: serverEnv.DTDC_WAREHOUSE_NAME,
       phone: serverEnv.DTDC_WAREHOUSE_PHONE,
@@ -136,23 +141,40 @@ export async function createDtdcShipment(
     cache: "no-store",
   });
 
-  const rawJson = (await res.json()) as DtdcSoftdataResponse;
-
-  if (!res.ok || rawJson.status !== "OK") {
-    const errorMsg =
-      rawJson.message ||
-      rawJson.data?.[0]?.error?.message ||
-      `DTDC booking failed with HTTP status ${res.status}`;
-    throw new Error(errorMsg);
+  const rawText = await res.text();
+  let rawJson: DtdcSoftdataResponse;
+  try {
+    rawJson = JSON.parse(rawText) as DtdcSoftdataResponse;
+  } catch {
+    throw new AppError(
+      `DTDC API returned an unparseable response (HTTP ${res.status}): ${rawText.slice(0, 160)}`,
+      502,
+      "DTDC_UPSTREAM_ERROR"
+    );
   }
 
   const resultItem = rawJson.data?.[0];
-  if (!resultItem || !resultItem.success || !resultItem.reference_number) {
-    const reason =
+
+  if (!res.ok || rawJson.status !== "OK") {
+    const errorMsg =
+      resultItem?.message ||
+      resultItem?.reason ||
       resultItem?.error?.message ||
       resultItem?.error?.reason ||
+      rawJson.message ||
+      `DTDC booking failed with HTTP status ${res.status}`;
+    throw new AppError(errorMsg, 400, "DTDC_BOOKING_FAILED");
+  }
+
+  if (!resultItem || !resultItem.success || !resultItem.reference_number) {
+    const reason =
+      resultItem?.message ||
+      resultItem?.reason ||
+      resultItem?.error?.message ||
+      resultItem?.error?.reason ||
+      rawJson.message ||
       "DTDC rejected consignment creation";
-    throw new Error(reason);
+    throw new AppError(reason, 400, "DTDC_BOOKING_FAILED");
   }
 
   const awbNumber = resultItem.reference_number;
@@ -176,7 +198,11 @@ export async function getDtdcShippingLabel(
   const apiUrl = serverEnv.DTDC_API_URL.replace(/\/+$/, "");
 
   if (!apiKey) {
-    throw new Error("DTDC_API_KEY is not configured.");
+    throw new AppError(
+      "DTDC_API_KEY is not configured.",
+      500,
+      "DTDC_CONFIG_ERROR"
+    );
   }
 
   const endpoint = `${apiUrl}/api/customer/integration/consignment/shippinglabel/stream?reference_number=${encodeURIComponent(
@@ -199,7 +225,11 @@ export async function getDtdcShippingLabel(
     } catch {
       // ignore
     }
-    throw new Error(errMessage);
+    throw new AppError(
+      errMessage,
+      res.status === 404 ? 404 : 502,
+      "DTDC_LABEL_ERROR"
+    );
   }
 
   if (format === "base64") {

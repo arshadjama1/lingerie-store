@@ -67,6 +67,7 @@ export interface DtdcConsignmentItem {
   is_risk_surcharge_applicable: boolean;
   cod_amount: string;
   cod_collection_mode: string;
+  cod_favor_of?: string;
   reference_number?: string;
   eway_bill?: string;
   invoice_number?: string;
@@ -85,6 +86,9 @@ export interface DtdcSoftdataResponseItem {
   courier_account?: string;
   chargeable_weight?: number;
   barCodeData?: string;
+  message?: string;
+  reason?: string;
+  event_description?: string;
   error?: {
     message?: string;
     code?: string;

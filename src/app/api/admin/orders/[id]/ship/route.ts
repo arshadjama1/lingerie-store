@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { assertAdmin } from "@/lib/admin-auth";
-import { withErrorHandling } from "@/lib/errors";
+import { AppError, withErrorHandling } from "@/lib/errors";
 
 import { getAdminOrderDetails } from "@/modules/admin/orders";
 import {
@@ -65,12 +65,20 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   }
 
   // Call official DTDC Booking API (Softdata Upload v2.0)
-  const result = await createDtdcShipment(order, {
-    weightKg: bodyData?.weightKg,
-    length: bodyData?.length,
-    width: bodyData?.width,
-    height: bodyData?.height,
-  });
+  let result: Awaited<ReturnType<typeof createDtdcShipment>>;
+  try {
+    result = await createDtdcShipment(order, {
+      weightKg: bodyData?.weightKg,
+      length: bodyData?.length,
+      width: bodyData?.width,
+      height: bodyData?.height,
+    });
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    const msg =
+      err instanceof Error ? err.message : "DTDC consignment creation failed";
+    throw new AppError(msg, 400, "DTDC_BOOKING_FAILED");
+  }
 
   const now = new Date();
   const markShipped = bodyData?.markAsShipped ?? true;
