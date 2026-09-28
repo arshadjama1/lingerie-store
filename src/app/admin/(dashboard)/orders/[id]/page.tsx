@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/utils";
 
 import { getAdminOrderDetails } from "@/modules/admin/orders";
 
+import { AdminCollectCodButton } from "@/components/admin/AdminCollectCodButton";
 import { AdminShipForm } from "@/components/admin/AdminShipForm";
 import { AdminStatusForm } from "@/components/admin/AdminStatusForm";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
@@ -143,16 +144,23 @@ export default async function AdminOrderDetailPage({
               <dl className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Method</dt>
-                  <dd className="font-semibold text-gray-900 uppercase">
+                  <dd className="flex items-center gap-2 font-semibold text-gray-900 uppercase">
                     {order.payment.method ?? "—"}
+                    {order.payment.method === "cod" && (
+                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                        PAY ON DELIVERY
+                      </span>
+                    )}
                   </dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-gray-500">Razorpay ID</dt>
-                  <dd className="font-mono text-xs text-gray-700">
-                    {order.payment.razorpayPaymentId ?? "—"}
-                  </dd>
-                </div>
+                {order.payment.method !== "cod" && (
+                  <div className="flex justify-between">
+                    <dt className="text-gray-500">Razorpay ID</dt>
+                    <dd className="font-mono text-xs text-gray-700">
+                      {order.payment.razorpayPaymentId ?? "—"}
+                    </dd>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <dt className="text-gray-500">Amount</dt>
                   <dd className="font-semibold text-gray-900">
@@ -160,6 +168,11 @@ export default async function AdminOrderDetailPage({
                   </dd>
                 </div>
               </dl>
+              {order.payment.method === "cod" && (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <AdminCollectCodButton orderId={order.id} />
+                </div>
+              )}
             </section>
           )}
 
