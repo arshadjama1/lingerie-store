@@ -219,3 +219,34 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
 
   return result;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COD — place an order without online payment
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PlaceCodOrderInput {
+  checkoutSessionId: string;
+  userId: string;
+}
+
+/**
+ * Creates an order for a Cash on Delivery checkout.
+ * Bypasses the Razorpay flow entirely — generates synthetic COD- prefixed IDs
+ * for the payment record so the idempotency check works identically to online
+ * payments.  No signature is passed, so verifyPaymentSignature is skipped.
+ */
+export async function placeCodOrder(input: PlaceCodOrderInput) {
+  const { checkoutSessionId } = input;
+
+  // Synthetic IDs — NOT real Razorpay values; uniqueness is guaranteed by cuid2.
+  const codOrderId = `COD-${createId()}`;
+  const codPaymentId = `COD-${createId()}`;
+
+  return processPaymentSuccess({
+    checkoutSessionId,
+    razorpayOrderId: codOrderId,
+    razorpayPaymentId: codPaymentId,
+    // razorpaySignature deliberately omitted → signature check is skipped
+    method: "cod",
+  });
+}
