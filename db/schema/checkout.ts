@@ -57,6 +57,7 @@ export const checkoutSessions = pgTable(
     }).notNull(),
     total: decimal("total", { precision: 10, scale: 2 }).notNull(),
     razorpayOrderId: text("razorpay_order_id").unique(),
+    codFee: decimal("cod_fee", { precision: 10, scale: 2 }),
     orderId: text("order_id"),
     status: text("status").default("active").notNull(),
     lineItems: jsonb("line_items").$type<CheckoutLineItemSnapshot[]>(),
