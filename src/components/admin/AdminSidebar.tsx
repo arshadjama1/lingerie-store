@@ -97,7 +97,7 @@ export function AdminSidebar({ email, onCloseMobile }: AdminSidebarProps) {
   async function handleSignOut() {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/admin/login?logged_out=true");
   }
 
   return (
