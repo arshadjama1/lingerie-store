@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import type { Address } from "@/db/schema";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
 import {
   ArrowLeft,
@@ -47,19 +48,29 @@ interface FastCheckoutModalProps {
 
 export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const router = useRouter();
-  const { cart, fetchCart } = useCartStore();
+  const { cart, isLoading: isCartLoading, fetchCart } = useCartStore();
 
-  // Auth state
+  // Read the globally-initialised auth store so that already-logged-in
+  // users are detected instantly without an extra network round-trip.
+  const {
+    user: globalAuthUser,
+    isAuthenticated: globalIsAuthenticated,
+    isLoading: globalAuthLoading,
+  } = useAuthStore();
+
+  // Auth state -- local mirror of the authenticated user for this modal.
   const [currentUser, setCurrentUser] = useState<{
     id: string;
     phone?: string | null;
     email?: string | null;
   } | null>(null);
-  const [_isAuthLoading, setIsAuthLoading] = useState(true);
+  // true while we are still determining auth state on first open
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   // Addresses
   const [_addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
   const [isAddressSheetOpen, setIsAddressSheetOpen] = useState(false);
 
   // Coupons
@@ -89,18 +100,41 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [optInUpdates, setOptInUpdates] = useState(true);
 
-  // Check auth & fetch addresses
-  const loadUserAndAddresses = useCallback(async () => {
+  // Fetch addresses for an already-authenticated user and select the default.
+  const loadAddresses = useCallback(async () => {
     try {
-      setIsAuthLoading(true);
+      setIsAddressLoading(true);
+      const addrRes = await fetch("/api/addresses");
+      if (addrRes.ok) {
+        const addrData = await addrRes.json();
+        const list: Address[] = addrData.addresses || [];
+        setAddresses(list);
+        if (list.length > 0) {
+          const def = list.find((a) => a.isDefault) || list[0];
+          setSelectedAddress(def);
+        } else {
+          setSelectedAddress(null);
+        }
+      }
+    } catch (err) {
+      console.warn("[FastCheckoutModal] loadAddresses error:", err);
+    } finally {
+      setIsAddressLoading(false);
+    }
+  }, []);
 
+  // Determine the authenticated user when the modal opens.
+  // Priority: server-side profile API -> client SDK fallback.
+  const checkAuthAndLoadAddresses = useCallback(async () => {
+    setIsAuthLoading(true);
+    try {
       let authenticatedUser: {
         id: string;
         phone?: string | null;
         email?: string | null;
       } | null = null;
 
-      // 1. Primary check: /api/profile endpoint (reads server HTTP-only SSR session cookies)
+      // 1. Primary: server-side profile (reads HTTP-only SSR session cookies)
       try {
         const profileRes = await fetch("/api/profile");
         if (profileRes.ok) {
@@ -136,20 +170,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
 
       if (authenticatedUser) {
         setCurrentUser(authenticatedUser);
-
-        // Fetch user addresses
-        const addrRes = await fetch("/api/addresses");
-        if (addrRes.ok) {
-          const addrData = await addrRes.json();
-          const list: Address[] = addrData.addresses || [];
-          setAddresses(list);
-          if (list.length > 0) {
-            const def = list.find((a) => a.isDefault) || list[0];
-            setSelectedAddress(def);
-          } else {
-            setSelectedAddress(null);
-          }
-        }
+        await loadAddresses();
       } else {
         setCurrentUser(null);
         setSelectedAddress(null);
@@ -159,13 +180,38 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     } finally {
       setIsAuthLoading(false);
     }
-  }, []);
+  }, [loadAddresses]);
 
-  // Load Razorpay SDK & listen for auth state changes
+  // Seed currentUser instantly from the global auth store the moment the
+  // modal opens -- eliminates the flash-of-login-form for users who are
+  // already signed in, because globalAuthUser is available synchronously.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (globalAuthLoading) return; // wait until global store has resolved
+
+    if (globalIsAuthenticated && globalAuthUser && !currentUser) {
+      setCurrentUser({
+        id: globalAuthUser.id,
+        phone: globalAuthUser.phone ?? null,
+        email: globalAuthUser.email ?? null,
+      });
+      // isAuthLoading stays true until checkAuthAndLoadAddresses finishes
+      // so the address skeleton shows instead of the login form.
+    }
+  }, [
+    isOpen,
+    globalIsAuthenticated,
+    globalAuthUser,
+    globalAuthLoading,
+    currentUser,
+  ]);
+
+  // On open: validate session server-side, load addresses, fetch cart.
+  // Also subscribes to auth state changes for magic-link callback support.
   useEffect(() => {
     if (!isOpen) return;
 
-    loadUserAndAddresses();
+    checkAuthAndLoadAddresses();
     fetchCart();
 
     const supabase = createClient();
@@ -173,7 +219,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        await loadUserAndAddresses();
+        await checkAuthAndLoadAddresses();
         await fetchCart();
       }
     });
@@ -191,7 +237,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         document.body.removeChild(script);
       }
     };
-  }, [isOpen, loadUserAndAddresses, fetchCart]);
+  }, [isOpen, checkAuthAndLoadAddresses, fetchCart]);
 
   if (!isOpen) return null;
 
@@ -316,9 +362,45 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         return;
       }
 
+      const verifiedUser = {
+        id: data.user.id,
+        phone: data.user.phone ?? null,
+        email: data.user.email ?? null,
+      };
+
+      // Immediately sync cart store with the merged cart returned by the
+      // server -- zero delay before cart items appear in the modal.
+      if (data.cart) {
+        useCartStore.setState({ cart: data.cart, isLoading: false });
+      }
+
+      // Update local auth state instantly -- no round-trip to /api/profile
+      // needed because the server validated the OTP and returned the user.
+      setCurrentUser(verifiedUser);
+      setIsAuthLoading(false);
+
+      // Sync the GLOBAL auth store immediately so the header dropdown and
+      // any other consumer of useAuthStore reflects the signed-in state
+      // right away, rather than waiting 8-10s for onAuthStateChange to fire
+      // (which is delayed because the session is set via server cookies,
+      // not through the Supabase client SDK in-memory session).
+      useAuthStore.setState({
+        user: verifiedUser,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      // Re-fetch full profile in background to populate firstName/lastName
+      // for the header UserDropdown -- non-blocking.
+      useAuthStore
+        .getState()
+        .fetchUser()
+        .catch(() => {});
+
       toast.success("Logged in successfully!");
       setOtpSent(false);
-      await loadUserAndAddresses();
+
+      // Fetch addresses in the background (non-blocking).
+      loadAddresses().catch(() => {});
     } catch {
       toast.error("Failed to verify OTP");
     } finally {
@@ -526,7 +608,14 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
           </div>
 
           {/* ── Scrollable Body ──────────────────────────────────── */}
-          {items.length === 0 ? (
+          {isCartLoading && items.length === 0 ? (
+            /* Cart is loading -- show skeleton to prevent "bag empty" flash */
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8">
+              <div className="h-12 w-12 animate-pulse rounded-full bg-neutral-100" />
+              <div className="h-3 w-32 animate-pulse rounded-full bg-neutral-100" />
+              <div className="h-3 w-24 animate-pulse rounded-full bg-neutral-100" />
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[var(--accent)]">
                 <ShoppingBag className="h-8 w-8" />
@@ -553,10 +642,33 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                   1. Delivery Address
                 </h3>
 
-                {currentUser ? (
+                {isAuthLoading && !currentUser ? (
+                  /* Resolving auth -- show skeleton instead of login form */
+                  <div className="animate-pulse rounded-2xl border border-neutral-200 bg-white p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-100" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-32 rounded-full bg-neutral-100" />
+                        <div className="h-3 w-48 rounded-full bg-neutral-100" />
+                        <div className="h-3 w-40 rounded-full bg-neutral-100" />
+                      </div>
+                    </div>
+                  </div>
+                ) : currentUser ? (
                   /* Authenticated: Selected Delivery Address Card */
                   <div className="relative rounded-2xl border border-neutral-200 bg-white p-4 shadow-xs">
-                    {selectedAddress ? (
+                    {isAddressLoading ? (
+                      /* Fetching addresses -- show skeleton card */
+                      <div className="animate-pulse space-y-2 py-1">
+                        <div className="flex items-start gap-3">
+                          <div className="h-7 w-7 shrink-0 rounded-full bg-neutral-100" />
+                          <div className="flex-1 space-y-2">
+                            <div className="h-3 w-40 rounded-full bg-neutral-100" />
+                            <div className="h-3 w-56 rounded-full bg-neutral-100" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : selectedAddress ? (
                       <div>
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-2.5">
@@ -1076,7 +1188,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
           )}
 
           {/* ── Modal Footer: Primary CTA Button ──────────────────── */}
-          {items.length > 0 && (
+          {!isCartLoading && items.length > 0 && (
             <div className="border-t border-neutral-200 bg-white p-4 shadow-lg sm:p-5">
               <button
                 type="button"
