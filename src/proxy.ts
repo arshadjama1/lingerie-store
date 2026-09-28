@@ -94,9 +94,43 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin")) {
+    const isAdminAuthPage =
+      pathname === "/admin/login" || pathname === "/admin/reset-password";
+
+    if (isAdminAuthPage) {
+      if (user) {
+        let role: string | null = null;
+        const { data: profileById } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profileById) {
+          role = profileById.role;
+        } else if (user.email) {
+          const { data: profileByEmail } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("email", user.email)
+            .maybeSingle();
+          if (profileByEmail) {
+            role = profileByEmail.role;
+          }
+        }
+
+        if (role && ["admin", "staff"].includes(role)) {
+          return NextResponse.redirect(
+            new URL("/admin/dashboard", request.url)
+          );
+        }
+      }
+      return response;
+    }
+
     if (!user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/admin/login";
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
@@ -131,7 +165,10 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!role || !["admin", "staff"].includes(role)) {
-      return NextResponse.redirect(new URL("/", request.url));
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/login";
+      url.searchParams.set("error", "forbidden");
+      return NextResponse.redirect(url);
     }
   }
 
