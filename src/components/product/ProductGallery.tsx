@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   ChevronLeft,
@@ -38,6 +38,7 @@ export function ProductGallery({
   const [zoomCoords, setZoomCoords] = useState({ x: 50, y: 50 });
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const mainImageRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const safeImages =
     images.length > 0
@@ -69,6 +70,40 @@ export function ProductGallery({
   const handleNext = useCallback(() => {
     setActiveIndex((prev) => (prev === safeImages.length - 1 ? 0 : prev + 1));
   }, [safeImages.length]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return;
+      const diff = touchStartX.current - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) {
+        if (diff > 0) {
+          handleNext();
+        } else {
+          handlePrev();
+        }
+      }
+      touchStartX.current = null;
+    },
+    [handleNext, handlePrev]
+  );
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = origOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [lightboxOpen]);
 
   return (
     <div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
@@ -109,6 +144,8 @@ export function ProductGallery({
           onMouseEnter={() => setIsZooming(true)}
           onMouseLeave={() => setIsZooming(false)}
           onMouseMove={handleMouseMove}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
           className="group relative aspect-[3/4] w-full cursor-crosshair overflow-hidden rounded-none border border-gray-100 bg-[var(--surface)] shadow-sm"
         >
           {/* Main Image */}
@@ -156,7 +193,7 @@ export function ProductGallery({
           {/* Expand / Lightbox Button */}
           <button
             onClick={() => setLightboxOpen(true)}
-            className="absolute top-4 right-4 z-10 cursor-pointer rounded-full bg-white/90 p-2 text-gray-700 opacity-0 shadow-md backdrop-blur-xs transition-opacity group-hover:opacity-100 hover:bg-white hover:text-black"
+            className="absolute top-4 right-4 z-10 cursor-pointer rounded-full bg-white/90 p-2 text-gray-700 opacity-90 shadow-md backdrop-blur-xs transition-opacity hover:bg-white hover:text-black sm:opacity-0 sm:group-hover:opacity-100"
             aria-label="Open fullscreen image"
             title="Open fullscreen view"
           >
@@ -171,7 +208,7 @@ export function ProductGallery({
                   e.stopPropagation();
                   handlePrev();
                 }}
-                className="absolute top-1/2 left-3 z-10 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2 text-gray-800 opacity-0 shadow-md backdrop-blur-xs transition-opacity group-hover:opacity-100 hover:bg-white sm:left-4"
+                className="absolute top-1/2 left-3 z-10 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2 text-gray-800 opacity-90 shadow-md backdrop-blur-xs transition-opacity hover:bg-white sm:left-4 sm:opacity-0 sm:group-hover:opacity-100"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -181,7 +218,7 @@ export function ProductGallery({
                   e.stopPropagation();
                   handleNext();
                 }}
-                className="absolute top-1/2 right-3 z-10 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2 text-gray-800 opacity-0 shadow-md backdrop-blur-xs transition-opacity group-hover:opacity-100 hover:bg-white sm:right-4"
+                className="absolute top-1/2 right-3 z-10 -translate-y-1/2 cursor-pointer rounded-full bg-white/90 p-2 text-gray-800 opacity-90 shadow-md backdrop-blur-xs transition-opacity hover:bg-white sm:right-4 sm:opacity-0 sm:group-hover:opacity-100"
                 aria-label="Next image"
               >
                 <ChevronRight className="h-5 w-5" />

@@ -1,48 +1,12 @@
 import Link from "next/link";
 
-import {
-  ArrowRight,
-  Lock,
-  Mail,
-  PhoneCall,
-  ShieldCheck,
-  Truck,
-} from "lucide-react";
+import { Lock, Mail, ShieldCheck, Truck } from "lucide-react";
 
 import { FOOTER_LINK_GROUPS } from "./data/navigationData";
 
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-pink-900/60 bg-[#11040b] text-white">
-      {/* Newsletter Strip */}
-      <div className="border-b border-pink-800/50 bg-[#240819] px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 md:flex-row">
-          <div className="space-y-1 text-center md:text-left">
-            <h3 className="font-serif text-xl font-black tracking-tight text-white sm:text-2xl">
-              Join the Surekh Insider Club
-            </h3>
-            <p className="text-xs font-normal text-pink-100">
-              Get secret sale updates, exclusive coupon codes, and fit tips
-              delivered to your inbox.
-            </p>
-          </div>
-
-          <div className="flex w-full max-w-md items-center gap-0 shadow-xl md:w-auto">
-            <div className="relative flex-1">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="w-full rounded-none bg-white py-3.5 pr-4 pl-10 text-xs font-semibold text-gray-900 placeholder:text-gray-500 focus:ring-2 focus:ring-[var(--accent)] focus:outline-none"
-              />
-              <Mail className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-500" />
-            </div>
-            <button className="flex flex-shrink-0 cursor-pointer items-center gap-1.5 rounded-none bg-[var(--accent)] px-7 py-3.5 text-xs font-black tracking-wider text-white uppercase shadow-md transition-colors hover:bg-pink-600">
-              Subscribe <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Links */}
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
@@ -59,10 +23,13 @@ export function Footer() {
               India&apos;s premier intimate wear destination designed for every
               woman&apos;s unique comfort, fit precision, and signature style.
             </p>
-            <div className="flex items-center gap-2 rounded-none border border-white/15 bg-white/10 p-2.5 text-xs font-bold text-white">
-              <PhoneCall className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
-              <span>Support: +91 1800-123-4567</span>
-            </div>
+            <a
+              href="mailto:support@surekh.co.in"
+              className="flex items-center gap-2 rounded-none border border-white/15 bg-white/10 p-2.5 text-xs font-bold text-white transition-colors hover:bg-white/20"
+            >
+              <Mail className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
+              <span>support@surekh.co.in</span>
+            </a>
           </div>
 
           {/* Link Groups */}

@@ -161,18 +161,22 @@ export function HeroCarousel() {
         </div>
 
         {/* Bottom Dot Navigation */}
-        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 sm:hidden">
+        <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 sm:hidden">
           {SLIDES.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
               aria-label={`Go to slide ${index + 1}`}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
-                  ? "w-7 bg-[var(--accent)]"
-                  : "w-2 bg-white/60"
-              }`}
-            />
+              className="flex h-10 w-10 cursor-pointer items-center justify-center p-2"
+            >
+              <span
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  index === currentIndex
+                    ? "w-7 bg-[var(--accent)] shadow-xs"
+                    : "w-2 bg-white/60"
+                }`}
+              />
+            </button>
           ))}
         </div>
       </div>

@@ -14,7 +14,7 @@ export function PlayfulCategoryGrid() {
           POPULAR CATEGORIES
         </span>
         <h2 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-4xl">
-          Rainy Day Vibes & Super Buys
+          Everyday Comfort & Best Buys
         </h2>
       </div>
 

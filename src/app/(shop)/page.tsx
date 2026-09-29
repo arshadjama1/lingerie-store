@@ -16,7 +16,7 @@ export default async function HomePage() {
   const featuredProducts = await getCatalogFeatured(12).catch(() => []);
 
   return (
-    <main className="flex flex-col gap-0 bg-white pb-16">
+    <div className="flex flex-col gap-0 bg-white pb-16">
       {/* 1. Hero Carousel */}
       <HeroCarousel />
 
@@ -45,6 +45,6 @@ export default async function HomePage() {
 
       {/* 9. Storefront Trust Strip */}
       <TrustStrip />
-    </main>
+    </div>
   );
 }

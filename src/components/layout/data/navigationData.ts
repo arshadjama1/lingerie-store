@@ -48,20 +48,19 @@ export const FOOTER_LINK_GROUPS = {
   "Fit & Care": [
     { label: "Bra Size Calculator & FitCode™", href: "/size-calculator" },
     { label: "Size & Measurement Guide", href: "/size-calculator" },
-    { label: "Lingerie Care Guide", href: "/care-guide" },
-    { label: "Find Your Style Quiz", href: "/quiz" },
+    { label: "Fit Troubleshooter", href: "/size-calculator" },
+    { label: "Find Your Style", href: "/size-calculator" },
   ],
   "Customer Support": [
     { label: "Track Your Order", href: "/account/orders" },
     { label: "Shipping & Delivery Policy", href: "/shipping" },
     { label: "Cancellation & Return Policy", href: "/legal/returns" },
-    { label: "Contact Customer Care", href: "/contact" },
-    { label: "FAQs", href: "/faqs" },
+    { label: "Discreet Packaging", href: "/shipping" },
   ],
   "About Surekh": [
     { label: "Our Story & Mission", href: "/about" },
+    { label: "Quality & Hygiene Guarantee", href: "/about" },
     { label: "Privacy Policy", href: "/legal/privacy" },
     { label: "Terms of Service", href: "/legal/terms" },
-    { label: "Cancellation & Return Policy", href: "/legal/returns" },
   ],
 };

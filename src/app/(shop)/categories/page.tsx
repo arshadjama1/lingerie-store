@@ -30,7 +30,7 @@ export default async function CategoriesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#faf8f7]/50 pb-20">
+    <div className="min-h-screen bg-[#faf8f7]/50 pb-20">
       <div className="border-b border-stone-200/80 bg-white">
         <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 sm:px-6 lg:px-8">
           <Breadcrumb items={breadcrumbs} className="mb-3" />
@@ -90,6 +90,6 @@ export default async function CategoriesPage() {
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

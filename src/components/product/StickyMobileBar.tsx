@@ -86,7 +86,7 @@ export function StickyMobileBar({
         <div className="shrink-0">
           <button
             type="button"
-            disabled={!selectedSize || isOutOfStock || isLoading}
+            disabled={isOutOfStock || isLoading}
             onClick={() => {
               if (!selectedSize && onOpenSizePicker) {
                 onOpenSizePicker();

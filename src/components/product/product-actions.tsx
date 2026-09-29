@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import { useFitStore } from "@/stores/useFitStore";
@@ -39,6 +39,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
 
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const sizeSectionRef = useRef<HTMLDivElement>(null);
 
   // Extract all unique colors and sizes from variants
   const colorMap = useMemo(() => {
@@ -272,24 +273,32 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
 
           {/* Social Proof / Rating Snippet */}
           <div className="mt-2.5 flex items-center gap-3">
-            <div className="flex items-center gap-1 border border-amber-200 bg-amber-50 px-2 py-0.5">
-              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
-              <span className="text-xs font-black text-amber-900">
-                {Number(product.ratingAvg) > 0 ? product.ratingAvg : "4.9"}
+            {product.ratingCount > 0 && Number(product.ratingAvg) > 0 ? (
+              <div className="flex items-center gap-1 border border-amber-200 bg-amber-50 px-2 py-0.5">
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                <span className="text-xs font-black text-amber-900">
+                  {parseFloat(product.ratingAvg).toFixed(1)}
+                </span>
+              </div>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-none border border-pink-200 bg-pink-50 px-2 py-0.5 text-[10px] font-black tracking-wider text-[var(--accent)] uppercase">
+                New Arrival
               </span>
-            </div>
+            )}
             <a
               href="#reviews-section"
               className="text-xs font-medium text-gray-500 underline transition hover:text-[var(--accent)]"
             >
               {product.ratingCount > 0
-                ? `${product.ratingCount} Customer Reviews`
-                : "128 Verified Ratings"}
+                ? `${product.ratingCount} ${product.ratingCount === 1 ? "Customer Review" : "Customer Reviews"}`
+                : "Be the first to review"}
             </a>
             <span className="text-gray-300">•</span>
-            <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
-              <Sparkles className="h-3 w-3" /> In Stock
-            </span>
+            {!isOutOfStock && (
+              <span className="flex items-center gap-1 text-xs font-bold text-emerald-700">
+                <Sparkles className="h-3 w-3" /> In Stock
+              </span>
+            )}
           </div>
 
           {/* Pricing */}
@@ -361,7 +370,10 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
 
         {/* Size Selection Grid with Size Guide Trigger */}
         {allSizes.length > 0 && (
-          <div className="flex flex-col gap-2.5">
+          <div
+            ref={sizeSectionRef}
+            className="flex scroll-mt-28 flex-col gap-2.5"
+          >
             <div className="flex items-center justify-between">
               <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
                 Select Size:{" "}
@@ -618,7 +630,14 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
         isLoading={isCartLoading}
         onAddToCart={handleAddToCart}
         onOpenSizePicker={() => {
-          window.scrollTo({ top: 300, behavior: "smooth" });
+          if (sizeSectionRef.current) {
+            sizeSectionRef.current.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+            });
+          } else {
+            window.scrollTo({ top: 350, behavior: "smooth" });
+          }
         }}
       />
     </div>

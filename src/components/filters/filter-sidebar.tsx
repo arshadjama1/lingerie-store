@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Check, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 import { buildQueryString, cn } from "@/lib/utils";
 
@@ -146,10 +147,15 @@ export function FilterSidebar({
 
   const applyPriceRange = useCallback(
     (minStr: string, maxStr: string) => {
-      updateParams((p) => {
-        const minVal = minStr.trim() !== "" ? parseInt(minStr.trim(), 10) : NaN;
-        const maxVal = maxStr.trim() !== "" ? parseInt(maxStr.trim(), 10) : NaN;
+      const minVal = minStr.trim() !== "" ? parseInt(minStr.trim(), 10) : NaN;
+      const maxVal = maxStr.trim() !== "" ? parseInt(maxStr.trim(), 10) : NaN;
 
+      if (!isNaN(minVal) && !isNaN(maxVal) && minVal > maxVal) {
+        toast.error("Minimum price cannot exceed maximum price");
+        return;
+      }
+
+      updateParams((p) => {
         if (!isNaN(minVal) && minVal >= 0) {
           p.priceMin = String(minVal);
         } else {

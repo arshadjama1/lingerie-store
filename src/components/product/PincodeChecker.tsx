@@ -55,12 +55,7 @@ export function PincodeChecker() {
         setResult(null);
       }
     } catch {
-      // Fallback optimistic standard delivery estimate
-      setResult({
-        isServiceable: true,
-        isCodAvailable: true,
-        tatDays: 3,
-      });
+      setError("Unable to check delivery availability. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -110,7 +105,11 @@ export function PincodeChecker() {
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             maxLength={6}
+            autoComplete="postal-code"
+            aria-label="Enter 6-digit delivery pincode"
             value={pincode}
             onChange={(e) => {
               const val = e.target.value.replace(/\D/g, "");

@@ -6,7 +6,6 @@ import { ComfortFoliageSection } from "./ComfortFoliageSection";
 import { FloralFabricGrid } from "./FloralFabricGrid";
 import { PlayfulCategoryGrid } from "./PlayfulCategoryGrid";
 import { RibbonEditsGrid } from "./RibbonEditsGrid";
-import { StyleCutoutsGrid } from "./StyleCutoutsGrid";
 import { TimeOccasionGrid } from "./TimeOccasionGrid";
 
 export function HomeShowcase({ products }: { products: ProductItem[] }) {
@@ -27,10 +26,7 @@ export function HomeShowcase({ products }: { products: ProductItem[] }) {
       {/* 5. Everyday Fabric Floral Cards */}
       <FloralFabricGrid />
 
-      {/* 6. Style Silhouette Cutout Cards */}
-      <StyleCutoutsGrid />
-
-      {/* 7. Tabbed Bestseller Showcase Grid */}
+      {/* 6. Tabbed Bestseller Showcase Grid */}
       <BestsellerShowcase products={products} />
     </div>
   );

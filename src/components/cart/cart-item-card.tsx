@@ -113,19 +113,19 @@ export function CartItemCard({ item, onCloseDrawer }: CartItemCardProps) {
 
         {/* Price & Quantity Controls */}
         <div className="mt-3 flex items-center justify-between">
-          <div className="border-input bg-background flex items-center gap-1.5 rounded-md border px-1 py-0.5">
+          <div className="flex items-center rounded-lg border border-neutral-200 bg-neutral-50/80 p-0.5">
             <button
               onClick={handleDecrease}
               disabled={isUpdating}
-              className="hover:bg-accent text-foreground rounded p-1 transition-colors disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded text-neutral-700 transition-colors hover:bg-pink-100 hover:text-[var(--accent)] active:scale-90 disabled:pointer-events-none disabled:opacity-30"
               aria-label="Decrease quantity"
             >
-              <Minus className="h-3 w-3" />
+              <Minus className="h-3.5 w-3.5" />
             </button>
 
-            <span className="w-6 text-center text-xs font-semibold">
+            <span className="w-7 text-center text-xs font-bold text-neutral-900">
               {isUpdating ? (
-                <Loader2 className="text-primary mx-auto h-3 w-3 animate-spin" />
+                <Loader2 className="mx-auto h-3 w-3 animate-spin text-[var(--accent)]" />
               ) : (
                 item.quantity
               )}
@@ -134,10 +134,10 @@ export function CartItemCard({ item, onCloseDrawer }: CartItemCardProps) {
             <button
               onClick={handleIncrease}
               disabled={isUpdating || item.quantity >= availableStock}
-              className="hover:bg-accent text-foreground rounded p-1 transition-colors disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded text-neutral-700 transition-colors hover:bg-pink-100 hover:text-[var(--accent)] active:scale-90 disabled:pointer-events-none disabled:opacity-30"
               aria-label="Increase quantity"
             >
-              <Plus className="h-3 w-3" />
+              <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
 

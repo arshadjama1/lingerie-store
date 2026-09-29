@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 
 export default function SearchLoading() {
   return (
-    <main className="bg-white pb-16">
+    <div className="bg-white pb-16">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Header skeleton */}
         <div className="mb-8 space-y-2">
@@ -35,6 +35,6 @@ export default function SearchLoading() {
           <Search className="inline h-4 w-4" /> Loading search results…
         </span>
       </div>
-    </main>
+    </div>
   );
 }
