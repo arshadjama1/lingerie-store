@@ -162,17 +162,36 @@ export default async function AdminOrderDetailPage({
                   </div>
                 )}
                 <div className="flex justify-between">
+                  <dt className="text-gray-500">Payment Status</dt>
+                  <dd className="font-semibold text-gray-900 uppercase">
+                    {order.payment.status === "captured" ? (
+                      <span className="inline-flex items-center rounded-none bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                        {order.payment.method === "cod"
+                          ? "Collected / Paid"
+                          : "Paid"}
+                      </span>
+                    ) : order.payment.status === "pending" ? (
+                      <span className="inline-flex items-center rounded-none bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                        Pending Collection
+                      </span>
+                    ) : (
+                      order.payment.status
+                    )}
+                  </dd>
+                </div>
+                <div className="flex justify-between">
                   <dt className="text-gray-500">Amount</dt>
                   <dd className="font-semibold text-gray-900">
                     {formatPrice(order.payment.amount)}
                   </dd>
                 </div>
               </dl>
-              {order.payment.method === "cod" && (
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  <AdminCollectCodButton orderId={order.id} />
-                </div>
-              )}
+              {order.payment.method === "cod" &&
+                order.payment.status !== "captured" && (
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    <AdminCollectCodButton orderId={order.id} />
+                  </div>
+                )}
             </section>
           )}
 

@@ -143,7 +143,10 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
       id: createId(),
       orderId: newOrder.id,
       status: "confirmed",
-      note: "Payment completed successfully",
+      note:
+        method === "cod"
+          ? "Order confirmed via Cash on Delivery"
+          : "Payment completed successfully",
     });
 
     // Insert payment record
@@ -155,7 +158,7 @@ export async function processPaymentSuccess(input: ProcessPaymentSuccessInput) {
       razorpaySignature: razorpaySignature || null,
       amount: session.total,
       currency: "INR",
-      status: "captured",
+      status: method === "cod" ? "pending" : "captured",
       method: method || null,
     });
 

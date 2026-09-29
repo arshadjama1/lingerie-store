@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { db } from "@/db";
-import { orderStatusHistory, payments } from "@/db/schema";
+import { orderStatusHistory, orders, payments } from "@/db/schema";
 import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 
@@ -18,9 +18,18 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
 
   const admin = await assertAdmin();
 
-  const payment = await db.query.payments.findFirst({
-    where: eq(payments.orderId, orderId),
-  });
+  const [order, payment] = await Promise.all([
+    db.query.orders.findFirst({
+      where: eq(orders.id, orderId),
+    }),
+    db.query.payments.findFirst({
+      where: eq(payments.orderId, orderId),
+    }),
+  ]);
+
+  if (!order) {
+    throw new NotFoundError("Order");
+  }
 
   if (!payment) {
     throw new NotFoundError("Payment");
@@ -39,13 +48,13 @@ export const POST = withErrorHandling(async (req: Request, ctx?: unknown) => {
   await db.transaction(async (tx) => {
     await tx
       .update(payments)
-      .set({ status: "captured" })
+      .set({ status: "captured", updatedAt: new Date() })
       .where(eq(payments.orderId, orderId));
 
     await tx.insert(orderStatusHistory).values({
       id: createId(),
       orderId,
-      status: "delivered",
+      status: order.status,
       note: "COD collected — payment received from customer",
       changedBy: admin.id,
     });

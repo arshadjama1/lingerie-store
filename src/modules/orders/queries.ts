@@ -190,6 +190,7 @@ export async function getOrderDetails(
 
   const mappedPayment: OrderPayment | null = payment
     ? {
+        status: payment.status,
         method: payment.method,
         razorpayPaymentId: payment.razorpayPaymentId,
         amount: payment.amount,
