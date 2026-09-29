@@ -5,38 +5,35 @@ import { useEffect, useState } from "react";
 
 import { toast } from "sonner";
 
-import { VALID_TRANSITIONS } from "@/modules/orders/transitions";
-import type { OrderStatus } from "@/modules/orders/types";
+import { RETURN_VALID_TRANSITIONS } from "@/modules/admin/returns/transitions";
+import type { ReturnStatus } from "@/modules/admin/returns/types";
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: "Pending",
-  confirmed: "Confirmed",
-  processing: "Processing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
+const STATUS_LABELS: Record<ReturnStatus, string> = {
+  requested: "Requested",
+  approved: "Approved",
+  rejected: "Rejected",
+  picked_up: "Picked Up",
   refunded: "Refunded",
 };
 
-interface AdminStatusFormProps {
-  orderId: string;
-  currentStatus: OrderStatus;
+interface AdminReturnActionFormProps {
+  returnId: string;
+  currentStatus: ReturnStatus;
 }
 
-export function AdminStatusForm({
-  orderId,
+export function AdminReturnActionForm({
+  returnId,
   currentStatus,
-}: AdminStatusFormProps) {
+}: AdminReturnActionFormProps) {
   const router = useRouter();
-  const validNext = VALID_TRANSITIONS[currentStatus] ?? [];
+  const validNext = RETURN_VALID_TRANSITIONS[currentStatus] ?? [];
 
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus>(
+  const [selectedStatus, setSelectedStatus] = useState<ReturnStatus>(
     validNext[0] ?? currentStatus
   );
-  const [note, setNote] = useState("");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Sync selected status when currentStatus changes after a refresh
   useEffect(() => {
     if (validNext[0]) {
       setSelectedStatus(validNext[0]);
@@ -55,20 +52,22 @@ export function AdminStatusForm({
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: "POST",
+      const res = await fetch(`/api/admin/returns/${returnId}/status`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           status: selectedStatus,
-          note: note || undefined,
+          notes: notes || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to update status");
+        toast.error(data.error ?? "Failed to update return status");
         return;
       }
-      toast.success(`Status updated to "${STATUS_LABELS[selectedStatus]}"`);
+      toast.success(
+        `Return status updated to "${STATUS_LABELS[selectedStatus]}"`
+      );
       router.refresh();
     } catch {
       toast.error("Network error — please try again");
@@ -85,7 +84,7 @@ export function AdminStatusForm({
         </label>
         <select
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
+          onChange={(e) => setSelectedStatus(e.target.value as ReturnStatus)}
           className="w-full rounded-none border border-gray-200 bg-white px-3 py-2 text-sm focus:border-[#3d0a20] focus:outline-none"
         >
           {validNext.map((s) => (
@@ -98,13 +97,14 @@ export function AdminStatusForm({
 
       <div>
         <label className="mb-1 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
-          Note <span className="font-normal text-gray-400">(optional)</span>
+          Admin Notes{" "}
+          <span className="font-normal text-gray-400">(optional)</span>
         </label>
         <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={2}
-          placeholder="Internal note about this status change…"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          placeholder="Internal note about this decision…"
           className="w-full resize-none rounded-none border border-gray-200 px-3 py-2 text-sm focus:border-[#3d0a20] focus:outline-none"
         />
       </div>
@@ -114,7 +114,7 @@ export function AdminStatusForm({
         disabled={loading}
         className="w-full rounded-none bg-[#3d0a20] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? "Saving…" : "Save Status"}
+        {loading ? "Saving…" : "Save Decision"}
       </button>
     </form>
   );
