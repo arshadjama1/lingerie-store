@@ -64,11 +64,10 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     name: "Returns & Exchanges",
-    href: "#",
+    href: "/admin/returns",
     icon: RotateCcw,
-    badge: "Phase 4",
-    isPlanned: true,
   },
+
   {
     name: "Customer CRM",
     href: "#",
