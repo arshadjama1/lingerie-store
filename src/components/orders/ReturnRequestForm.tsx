@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { RotateCcw } from "lucide-react";
@@ -10,6 +11,7 @@ interface ReturnRequestFormProps {
 }
 
 export function ReturnRequestForm({ orderId }: ReturnRequestFormProps) {
+  const router = useRouter();
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -38,6 +40,8 @@ export function ReturnRequestForm({ orderId }: ReturnRequestFormProps) {
       }
 
       setSubmitted(true);
+      toast.success("Return request submitted successfully");
+      router.refresh();
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {
