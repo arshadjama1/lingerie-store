@@ -190,46 +190,6 @@ export const FLORAL_FABRICS_DATA = [
   },
 ];
 
-// ── Style Cutout Cards ────────────────────────────────────────────────
-export const STYLE_CUTOUTS_DATA = [
-  {
-    name: "Bamboo Bra – Black",
-    href: "/bras",
-    image: "/images/products/bamboo-bra-black.png",
-    bg: "bg-pink-50 border-pink-200",
-  },
-  {
-    name: "Bamboo Bra – Navy",
-    href: "/bras",
-    image: "/images/products/bamboo-bra-navy.png",
-    bg: "bg-blue-50 border-blue-200",
-  },
-  {
-    name: "Lounge Bra – Pink",
-    href: "/bras",
-    image: "/images/products/mischief-lounge-bra-pink.png",
-    bg: "bg-rose-50 border-rose-200",
-  },
-  {
-    name: "Overlap Bralette Set",
-    href: "/sets",
-    image: "/images/products/lingerie-set-olive.png",
-    bg: "bg-green-50 border-green-200",
-  },
-  {
-    name: "Camisole – Pink",
-    href: "/loungewear",
-    image: "/images/products/camisole-pink.png",
-    bg: "bg-amber-50 border-amber-200",
-  },
-  {
-    name: "Floral Undie Pack",
-    href: "/panties",
-    image: "/images/products/floral-undie-navy.png",
-    bg: "bg-cyan-50 border-cyan-200",
-  },
-];
-
 // ── Customer Testimonials ─────────────────────────────────────────────
 export const TESTIMONIALS_DATA = [
   {
