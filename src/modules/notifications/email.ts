@@ -234,3 +234,125 @@ export async function sendOrderShippedEmail(
     console.error("[email] sendOrderShippedEmail failed:", err);
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// Return notification types
+// ─────────────────────────────────────────────────────────────────────
+
+interface ReturnEmailData {
+  orderNumber: string;
+  customerEmail: string | null;
+  reason: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// sendReturnApprovedEmail
+// ─────────────────────────────────────────────────────────────────────
+
+function buildReturnApprovedHtml(data: ReturnEmailData): string {
+  const body = `
+<h2 style="margin:0 0 8px;font-size:24px;color:#111827;font-family:Georgia,serif;">Your return request has been approved ✅</h2>
+<p style="margin:0 0 20px;font-size:15px;color:#6b7280;">We've reviewed your return request and it has been approved. Our team will arrange a pickup of the item(s) shortly.</p>
+
+${orderNumberPill(data.orderNumber)}
+
+<div style="margin:20px 0;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+  <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Your Return Reason</p>
+  <p style="margin:0;font-size:14px;color:#374151;">${data.reason}</p>
+</div>
+
+<p style="margin:24px 0 8px;font-size:14px;color:#374151;font-weight:600;">What happens next?</p>
+<ul style="margin:0 0 20px;padding-left:20px;font-size:14px;color:#6b7280;line-height:1.8;">
+  <li>Please keep the item(s) packed and ready for pickup.</li>
+  <li>Our courier will collect the item(s) from your shipping address.</li>
+  <li>Once received and verified, we'll process your refund.</li>
+</ul>
+
+<p style="margin:0;font-size:14px;color:#6b7280;">If you have any questions, reply to this email or contact <a href="mailto:support@surekh.in" style="color:#3d0a20;">support@surekh.in</a>.</p>`;
+
+  return wrapLayout(body);
+}
+
+export async function sendReturnApprovedEmail(
+  data: ReturnEmailData
+): Promise<void> {
+  if (!data.customerEmail) {
+    console.warn(
+      "[email] sendReturnApprovedEmail: no customer email for order",
+      data.orderNumber
+    );
+    return;
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: serverEnv.RESEND_FROM_EMAIL,
+      to: data.customerEmail,
+      subject: `Return approved – ${data.orderNumber} | Surekh`,
+      html: buildReturnApprovedHtml(data),
+    });
+
+    if (error) {
+      console.error("[email] sendReturnApprovedEmail Resend error:", error);
+    }
+  } catch (err) {
+    console.error("[email] sendReturnApprovedEmail failed:", err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// sendReturnRejectedEmail
+// ─────────────────────────────────────────────────────────────────────
+
+function buildReturnRejectedHtml(data: ReturnEmailData): string {
+  const body = `
+<h2 style="margin:0 0 8px;font-size:24px;color:#111827;font-family:Georgia,serif;">Update on your return request</h2>
+<p style="margin:0 0 20px;font-size:15px;color:#6b7280;">Thank you for reaching out. After reviewing your return request, we're unable to process it at this time.</p>
+
+${orderNumberPill(data.orderNumber)}
+
+<div style="margin:20px 0;padding:16px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca;">
+  <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Your Return Reason</p>
+  <p style="margin:0;font-size:14px;color:#374151;">${data.reason}</p>
+</div>
+
+<p style="margin:20px 0;font-size:14px;color:#374151;">
+  As per our policy, we only accept returns for items that arrive <strong>damaged or incorrect</strong>. 
+  If you believe this decision was made in error or you have additional information to share, 
+  please don't hesitate to contact our support team.
+</p>
+
+<p style="margin:0;font-size:14px;color:#6b7280;">
+  Contact us at <a href="mailto:support@surekh.in" style="color:#3d0a20;">support@surekh.in</a> 
+  — we're happy to help clarify or reconsider.
+</p>`;
+
+  return wrapLayout(body);
+}
+
+export async function sendReturnRejectedEmail(
+  data: ReturnEmailData
+): Promise<void> {
+  if (!data.customerEmail) {
+    console.warn(
+      "[email] sendReturnRejectedEmail: no customer email for order",
+      data.orderNumber
+    );
+    return;
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: serverEnv.RESEND_FROM_EMAIL,
+      to: data.customerEmail,
+      subject: `Update on your return request – ${data.orderNumber} | Surekh`,
+      html: buildReturnRejectedHtml(data),
+    });
+
+    if (error) {
+      console.error("[email] sendReturnRejectedEmail Resend error:", error);
+    }
+  } catch (err) {
+    console.error("[email] sendReturnRejectedEmail failed:", err);
+  }
+}
