@@ -34,7 +34,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
     setIsOpen(false);
   }, [pathname]);
 
-  // Click outside listener
+  // Click outside & Escape key listeners
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -44,11 +44,18 @@ export function UserDropdown({ className }: UserDropdownProps) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 

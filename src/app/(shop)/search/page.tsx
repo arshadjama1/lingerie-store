@@ -76,7 +76,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   // ── Discovery state: no query ─────────────────────────────────────────
   if (!query) {
     return (
-      <main className="bg-white pb-16">
+      <div className="bg-white pb-16">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
           {/* Hero prompt */}
           <div className="mb-10 text-center">
@@ -111,14 +111,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </div>
           )}
         </div>
-      </main>
+      </div>
     );
   }
 
   const hasResults = results && results.products.length > 0;
 
   return (
-    <main className="bg-white pb-16">
+    <div className="bg-white pb-16">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Page header */}
         <div className="mb-8">
@@ -194,6 +194,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

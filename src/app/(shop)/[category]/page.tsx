@@ -169,7 +169,7 @@ export default async function CategoryPage({
   const breadcrumbs = [{ label: "Home", href: "/" }, { label: category.name }];
 
   return (
-    <main className="min-h-screen bg-[#faf8f7]/50 pb-20">
+    <div className="min-h-screen bg-[#faf8f7]/50 pb-20">
       {/* Category Editorial Header */}
       <div className="border-b border-stone-200/80 bg-white">
         <div className="mx-auto w-full max-w-7xl px-4 pt-4 pb-6 sm:px-6 lg:px-8">
@@ -267,6 +267,6 @@ export default async function CategoryPage({
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

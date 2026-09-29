@@ -54,7 +54,7 @@ export default function SizeCalculatorPage() {
       </section>
 
       {/* Main Interactive Calculator Container */}
-      <main className="mx-auto -mt-6 max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto -mt-6 max-w-4xl px-4 sm:px-6 lg:px-8">
         <div className="border border-pink-200 bg-white p-6 shadow-xl sm:p-10">
           <SizeCalculatorWizard />
         </div>
@@ -107,7 +107,7 @@ export default function SizeCalculatorPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 }

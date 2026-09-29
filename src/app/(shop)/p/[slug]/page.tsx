@@ -122,7 +122,7 @@ export default async function ProductPage({
   ];
 
   return (
-    <main className="bg-white pb-16">
+    <div className="bg-white pb-16">
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         {/* JSON-LD for rich snippets */}
         <script
@@ -186,6 +186,6 @@ export default async function ProductPage({
           </div>
         )}
       </div>
-    </main>
+    </div>
   );
 }
