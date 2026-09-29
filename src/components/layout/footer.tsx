@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Lock, PhoneCall, ShieldCheck, Truck } from "lucide-react";
+import { Lock, Mail, ShieldCheck, Truck } from "lucide-react";
 
 import { FOOTER_LINK_GROUPS } from "./data/navigationData";
 
@@ -24,11 +24,11 @@ export function Footer() {
               woman&apos;s unique comfort, fit precision, and signature style.
             </p>
             <a
-              href="tel:+9118001234567"
+              href="mailto:support@surekh.co.in"
               className="flex items-center gap-2 rounded-none border border-white/15 bg-white/10 p-2.5 text-xs font-bold text-white transition-colors hover:bg-white/20"
             >
-              <PhoneCall className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
-              <span>Support: +91 1800-123-4567</span>
+              <Mail className="h-4 w-4 flex-shrink-0 text-[var(--accent)]" />
+              <span>support@surekh.co.in</span>
             </a>
           </div>
 
