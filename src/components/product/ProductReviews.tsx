@@ -65,7 +65,7 @@ export async function ProductReviews({
     fitDistribution.runsLarge;
 
   return (
-    <section id="customer-reviews" className="space-y-8">
+    <section id="reviews-section" className="scroll-mt-24 space-y-8">
       {/* Section Header */}
       <div>
         <span className="mb-1 inline-block rounded-none bg-[var(--accent-subtle)] px-3 py-1 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase shadow-xs">
@@ -235,7 +235,7 @@ export async function ProductReviews({
             <Pagination
               currentPage={page}
               totalPages={totalPages}
-              buildUrl={(p) => `?reviewPage=${p}#customer-reviews`}
+              buildUrl={(p) => `?reviewPage=${p}#reviews-section`}
               className="mt-8 border-t border-gray-100 pt-6"
             />
           )}
