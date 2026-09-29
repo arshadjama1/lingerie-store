@@ -49,7 +49,12 @@ interface FastCheckoutModalProps {
 
 export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const router = useRouter();
-  const { cart, isLoading: isCartLoading, fetchCart } = useCartStore();
+  const {
+    cart,
+    isLoading: isCartLoading,
+    fetchCart,
+    clearCart,
+  } = useCartStore();
 
   // Read the globally-initialised auth store so that already-logged-in
   // users are detected instantly without an extra network round-trip.
@@ -605,6 +610,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         return;
       }
 
+      clearCart();
+      fetchCart().catch(() => {});
       toast.success("Order placed! Pay on delivery.");
       onClose();
       router.push(`/order-success/${orderData.orderId}`);
@@ -699,6 +706,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
               return;
             }
 
+            clearCart();
+            fetchCart().catch(() => {});
             toast.success("Order placed successfully! Redirecting...");
             onClose();
             router.push(`/order-success/${verifyData.orderId}`);

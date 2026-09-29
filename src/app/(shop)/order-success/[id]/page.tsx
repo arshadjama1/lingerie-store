@@ -14,6 +14,7 @@ import {
 } from "@/modules/shipping";
 
 import { FulfillmentStepper } from "@/components/orders/FulfillmentStepper";
+import { OrderSuccessCartSync } from "@/components/orders/OrderSuccessCartSync";
 
 interface OrderSuccessPageProps {
   params: Promise<{ id: string }>;
@@ -71,6 +72,7 @@ export default async function OrderSuccessPage({
 
   return (
     <div className="min-h-screen bg-neutral-50/50 pt-12 pb-16">
+      <OrderSuccessCartSync />
       <div className="mx-auto max-w-2xl px-4 sm:px-6">
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
           {/* Confirmation header */}
