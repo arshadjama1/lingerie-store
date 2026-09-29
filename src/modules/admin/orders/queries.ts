@@ -149,6 +149,7 @@ export async function getAdminOrderDetails(
 
   const mappedPayment: OrderPayment | null = payment
     ? {
+        status: payment.status,
         method: payment.method,
         razorpayPaymentId: payment.razorpayPaymentId,
         amount: payment.amount,

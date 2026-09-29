@@ -13,6 +13,7 @@ import {
 import { getAddressById } from "@/modules/addresses";
 import { getCart } from "@/modules/cart";
 import { validateCoupon } from "@/modules/coupons";
+import { checkDtdcPincodeServiceability } from "@/modules/shipping";
 
 import { calculateCheckoutTotals, calculateLineItem } from "./calculations";
 import { releaseInventory, reserveInventory } from "./inventory";
@@ -22,10 +23,17 @@ import type {
   HydratedCheckoutSession,
 } from "./types";
 
+/** ₹49 Cash-on-Delivery surcharge. */
+export const COD_FEE = 49;
+/** Minimum subtotal (after coupon) for COD to be available. */
+export const COD_MIN_SUBTOTAL = 499;
+/** Maximum subtotal (after coupon) for COD to be available. */
+export const COD_MAX_SUBTOTAL = 4999;
+
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput
 ): Promise<HydratedCheckoutSession> {
-  const { userId, cartId, addressId, couponCode } = input;
+  const { userId, cartId, addressId, couponCode, paymentMethod } = input;
 
   const address = await getAddressById(userId, addressId);
   const cart = await getCart({ userId });
@@ -54,7 +62,40 @@ export async function createCheckoutSession(
     discountAmount = couponResult.discountAmount;
   }
 
-  const totals = calculateCheckoutTotals(lineItems, discountAmount);
+  // Determine COD fee: only for COD orders within the eligible range
+  const subtotalAfterDiscount =
+    lineItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0) -
+    discountAmount;
+
+  let codFee = 0;
+  if (paymentMethod === "cod") {
+    if (subtotalAfterDiscount < COD_MIN_SUBTOTAL) {
+      throw new ValidationError(
+        `Cash on Delivery is available for orders above ₹${COD_MIN_SUBTOTAL}`
+      );
+    }
+    if (subtotalAfterDiscount > COD_MAX_SUBTOTAL) {
+      throw new ValidationError(
+        `Cash on Delivery is available for orders up to ₹${COD_MAX_SUBTOTAL}`
+      );
+    }
+
+    // Verify destination pincode is COD-serviceable via DTDC
+    if (address.pincode && /^\d{6}$/.test(address.pincode)) {
+      const serviceability = await checkDtdcPincodeServiceability(
+        address.pincode
+      );
+      if (!serviceability.isCodAvailable) {
+        throw new ValidationError(
+          `Cash on Delivery is not available for PIN code ${address.pincode}. Please select Pay Online.`
+        );
+      }
+    }
+
+    codFee = COD_FEE;
+  }
+
+  const totals = calculateCheckoutTotals(lineItems, discountAmount, codFee);
 
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
   const sessionId = createId();
@@ -78,6 +119,7 @@ export async function createCheckoutSession(
       discountAmount: totals.discountAmount.toString(),
       taxAmount: totals.taxAmount.toString(),
       shippingAmount: totals.shippingAmount.toString(),
+      codFee: totals.codFee > 0 ? totals.codFee.toString() : null,
       total: totals.total.toString(),
       razorpayOrderId: null,
       orderId: null,
@@ -97,6 +139,7 @@ export async function createCheckoutSession(
     discountAmount: totals.discountAmount,
     taxAmount: totals.taxAmount,
     shippingAmount: totals.shippingAmount,
+    codFee: totals.codFee,
     total: totals.total,
     razorpayOrderId: null,
     orderId: null,
@@ -148,6 +191,7 @@ export async function getCheckoutSession(
     discountAmount: Number(session.discountAmount),
     taxAmount: Number(session.taxAmount),
     shippingAmount: Number(session.shippingAmount),
+    codFee: Number(session.codFee ?? 0),
     total: Number(session.total),
     razorpayOrderId: session.razorpayOrderId,
     orderId: session.orderId,

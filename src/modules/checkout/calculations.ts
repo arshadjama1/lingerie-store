@@ -35,7 +35,8 @@ export function calculateLineItem(item: CartItemWithVariant): CheckoutLineItem {
 
 export function calculateCheckoutTotals(
   lineItems: CheckoutLineItem[],
-  discountAmount = 0
+  discountAmount = 0,
+  codFee = 0
 ): CheckoutTotals {
   const subtotal = Number(
     lineItems
@@ -55,7 +56,7 @@ export function calculateCheckoutTotals(
   const shippingAmount = subtotal >= 1299 || isDemoOrder ? 0 : 99;
 
   const total = Number(
-    Math.max(0, subtotal - discountAmount + shippingAmount).toFixed(2)
+    Math.max(0, subtotal - discountAmount + shippingAmount + codFee).toFixed(2)
   );
 
   return {
@@ -63,6 +64,7 @@ export function calculateCheckoutTotals(
     discountAmount: Number(discountAmount.toFixed(2)),
     taxAmount,
     shippingAmount,
+    codFee: Number(codFee.toFixed(2)),
     total,
   };
 }

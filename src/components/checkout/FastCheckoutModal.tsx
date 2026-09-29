@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
 import {
   ArrowLeft,
+  Banknote,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -48,7 +49,12 @@ interface FastCheckoutModalProps {
 
 export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const router = useRouter();
-  const { cart, isLoading: isCartLoading, fetchCart } = useCartStore();
+  const {
+    cart,
+    isLoading: isCartLoading,
+    fetchCart,
+    clearCart,
+  } = useCartStore();
 
   // Read the globally-initialised auth store so that already-logged-in
   // users are detected instantly without an extra network round-trip.
@@ -88,6 +94,22 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Payment method selection
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "cod">(
+    "online"
+  );
+
+  // DTDC Pincode COD Serviceability state
+  const [isPincodeCodSupported, setIsPincodeCodSupported] = useState<
+    boolean | null
+  >(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+
+  // COD eligibility constants (mirrors server-side values in checkout/queries.ts)
+  const COD_FEE = 49;
+  const COD_MIN_SUBTOTAL = 499;
+  const COD_MAX_SUBTOTAL = 4999;
+
   // Inline Auth (Phone OTP & Email Magic Link)
   const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
   const [authPhone, setAuthPhone] = useState("");
@@ -103,15 +125,25 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Fetch addresses for an already-authenticated user and select the default.
   const loadAddresses = useCallback(async () => {
     try {
-      setIsAddressLoading(true);
+      setSelectedAddress((current) => {
+        if (!current) setIsAddressLoading(true);
+        return current;
+      });
       const addrRes = await fetch("/api/addresses");
       if (addrRes.ok) {
         const addrData = await addrRes.json();
         const list: Address[] = addrData.addresses || [];
         setAddresses(list);
         if (list.length > 0) {
-          const def = list.find((a) => a.isDefault) || list[0];
-          setSelectedAddress(def);
+          setSelectedAddress((prev) => {
+            // If the user already has a selected address that exists in the refreshed list, PRESERVE IT!
+            if (prev) {
+              const matched = list.find((a) => a.id === prev.id);
+              if (matched) return matched;
+            }
+            // First time load: select default or first
+            return list.find((a) => a.isDefault) || list[0];
+          });
         } else {
           setSelectedAddress(null);
         }
@@ -126,7 +158,10 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Determine the authenticated user when the modal opens.
   // Priority: server-side profile API -> client SDK fallback.
   const checkAuthAndLoadAddresses = useCallback(async () => {
-    setIsAuthLoading(true);
+    setCurrentUser((current) => {
+      if (!current) setIsAuthLoading(true);
+      return current;
+    });
     try {
       let authenticatedUser: {
         id: string;
@@ -217,10 +252,27 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await checkAuthAndLoadAddresses();
-        await fetchCart();
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only re-run if this is a genuine sign-in/sign-out, NOT on background tab focus / token refresh
+      if (event === "SIGNED_IN") {
+        if (session?.user) {
+          // If already logged in as this user, do nothing (prevents reloads on tab focus / token refresh)
+          setCurrentUser((prev) => {
+            if (prev?.id === session.user.id) return prev;
+            // First time auth resolved: load addresses and cart
+            loadAddresses();
+            fetchCart();
+            return {
+              id: session.user.id,
+              phone: session.user.phone ?? null,
+              email: session.user.email ?? null,
+            };
+          });
+        }
+      } else if (event === "SIGNED_OUT") {
+        setCurrentUser(null);
+        setSelectedAddress(null);
+        setAddresses([]);
       }
     });
 
@@ -239,6 +291,47 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     };
   }, [isOpen, checkAuthAndLoadAddresses, fetchCart]);
 
+  // Check DTDC COD serviceability whenever the delivery address changes
+  useEffect(() => {
+    const pincode = selectedAddress?.pincode?.trim();
+    if (!pincode || !/^\d{6}$/.test(pincode)) {
+      setIsPincodeCodSupported(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCheckingPincode(true);
+
+    fetch(`/api/shipping/serviceability?pincode=${pincode}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data.success && data.serviceability) {
+          const codAvailable = data.serviceability.isCodAvailable ?? true;
+          setIsPincodeCodSupported(codAvailable);
+          if (!codAvailable && paymentMethod === "cod") {
+            setPaymentMethod("online");
+          }
+        } else {
+          setIsPincodeCodSupported(null);
+        }
+      })
+      .catch((err) => {
+        console.warn(
+          "[FastCheckoutModal] DTDC Pincode serviceability check failed:",
+          err
+        );
+        if (isMounted) setIsPincodeCodSupported(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsCheckingPincode(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAddress?.pincode, paymentMethod]);
+
   if (!isOpen) return null;
 
   // Cart calculations
@@ -249,6 +342,9 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Total discount
   const couponDiscount = appliedCoupon?.discountAmount || 0;
   const totalSavings = couponDiscount;
+
+  // Net subtotal used for COD eligibility check
+  const netSubtotal = Math.max(0, rawSubtotal - couponDiscount);
 
   // Shipping (Free above ₹1,299, promo code, or ₹1 demo test items)
   const isDemoOrder =
@@ -262,8 +358,18 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
   const shippingFee = isFreeShipping ? 0 : 99;
 
+  // COD eligibility: cart thresholds + DTDC pincode serviceability
+  const isCartValueCodEligible =
+    netSubtotal >= COD_MIN_SUBTOTAL && netSubtotal <= COD_MAX_SUBTOTAL;
+  const isPincodeCodEligible = isPincodeCodSupported !== false;
+  const isCodEligible = isCartValueCodEligible && isPincodeCodEligible;
+  const codFeeAmount = paymentMethod === "cod" && isCodEligible ? COD_FEE : 0;
+
   // Final Payable Total (No GST added per client pricing instructions)
-  const finalPayable = Math.max(0, rawSubtotal - couponDiscount + shippingFee);
+  const finalPayable = Math.max(
+    0,
+    rawSubtotal - couponDiscount + shippingFee + codFeeAmount
+  );
   const strikeThroughMrp = Math.round(rawSubtotal * 1.35);
 
   // Apply Coupon Handler
@@ -444,23 +550,81 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     }
   };
 
-  // Payment Execution (Razorpay)
-  const handlePayment = async () => {
+  // ── Common pre-flight checks ────────────────────────────────────────
+  const preflightCheck = (): boolean => {
     if (!currentUser) {
       toast.error("Please log in with your mobile number or email to continue");
-      return;
+      return false;
     }
-
     if (!selectedAddress) {
       setIsAddressSheetOpen(true);
       toast.error("Please select a delivery address");
-      return;
+      return false;
     }
-
     if (!cart || items.length === 0) {
       toast.error("Your shopping bag is empty");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  // ── COD order placement ─────────────────────────────────────────────
+  const handleCodPayment = async () => {
+    if (!preflightCheck()) return;
+
+    try {
+      setIsProcessingPayment(true);
+
+      // 1. Create checkout session (COD path)
+      const sessionRes = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cartId: cart!.id,
+          addressId: selectedAddress!.id,
+          couponCode: appliedCoupon?.code,
+          paymentMethod: "cod",
+        }),
+      });
+
+      const sessionData = await sessionRes.json();
+      if (!sessionRes.ok) {
+        toast.error(sessionData.error || "Failed to initiate checkout session");
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      const sessionId = sessionData.session.id;
+
+      // 2. Place COD order directly (no payment gateway)
+      const orderRes = await fetch("/api/checkout/cod/place-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkoutSessionId: sessionId }),
+      });
+
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) {
+        toast.error(orderData.error || "Failed to place COD order");
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      clearCart();
+      fetchCart().catch(() => {});
+      toast.success("Order placed! Pay on delivery.");
+      onClose();
+      router.push(`/order-success/${orderData.orderId}`);
+    } catch (err) {
+      console.error("[FastCheckoutModal] COD error:", err);
+      toast.error("Order placement error. Please try again.");
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // ── Razorpay online payment ──────────────────────────────────────────
+  const handleRazorpayPayment = async () => {
+    if (!preflightCheck()) return;
 
     try {
       setIsProcessingPayment(true);
@@ -470,9 +634,10 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cartId: cart.id,
-          addressId: selectedAddress.id,
+          cartId: cart!.id,
+          addressId: selectedAddress!.id,
           couponCode: appliedCoupon?.code,
+          paymentMethod: "online",
         }),
       });
 
@@ -514,8 +679,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         description: `Order Checkout (${itemCount} items) • 100% Discreet Packaging`,
         order_id: orderData.razorpayOrderId,
         prefill: {
-          name: selectedAddress.fullName,
-          contact: selectedAddress.phone,
+          name: selectedAddress!.fullName,
+          contact: selectedAddress!.phone,
         },
         theme: {
           color: "#c83c7e", // Surekh Clovia Fuchsia Accent
@@ -541,6 +706,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
               return;
             }
 
+            clearCart();
+            fetchCart().catch(() => {});
             toast.success("Order placed successfully! Redirecting...");
             onClose();
             router.push(`/order-success/${verifyData.orderId}`);
@@ -563,6 +730,15 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
       console.error("[FastCheckoutModal] Payment error:", err);
       toast.error("Payment initialization error");
       setIsProcessingPayment(false);
+    }
+  };
+
+  // ── Main dispatcher ──────────────────────────────────────────────────
+  const handlePayment = async () => {
+    if (paymentMethod === "cod") {
+      await handleCodPayment();
+    } else {
+      await handleRazorpayPayment();
     }
   };
 
@@ -1045,10 +1221,116 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                 </div>
               </div>
 
-              {/* ── 3. ORDER SUMMARY ────────────────────────────────── */}
+              {/* ── 3. PAYMENT METHOD ───────────────────────────────── */}
               <div className="space-y-2.5">
                 <h3 className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
-                  3. Order Summary
+                  3. Payment Method
+                </h3>
+
+                <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xs">
+                  {/* Pay Online */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod("online")}
+                    className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+                      paymentMethod === "online"
+                        ? "bg-[var(--accent-subtle)]"
+                        : "hover:bg-neutral-50"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                        paymentMethod === "online"
+                          ? "border-[var(--accent)] bg-[var(--accent)]"
+                          : "border-neutral-300"
+                      }`}
+                    >
+                      {paymentMethod === "online" && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-neutral-900">
+                        Pay Online
+                      </p>
+                      <p className="text-[11px] text-neutral-500">
+                        UPI • Cards • NetBanking • Wallets
+                      </p>
+                    </div>
+                    <CreditCard className="h-4 w-4 text-neutral-400" />
+                  </button>
+
+                  <div className="border-t border-neutral-100" />
+
+                  {/* Cash on Delivery */}
+                  <button
+                    type="button"
+                    disabled={!isCodEligible}
+                    onClick={() => isCodEligible && setPaymentMethod("cod")}
+                    className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors ${
+                      !isCodEligible
+                        ? "cursor-not-allowed opacity-50"
+                        : paymentMethod === "cod"
+                          ? "bg-amber-50"
+                          : "hover:bg-neutral-50"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+                        paymentMethod === "cod"
+                          ? "border-amber-500 bg-amber-500"
+                          : "border-neutral-300"
+                      }`}
+                    >
+                      {paymentMethod === "cod" && (
+                        <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-neutral-900">
+                          Cash on Delivery
+                        </p>
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
+                          +₹{COD_FEE}
+                        </span>
+                      </div>
+                      {isCheckingPincode ? (
+                        <p className="text-[11px] text-neutral-400">
+                          Checking COD availability for PIN{" "}
+                          {selectedAddress?.pincode}…
+                        </p>
+                      ) : !isPincodeCodEligible ? (
+                        <p className="text-[11px] font-medium text-rose-600">
+                          Cash on Delivery unavailable for PIN{" "}
+                          {selectedAddress?.pincode} (Online payment only)
+                        </p>
+                      ) : isCodEligible ? (
+                        <p className="text-[11px] text-neutral-500">
+                          Pay ₹{finalPayable.toLocaleString("en-IN")} when your
+                          order arrives
+                        </p>
+                      ) : netSubtotal < COD_MIN_SUBTOTAL ? (
+                        <p className="text-[11px] text-amber-700">
+                          Available for orders above ₹
+                          {COD_MIN_SUBTOTAL.toLocaleString("en-IN")}
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-amber-700">
+                          Available for orders up to ₹
+                          {COD_MAX_SUBTOTAL.toLocaleString("en-IN")}
+                        </p>
+                      )}
+                    </div>
+                    <Banknote className="h-4 w-4 text-neutral-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* ── 4. ORDER SUMMARY ────────────────────────────────── */}
+              <div className="space-y-2.5">
+                <h3 className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
+                  4. Order Summary
                 </h3>
 
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50/70">
@@ -1164,6 +1446,12 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                             <span>₹{shippingFee}</span>
                           )}
                         </div>
+                        {codFeeAmount > 0 && (
+                          <div className="flex justify-between font-medium text-amber-700">
+                            <span>COD Fee</span>
+                            <span>+₹{codFeeAmount}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1193,28 +1481,51 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
               <button
                 type="button"
                 onClick={handlePayment}
-                disabled={isProcessingPayment || !isRazorpayLoaded}
-                className="group relative flex w-full items-center justify-between rounded-2xl bg-black px-6 py-3.5 font-bold text-white shadow-xl transition-all hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-50"
+                disabled={
+                  isProcessingPayment ||
+                  (paymentMethod === "online" && !isRazorpayLoaded)
+                }
+                className={`group relative flex w-full items-center justify-between rounded-2xl px-6 py-3.5 font-bold text-white shadow-xl transition-all active:scale-[0.99] disabled:opacity-50 ${
+                  paymentMethod === "cod"
+                    ? "bg-amber-600 hover:bg-amber-700"
+                    : "bg-black hover:bg-neutral-800"
+                }`}
               >
                 <div className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
+                  {paymentMethod === "cod" ? (
+                    <Banknote className="h-4 w-4" />
+                  ) : (
+                    <CreditCard className="h-4 w-4" />
+                  )}
                   <span className="text-sm tracking-wider uppercase">
                     {isProcessingPayment
-                      ? "Processing Payment..."
-                      : currentUser
-                        ? `Pay ₹${finalPayable.toLocaleString("en-IN")}`
-                        : `Login & Pay ₹${finalPayable.toLocaleString("en-IN")}`}
+                      ? paymentMethod === "cod"
+                        ? "Placing Order..."
+                        : "Processing Payment..."
+                      : paymentMethod === "cod"
+                        ? `Confirm COD — ₹${finalPayable.toLocaleString("en-IN")}`
+                        : currentUser
+                          ? `Pay ₹${finalPayable.toLocaleString("en-IN")}`
+                          : `Login & Pay ₹${finalPayable.toLocaleString("en-IN")}`}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-neutral-300">
-                  <span>UPI • Cards • NetBanking</span>
-                  <Lock className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-xs text-white/70">
+                  {paymentMethod === "cod" ? (
+                    <span>Pay on Delivery</span>
+                  ) : (
+                    <>
+                      <span>UPI • Cards • NetBanking</span>
+                      <Lock className="h-3.5 w-3.5" />
+                    </>
+                  )}
                 </div>
               </button>
 
               <p className="mt-2 text-center text-[10px] text-neutral-400">
-                🔒 Safe & Secure 256-Bit SSL Encrypted Razorpay Checkout
+                {paymentMethod === "cod"
+                  ? "🏠 Pay cash to the courier when your order arrives"
+                  : "🔒 Safe & Secure 256-Bit SSL Encrypted Razorpay Checkout"}
               </p>
             </div>
           )}

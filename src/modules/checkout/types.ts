@@ -1,10 +1,13 @@
 import type { Address } from "@/db/schema";
 
+export type CheckoutPaymentMethod = "online" | "cod";
+
 export interface CheckoutTotals {
   subtotal: number;
   discountAmount: number;
   taxAmount: number;
   shippingAmount: number;
+  codFee: number;
   total: number;
 }
 
@@ -29,6 +32,7 @@ export interface CreateCheckoutSessionInput {
   cartId: string;
   addressId: string;
   couponCode?: string;
+  paymentMethod?: CheckoutPaymentMethod;
 }
 
 export interface HydratedCheckoutSession {
@@ -41,6 +45,7 @@ export interface HydratedCheckoutSession {
   discountAmount: number;
   taxAmount: number;
   shippingAmount: number;
+  codFee: number;
   total: number;
   razorpayOrderId: string | null;
   orderId: string | null;

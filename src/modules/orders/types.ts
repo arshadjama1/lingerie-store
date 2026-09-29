@@ -1,7 +1,12 @@
-import type { orderStatusEnum, paymentMethodEnum } from "@/db/schema";
+import type {
+  orderStatusEnum,
+  paymentMethodEnum,
+  paymentStatusEnum,
+} from "@/db/schema";
 
 export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];
 export type PaymentMethod = (typeof paymentMethodEnum.enumValues)[number];
+export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];
 
 export interface OrderSummary {
   id: string;
@@ -40,6 +45,7 @@ export interface OrderStatusHistoryEntry {
 }
 
 export interface OrderPayment {
+  status: PaymentStatus;
   method: PaymentMethod | null;
   razorpayPaymentId: string | null;
   amount: string;

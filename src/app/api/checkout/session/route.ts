@@ -15,6 +15,7 @@ const createSessionSchema = z.object({
   cartId: z.string().min(1, "Cart ID is required"),
   addressId: z.string().min(1, "Address ID is required"),
   couponCode: z.string().optional(),
+  paymentMethod: z.enum(["online", "cod"]).optional(),
 });
 
 export const POST = withErrorHandling(async (req: Request) => {
@@ -41,6 +42,7 @@ export const POST = withErrorHandling(async (req: Request) => {
     cartId: result.data.cartId,
     addressId: result.data.addressId,
     couponCode: result.data.couponCode,
+    paymentMethod: result.data.paymentMethod,
   });
 
   return NextResponse.json({ session }, { status: 201 });

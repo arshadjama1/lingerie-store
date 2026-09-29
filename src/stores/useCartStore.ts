@@ -17,6 +17,7 @@ interface CartState {
   toggleCart: () => void;
   openFastCheckout: () => void;
   closeFastCheckout: () => void;
+  clearCart: () => void;
   fetchCart: () => Promise<void>;
   addItem: (variantId: string, quantity?: number) => Promise<boolean>;
   updateQuantity: (itemId: string, quantity: number) => Promise<boolean>;
@@ -35,6 +36,7 @@ export const useCartStore = create<CartState>((set) => ({
   toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
   openFastCheckout: () => set({ isOpen: false, isFastCheckoutOpen: true }),
   closeFastCheckout: () => set({ isFastCheckoutOpen: false }),
+  clearCart: () => set({ cart: null }),
 
   fetchCart: async () => {
     try {

@@ -267,6 +267,7 @@ console.log("\n▶ [4/6] Testing DTDC Logistics Dimensions & TAT Estimates...");
       },
     ],
     payment: {
+      status: "captured",
       method: "upi",
       razorpayPaymentId: "pay_test123",
       amount: "1499",
