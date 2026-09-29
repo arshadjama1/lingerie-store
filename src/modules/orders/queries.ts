@@ -158,14 +158,17 @@ export async function getOrderDetails(
     throw new NotFoundError("Order");
   }
 
-  // Fetch payment and profile email in parallel (both are 1:1 reads)
-  const [payment, profile] = await Promise.all([
+  // Fetch payment, profile email, and return request in parallel
+  const [payment, profile, returnReq] = await Promise.all([
     db.query.payments.findFirst({
       where: eq(payments.orderId, orderId),
     }),
     db.query.profiles.findFirst({
       where: eq(profiles.id, order.userId),
       columns: { email: true },
+    }),
+    db.query.returnRequests.findFirst({
+      where: eq(returnRequests.orderId, orderId),
     }),
   ]);
 
@@ -197,6 +200,17 @@ export async function getOrderDetails(
       }
     : null;
 
+  const mappedReturnRequest = returnReq
+    ? {
+        id: returnReq.id,
+        status: returnReq.status,
+        reason: returnReq.reason,
+        notes: returnReq.notes,
+        createdAt: returnReq.createdAt,
+        updatedAt: returnReq.updatedAt,
+      }
+    : null;
+
   return {
     id: order.id,
     orderNumber: order.orderNumber,
@@ -216,6 +230,7 @@ export async function getOrderDetails(
     items: mappedItems,
     payment: mappedPayment,
     statusHistory: mappedHistory,
+    returnRequest: mappedReturnRequest,
   };
 }
 

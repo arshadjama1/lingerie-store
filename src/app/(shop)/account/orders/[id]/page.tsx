@@ -23,6 +23,7 @@ import {
 } from "@/modules/shipping";
 
 import { CancelOrderButton } from "@/components/orders/CancelOrderButton";
+import { CustomerReturnStatusCard } from "@/components/orders/CustomerReturnStatusCard";
 import { FulfillmentStepper } from "@/components/orders/FulfillmentStepper";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { OrderTrackingTimeline } from "@/components/orders/OrderTrackingTimeline";
@@ -348,7 +349,17 @@ export default async function OrderDetailPage({
           )}
 
           {/* ── Action Zone ── */}
-          {canCancel ? (
+          {order.returnRequest ? (
+            <section className="rounded-2xl border border-neutral-200 bg-white p-6">
+              <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
+                Return Request
+              </h2>
+              <CustomerReturnStatusCard
+                returnRequest={order.returnRequest}
+                orderNumber={order.orderNumber}
+              />
+            </section>
+          ) : canCancel ? (
             <section className="rounded-2xl border border-neutral-200 bg-white p-6">
               <h2 className="mb-4 text-sm font-semibold tracking-wider text-neutral-500 uppercase">
                 Order Actions

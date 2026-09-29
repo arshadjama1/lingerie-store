@@ -4,6 +4,8 @@ import type {
   paymentStatusEnum,
 } from "@/db/schema";
 
+import type { ReturnStatus } from "@/modules/admin/returns/types";
+
 export type OrderStatus = (typeof orderStatusEnum.enumValues)[number];
 export type PaymentMethod = (typeof paymentMethodEnum.enumValues)[number];
 export type PaymentStatus = (typeof paymentStatusEnum.enumValues)[number];
@@ -51,6 +53,15 @@ export interface OrderPayment {
   amount: string;
 }
 
+export interface OrderReturnRequestSummary {
+  id: string;
+  status: ReturnStatus;
+  reason: string;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface OrderDetails {
   id: string;
   orderNumber: string;
@@ -78,6 +89,7 @@ export interface OrderDetails {
   items: OrderItem[];
   payment: OrderPayment | null;
   statusHistory: OrderStatusHistoryEntry[];
+  returnRequest?: OrderReturnRequestSummary | null;
 }
 
 export interface ListOrdersResult {
