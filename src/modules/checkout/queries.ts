@@ -13,6 +13,7 @@ import {
 import { getAddressById } from "@/modules/addresses";
 import { getCart } from "@/modules/cart";
 import { validateCoupon } from "@/modules/coupons";
+import { checkDtdcPincodeServiceability } from "@/modules/shipping";
 
 import { calculateCheckoutTotals, calculateLineItem } from "./calculations";
 import { releaseInventory, reserveInventory } from "./inventory";
@@ -78,6 +79,19 @@ export async function createCheckoutSession(
         `Cash on Delivery is available for orders up to ₹${COD_MAX_SUBTOTAL}`
       );
     }
+
+    // Verify destination pincode is COD-serviceable via DTDC
+    if (address.pincode && /^\d{6}$/.test(address.pincode)) {
+      const serviceability = await checkDtdcPincodeServiceability(
+        address.pincode
+      );
+      if (!serviceability.isCodAvailable) {
+        throw new ValidationError(
+          `Cash on Delivery is not available for PIN code ${address.pincode}. Please select Pay Online.`
+        );
+      }
+    }
+
     codFee = COD_FEE;
   }
 

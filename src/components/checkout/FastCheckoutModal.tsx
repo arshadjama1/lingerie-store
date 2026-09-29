@@ -94,6 +94,12 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     "online"
   );
 
+  // DTDC Pincode COD Serviceability state
+  const [isPincodeCodSupported, setIsPincodeCodSupported] = useState<
+    boolean | null
+  >(null);
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+
   // COD eligibility constants (mirrors server-side values in checkout/queries.ts)
   const COD_FEE = 49;
   const COD_MIN_SUBTOTAL = 499;
@@ -250,6 +256,47 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     };
   }, [isOpen, checkAuthAndLoadAddresses, fetchCart]);
 
+  // Check DTDC COD serviceability whenever the delivery address changes
+  useEffect(() => {
+    const pincode = selectedAddress?.pincode?.trim();
+    if (!pincode || !/^\d{6}$/.test(pincode)) {
+      setIsPincodeCodSupported(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCheckingPincode(true);
+
+    fetch(`/api/shipping/serviceability?pincode=${pincode}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!isMounted) return;
+        if (data.success && data.serviceability) {
+          const codAvailable = data.serviceability.isCodAvailable ?? true;
+          setIsPincodeCodSupported(codAvailable);
+          if (!codAvailable && paymentMethod === "cod") {
+            setPaymentMethod("online");
+          }
+        } else {
+          setIsPincodeCodSupported(null);
+        }
+      })
+      .catch((err) => {
+        console.warn(
+          "[FastCheckoutModal] DTDC Pincode serviceability check failed:",
+          err
+        );
+        if (isMounted) setIsPincodeCodSupported(null);
+      })
+      .finally(() => {
+        if (isMounted) setIsCheckingPincode(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedAddress?.pincode, paymentMethod]);
+
   if (!isOpen) return null;
 
   // Cart calculations
@@ -276,9 +323,11 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
   const shippingFee = isFreeShipping ? 0 : 99;
 
-  // COD eligibility
-  const isCodEligible =
+  // COD eligibility: cart thresholds + DTDC pincode serviceability
+  const isCartValueCodEligible =
     netSubtotal >= COD_MIN_SUBTOTAL && netSubtotal <= COD_MAX_SUBTOTAL;
+  const isPincodeCodEligible = isPincodeCodSupported !== false;
+  const isCodEligible = isCartValueCodEligible && isPincodeCodEligible;
   const codFeeAmount = paymentMethod === "cod" && isCodEligible ? COD_FEE : 0;
 
   // Final Payable Total (No GST added per client pricing instructions)
@@ -1207,7 +1256,17 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                           +₹{COD_FEE}
                         </span>
                       </div>
-                      {isCodEligible ? (
+                      {isCheckingPincode ? (
+                        <p className="text-[11px] text-neutral-400">
+                          Checking COD availability for PIN{" "}
+                          {selectedAddress?.pincode}…
+                        </p>
+                      ) : !isPincodeCodEligible ? (
+                        <p className="text-[11px] font-medium text-rose-600">
+                          Cash on Delivery unavailable for PIN{" "}
+                          {selectedAddress?.pincode} (Online payment only)
+                        </p>
+                      ) : isCodEligible ? (
                         <p className="text-[11px] text-neutral-500">
                           Pay ₹{finalPayable.toLocaleString("en-IN")} when your
                           order arrives
@@ -1232,7 +1291,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
               {/* ── 4. ORDER SUMMARY ────────────────────────────────── */}
               <div className="space-y-2.5">
                 <h3 className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
-                  3. Order Summary
+                  4. Order Summary
                 </h3>
 
                 <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50/70">
