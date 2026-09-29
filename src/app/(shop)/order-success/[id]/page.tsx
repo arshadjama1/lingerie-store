@@ -31,7 +31,36 @@ export default async function OrderSuccessPage({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    notFound();
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center bg-neutral-50/50 px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-[var(--accent)]">
+            <CheckCircle2 className="h-8 w-8" />
+          </div>
+          <h1 className="mt-4 text-xl font-bold text-neutral-900">
+            Order Placed Successfully
+          </h1>
+          <p className="mt-2 text-xs leading-relaxed text-neutral-600">
+            Please sign in with the mobile number or email used during checkout
+            to view your complete invoice and live shipping tracker.
+          </p>
+          <div className="mt-6 flex flex-col gap-2.5">
+            <Link
+              href={`/login?redirect=/order-success/${orderId}`}
+              className="inline-flex w-full items-center justify-center rounded-xl bg-[var(--accent)] py-2.5 text-xs font-bold tracking-wider text-white uppercase shadow-sm transition hover:bg-[var(--accent-dark)]"
+            >
+              Sign In to View Order
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 py-2.5 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+            >
+              Return to Storefront
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const [order, payment] = await Promise.all([
@@ -46,8 +75,30 @@ export default async function OrderSuccessPage({
     }),
   ]);
 
-  if (!order || order.userId !== user.id) {
+  if (!order) {
     notFound();
+  }
+
+  if (order.userId !== user.id) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center bg-neutral-50/50 px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-lg font-bold text-neutral-900">
+            Order Access Restricted
+          </h1>
+          <p className="mt-2 text-xs text-neutral-600">
+            This order belongs to a different account. Please sign in with the
+            account used at checkout.
+          </p>
+          <Link
+            href="/account/orders"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-[var(--accent)] py-2.5 text-xs font-bold tracking-wider text-white uppercase shadow-sm"
+          >
+            Go to My Orders
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const isCod = payment?.method === "cod";
