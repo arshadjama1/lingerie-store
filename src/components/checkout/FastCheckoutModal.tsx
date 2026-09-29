@@ -120,15 +120,25 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Fetch addresses for an already-authenticated user and select the default.
   const loadAddresses = useCallback(async () => {
     try {
-      setIsAddressLoading(true);
+      setSelectedAddress((current) => {
+        if (!current) setIsAddressLoading(true);
+        return current;
+      });
       const addrRes = await fetch("/api/addresses");
       if (addrRes.ok) {
         const addrData = await addrRes.json();
         const list: Address[] = addrData.addresses || [];
         setAddresses(list);
         if (list.length > 0) {
-          const def = list.find((a) => a.isDefault) || list[0];
-          setSelectedAddress(def);
+          setSelectedAddress((prev) => {
+            // If the user already has a selected address that exists in the refreshed list, PRESERVE IT!
+            if (prev) {
+              const matched = list.find((a) => a.id === prev.id);
+              if (matched) return matched;
+            }
+            // First time load: select default or first
+            return list.find((a) => a.isDefault) || list[0];
+          });
         } else {
           setSelectedAddress(null);
         }
@@ -143,7 +153,10 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Determine the authenticated user when the modal opens.
   // Priority: server-side profile API -> client SDK fallback.
   const checkAuthAndLoadAddresses = useCallback(async () => {
-    setIsAuthLoading(true);
+    setCurrentUser((current) => {
+      if (!current) setIsAuthLoading(true);
+      return current;
+    });
     try {
       let authenticatedUser: {
         id: string;
@@ -234,10 +247,27 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     const supabase = createClient();
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        await checkAuthAndLoadAddresses();
-        await fetchCart();
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only re-run if this is a genuine sign-in/sign-out, NOT on background tab focus / token refresh
+      if (event === "SIGNED_IN") {
+        if (session?.user) {
+          // If already logged in as this user, do nothing (prevents reloads on tab focus / token refresh)
+          setCurrentUser((prev) => {
+            if (prev?.id === session.user.id) return prev;
+            // First time auth resolved: load addresses and cart
+            loadAddresses();
+            fetchCart();
+            return {
+              id: session.user.id,
+              phone: session.user.phone ?? null,
+              email: session.user.email ?? null,
+            };
+          });
+        }
+      } else if (event === "SIGNED_OUT") {
+        setCurrentUser(null);
+        setSelectedAddress(null);
+        setAddresses([]);
       }
     });
 
