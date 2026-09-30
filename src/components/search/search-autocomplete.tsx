@@ -27,6 +27,7 @@ interface SearchAutocompleteProps {
   onSelect?: () => void;
   autoFocus?: boolean;
   isMobileOverlay?: boolean;
+  showShortcutHint?: boolean;
 }
 
 const TRENDING_SEARCHES = [
@@ -54,6 +55,7 @@ export function SearchAutocomplete({
   onSelect,
   autoFocus = false,
   isMobileOverlay = false,
+  showShortcutHint = false,
 }: SearchAutocompleteProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -99,6 +101,20 @@ export function SearchAutocomplete({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Global shortcut (Ctrl+K / Cmd+K) to focus search
+  useEffect(() => {
+    if (isMobileOverlay) return;
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+        setIsOpen(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [isMobileOverlay]);
 
   // Fetch suggestions with 180ms debounce
   const fetchSuggestions = useCallback((searchStr: string) => {
@@ -279,6 +295,10 @@ export function SearchAutocomplete({
             >
               <X className="h-3.5 w-3.5" />
             </button>
+          ) : showShortcutHint && !isMobileOverlay ? (
+            <kbd className="pointer-events-none hidden items-center gap-0.5 rounded border border-gray-200/90 bg-gray-100/90 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 shadow-2xs select-none xl:inline-flex">
+              <span className="text-[9px]">⌘</span>K
+            </kbd>
           ) : null}
         </div>
       </div>
