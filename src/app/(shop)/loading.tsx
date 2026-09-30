@@ -4,14 +4,14 @@ export default function ShopLoading() {
   return (
     <div className="flex flex-col gap-0 bg-white pb-16">
       {/* 1. Hero Skeleton */}
-      <div className="relative aspect-[16/7] max-h-[560px] min-h-[380px] w-full animate-pulse bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-950 sm:min-h-[460px]">
-        <div className="mx-auto flex h-full max-w-7xl flex-col justify-center px-6 sm:px-14">
-          <div className="max-w-xl space-y-4">
+      <div className="relative h-[calc(100svh-5.5rem)] max-h-[820px] min-h-[520px] w-full animate-pulse bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-950 sm:h-[calc(100svh-6rem)] sm:min-h-[580px] lg:h-[calc(100dvh-6.75rem)] lg:min-h-[640px] xl:max-h-[860px]">
+        <div className="mx-auto flex h-full max-w-7xl flex-col justify-center px-6 sm:px-14 lg:px-16">
+          <div className="max-w-xl space-y-4 lg:max-w-2xl lg:space-y-5">
             <div className="h-6 w-32 rounded-full bg-white/20" />
-            <div className="h-10 w-3/4 rounded-md bg-white/20 sm:h-12" />
-            <div className="h-4 w-1/2 rounded-md bg-white/10" />
+            <div className="h-10 w-3/4 rounded-md bg-white/20 sm:h-12 lg:h-14" />
+            <div className="h-4 w-1/2 rounded-md bg-white/10 sm:h-5" />
             <div className="pt-2">
-              <div className="h-11 w-44 rounded-full bg-white/20" />
+              <div className="h-11 w-44 rounded-full bg-white/20 sm:h-12" />
             </div>
           </div>
         </div>

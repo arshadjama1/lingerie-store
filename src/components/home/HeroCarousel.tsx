@@ -70,7 +70,7 @@ export function HeroCarousel() {
   return (
     <div className="w-full bg-white px-0 py-0">
       <div
-        className="group relative aspect-[16/7] max-h-[560px] min-h-[380px] w-full overflow-hidden rounded-none border-b border-pink-100/50 bg-slate-950 shadow-lg sm:min-h-[460px]"
+        className="group relative h-[calc(100svh-5.5rem)] max-h-[820px] min-h-[520px] w-full overflow-hidden rounded-none border-b border-pink-100/50 bg-slate-950 shadow-lg sm:h-[calc(100svh-6rem)] sm:min-h-[580px] lg:h-[calc(100dvh-6.75rem)] lg:min-h-[640px] xl:max-h-[860px]"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
       >
@@ -92,26 +92,26 @@ export function HeroCarousel() {
                 alt={slide.title}
                 fill
                 priority={index === 0}
-                className="scale-105 transform object-cover object-top transition-transform duration-10000 ease-out"
+                className="scale-105 transform object-cover object-center transition-transform duration-10000 ease-out sm:object-top"
                 sizes="100vw"
               />
 
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-transparent" />
+              {/* Gradient Overlay: mobile bottom-up + desktop left-to-right for optimal text contrast */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/30 sm:bg-gradient-to-r sm:from-black/85 sm:via-black/45 sm:to-transparent" />
 
               {/* Text Overlay Box */}
-              <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-6 text-white sm:px-14">
-                <div className="max-w-xl space-y-4">
+              <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-6 text-white sm:px-14 lg:px-16">
+                <div className="max-w-xl space-y-4 lg:max-w-2xl lg:space-y-5">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--accent)] to-rose-500 px-3.5 py-1.5 text-[11px] font-black tracking-widest text-white uppercase shadow-md">
                     <Sparkles className="h-3 w-3" />
                     {slide.badge}
                   </span>
 
-                  <h1 className="font-serif text-2xl leading-tight font-black tracking-tight text-white drop-shadow-md sm:text-4xl md:text-5xl">
+                  <h1 className="font-serif text-2xl leading-tight font-black tracking-tight text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-6xl">
                     {slide.title}
                   </h1>
 
-                  <p className="text-xs leading-relaxed font-light text-gray-200 drop-shadow-xs sm:text-base">
+                  <p className="text-xs leading-relaxed font-light text-gray-200 drop-shadow-xs sm:text-base lg:text-lg">
                     {slide.subtitle}
                   </p>
 
