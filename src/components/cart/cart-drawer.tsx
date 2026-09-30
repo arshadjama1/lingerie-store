@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import {
@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { createClient } from "@/lib/supabase/client";
 import { cn, formatPrice } from "@/lib/utils";
 
@@ -64,6 +65,7 @@ export function CartDrawer() {
 
   const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
+  const isLockedRef = useRef(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -73,24 +75,39 @@ export function CartDrawer() {
           setActive(true);
         });
       });
-      document.body.style.overflow = "hidden";
+      if (!isLockedRef.current) {
+        lockScroll();
+        isLockedRef.current = true;
+      }
       return () => cancelAnimationFrame(rAF);
     } else {
       setActive(false);
       const timer = setTimeout(() => {
         setMounted(false);
-        if (!isFastCheckoutOpen) {
-          document.body.style.overflow = "";
+        if (!isFastCheckoutOpen && isLockedRef.current) {
+          unlockScroll();
+          isLockedRef.current = false;
         }
       }, 300);
       return () => clearTimeout(timer);
     }
   }, [isOpen, isFastCheckoutOpen]);
 
-  // Clean up body overflow on unmount
+  // If FastCheckout closes while cart is also closed, release scroll lock
+  useEffect(() => {
+    if (!isOpen && !isFastCheckoutOpen && isLockedRef.current) {
+      unlockScroll();
+      isLockedRef.current = false;
+    }
+  }, [isOpen, isFastCheckoutOpen]);
+
+  // Clean up body scroll lock on unmount
   useEffect(() => {
     return () => {
-      document.body.style.overflow = "";
+      if (isLockedRef.current) {
+        unlockScroll();
+        isLockedRef.current = false;
+      }
     };
   }, []);
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 import { LogoutButton } from "@/components/account/LogoutButton";
@@ -41,6 +42,7 @@ export function Header() {
   // Lock body scroll on mobile when search overlay or mobile menu is open
   const [mobileMounted, setMobileMounted] = useState(false);
   const [mobileActive, setMobileActive] = useState(false);
+  const isMobileMenuLockedRef = useRef(false);
 
   useEffect(() => {
     if (mobileOpen) {
@@ -50,28 +52,43 @@ export function Header() {
           setMobileActive(true);
         });
       });
-      document.body.style.overflow = "hidden";
+      if (!isMobileMenuLockedRef.current) {
+        lockScroll();
+        isMobileMenuLockedRef.current = true;
+      }
       return () => cancelAnimationFrame(rAF);
     } else {
       setMobileActive(false);
       const timer = setTimeout(() => {
         setMobileMounted(false);
-        if (!mobileSearchOpen) {
-          document.body.style.overflow = "";
+        if (isMobileMenuLockedRef.current) {
+          unlockScroll();
+          isMobileMenuLockedRef.current = false;
         }
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [mobileOpen, mobileSearchOpen]);
+  }, [mobileOpen]);
+
+  // Clean up lock on unmount if menu was open
+  useEffect(() => {
+    return () => {
+      if (isMobileMenuLockedRef.current) {
+        unlockScroll();
+        isMobileMenuLockedRef.current = false;
+      }
+    };
+  }, []);
 
   // Lock body scroll when mobile search overlay is open
   useEffect(() => {
     if (mobileSearchOpen) {
-      document.body.style.overflow = "hidden";
-    } else if (!mobileOpen) {
-      document.body.style.overflow = "";
+      lockScroll();
+      return () => {
+        unlockScroll();
+      };
     }
-  }, [mobileSearchOpen, mobileOpen]);
+  }, [mobileSearchOpen]);
 
   // Close mobile drawer on route change
   useEffect(() => {

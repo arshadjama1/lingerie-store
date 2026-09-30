@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { buildQueryString, cn } from "@/lib/utils";
 
 interface MobileFilterDrawerProps {
@@ -54,10 +55,9 @@ export function MobileFilterDrawer({
   // Lock body scroll when mobile drawer is open
   useEffect(() => {
     if (!isOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
     return () => {
-      document.body.style.overflow = prevOverflow;
+      unlockScroll();
     };
   }, [isOpen]);
 

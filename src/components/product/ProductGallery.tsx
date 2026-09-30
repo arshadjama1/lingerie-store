@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 export interface GalleryImage {
@@ -93,14 +94,13 @@ export function ProductGallery({
 
   useEffect(() => {
     if (!lightboxOpen) return;
-    const origOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") setLightboxOpen(false);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.body.style.overflow = origOverflow;
+      unlockScroll();
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [lightboxOpen]);
