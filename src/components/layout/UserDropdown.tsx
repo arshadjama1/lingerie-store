@@ -75,16 +75,16 @@ export function UserDropdown({ className }: UserDropdownProps) {
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         className={cn(
-          "flex h-10 w-10 cursor-pointer items-center justify-center rounded-full transition-colors",
+          "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full transition-colors",
           isOpen
             ? "bg-rose-100 text-[var(--accent)]"
-            : "text-neutral-700 hover:bg-rose-50 hover:text-[var(--accent)]"
+            : "text-neutral-700 hover:bg-pink-50 hover:text-[var(--accent)]"
         )}
         aria-label="Account Menu"
         aria-expanded={isOpen}
       >
         {isAuthenticated && initials ? (
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[11px] font-bold text-[var(--accent-plum)]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--accent-subtle)] text-[11px] font-bold text-[var(--accent-plum)]">
             {initials}
           </span>
         ) : (
@@ -225,7 +225,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
                 >
                   <span className="flex items-center gap-2.5">
                     <Ruler className="h-4 w-4 text-neutral-400" />
-                    <span>FitCode™ Bra Calculator</span>
+                    <span>Bra Size Calculator</span>
                   </span>
                   <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
                     Free

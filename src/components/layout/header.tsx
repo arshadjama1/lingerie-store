@@ -16,7 +16,6 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Truck,
   User,
   X,
@@ -202,7 +201,7 @@ export function Header() {
                 key={i}
                 className="flex items-center gap-3 px-6 whitespace-nowrap"
               >
-                <span className="inline-block h-1 w-1 rounded-full bg-rose-300/80" />
+                <span className="inline-block h-1 w-1 rounded-full bg-pink-400" />
                 {item}
               </span>
             )
@@ -210,10 +209,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* ── TIER 2: Main Header Bar (Zero-Collision 3-Column Grid) ──── */}
+      {/* ── UNIFIED MAIN HEADER BAR ────────────────────────────────────── */}
       <div
+        onMouseLeave={handleFlyoutLeave}
         className={cn(
-          "border-b transition-all duration-300",
+          "relative border-b transition-all duration-300",
           isScrolled
             ? "border-rose-100/70 bg-white/95 shadow-xs backdrop-blur-md"
             : "border-gray-100 bg-white shadow-2xs"
@@ -221,38 +221,98 @@ export function Header() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* ── Desktop Header (1024px+) ──────────────────────────────── */}
-          <div className="hidden h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 lg:grid">
-            {/* Column 1: Search Autocomplete (Responsive max width, no logo collision) */}
-            <div className="flex items-center justify-start">
-              <div className="w-full max-w-[240px] xl:max-w-[320px] 2xl:max-w-[380px]">
+          <div className="hidden h-18 items-center justify-between gap-4 lg:flex xl:gap-6">
+            {/* Left: Brand Identity Logo */}
+            <Link
+              href="/"
+              className="group flex shrink-0 items-center font-serif text-2xl font-black tracking-[0.16em] text-[#3d0a20] transition-opacity hover:opacity-90 xl:text-3xl xl:tracking-[0.18em]"
+            >
+              Surekh
+              <span className="inline-block text-2xl leading-none text-[var(--accent)] transition-transform duration-300 group-hover:scale-125 xl:text-3xl">
+                .
+              </span>
+            </Link>
+
+            {/* Center: Primary Category Navigation with Hover Flyout Triggers */}
+            <nav
+              className="flex h-full items-center gap-0.5 xl:gap-2"
+              aria-label="Main navigation"
+            >
+              {NAV_CATEGORY_LINKS.map((cat) => {
+                const isActive =
+                  pathname === cat.href || pathname.startsWith(`${cat.href}/`);
+                const isFlyoutOpen = activeFlyout === cat.label;
+                return (
+                  <div
+                    key={cat.label}
+                    onMouseEnter={() => handleFlyoutEnter(cat.label)}
+                    className="relative flex h-full items-center"
+                  >
+                    <Link
+                      href={cat.href}
+                      className={cn(
+                        "relative flex h-full items-center gap-1.5 px-3 text-xs font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:px-4 xl:text-[13px]",
+                        isActive || isFlyoutOpen
+                          ? "text-[var(--accent)]"
+                          : "text-neutral-800 hover:text-[var(--accent)]"
+                      )}
+                    >
+                      <span>{cat.label}</span>
+                      {cat.badge && (
+                        <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-[var(--accent)]">
+                          {cat.badge}
+                        </span>
+                      )}
+                      {/* Active underline indicator */}
+                      {(isActive || isFlyoutOpen) && (
+                        <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--accent)] transition-all duration-200" />
+                      )}
+                    </Link>
+                  </div>
+                );
+              })}
+
+              {/* High-Contrast SALE link */}
+              <div className="relative flex h-full items-center">
+                <Link
+                  href="/sale"
+                  className={cn(
+                    "relative flex h-full items-center gap-1.5 px-3 text-xs font-black tracking-wider whitespace-nowrap uppercase transition-colors xl:px-4 xl:text-[13px]",
+                    pathname === "/sale"
+                      ? "text-rose-600"
+                      : "text-rose-600 hover:text-rose-700"
+                  )}
+                >
+                  <span>Sale</span>
+                  <span className="rounded-full bg-rose-100 px-1.5 py-0.5 text-[9px] font-black text-rose-700">
+                    Offer
+                  </span>
+                  {pathname === "/sale" && (
+                    <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-rose-600 transition-all duration-200" />
+                  )}
+                </Link>
+              </div>
+            </nav>
+
+            {/* Right: Search + Account + Wishlist + Cart */}
+            <div className="flex shrink-0 items-center justify-end gap-2 xl:gap-3">
+              {/* Responsive expanding search bar */}
+              <div className="w-36 transition-all duration-300 focus-within:w-56 xl:w-56 xl:focus-within:w-68 2xl:w-64 2xl:focus-within:w-76">
                 <SearchAutocomplete
-                  placeholder="Search bras, panties, sets..."
+                  placeholder="Search products..."
                   showShortcutHint={true}
-                  inputClassName="h-10 bg-rose-50/40 hover:bg-white focus:bg-white border-rose-100/80 focus:border-[var(--accent)]"
+                  dropdownAlign="right"
+                  inputClassName="bg-rose-50/40 hover:bg-white focus:bg-white border-rose-100/80 focus:border-[var(--accent)] shadow-2xs h-9 text-xs"
                 />
               </div>
-            </div>
 
-            {/* Column 2: Brand Identity Logo (True mathematical center) */}
-            <div className="flex items-center justify-center">
-              <Link
-                href="/"
-                className="group flex items-center font-serif text-3xl font-black tracking-[0.2em] text-[#3d0a20] transition-opacity hover:opacity-90"
-              >
-                Surekh
-                <span className="inline-block text-3xl leading-none text-[var(--accent)] transition-transform duration-300 group-hover:scale-125">
-                  .
-                </span>
-              </Link>
-            </div>
-
-            {/* Column 3: User, Wishlist, Cart Actions (Unified 40px Baseline) */}
-            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+              {/* User Dropdown */}
               <UserDropdown />
 
+              {/* Wishlist Link */}
               <Link
                 href="/wishlist"
-                className="group relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)]"
+                className="group relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
                 aria-label={
                   wishlistCount > 0
                     ? `Wishlist (${wishlistCount} items)`
@@ -267,15 +327,16 @@ export function Header() {
                 )}
               </Link>
 
+              {/* Cart Button */}
               <button
                 onClick={openCart}
-                className="group relative flex h-10 items-center gap-2 rounded-full pr-3.5 pl-2.5 text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)]"
+                className="group relative flex h-9 items-center gap-2 rounded-full pr-3 pl-2.5 text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
                 aria-label="Cart"
               >
-                <div className="relative flex items-center justify-center">
+                <div className="relative">
                   <ShoppingBag className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
                       {itemCount > 99 ? "99+" : itemCount}
                     </span>
                   )}
@@ -289,10 +350,10 @@ export function Header() {
 
           {/* ── Mobile Header (Balanced 3-Column Grid) ───────────────── */}
           <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center sm:h-16 lg:hidden">
-            {/* Left: Hamburger + Search Triggers */}
-            <div className="flex items-center justify-start gap-1">
+            {/* Left: Hamburger + Search Triggers (Balanced ~80px) */}
+            <div className="flex items-center justify-start gap-0.5">
               <button
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
               >
@@ -302,7 +363,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setMobileSearchOpen(true)}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
@@ -313,20 +374,17 @@ export function Header() {
             <div className="flex items-center justify-center">
               <Link
                 href="/"
-                className="group flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
+                className="flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
               >
-                Surekh
-                <span className="text-[var(--accent)] transition-transform duration-300 group-hover:scale-125">
-                  .
-                </span>
+                Surekh<span className="text-[var(--accent)]">.</span>
               </Link>
             </div>
 
-            {/* Right: Wishlist + Cart Actions */}
-            <div className="flex items-center justify-end gap-1">
+            {/* Right: Wishlist + Cart Actions (Balanced ~80px) */}
+            <div className="flex items-center justify-end gap-0.5">
               <Link
                 href="/wishlist"
-                className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
                 aria-label={
                   wishlistCount > 0
                     ? `Wishlist (${wishlistCount} items)`
@@ -335,7 +393,7 @@ export function Header() {
               >
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
+                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-0.5 text-[10px] leading-none font-bold text-white shadow-2xs">
                     {wishlistCount > 99 ? "99+" : wishlistCount}
                   </span>
                 )}
@@ -343,115 +401,18 @@ export function Header() {
 
               <button
                 onClick={openCart}
-                className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
                 aria-label="Cart"
               >
                 <ShoppingBag className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
+                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-0.5 text-[10px] leading-none font-bold text-white shadow-2xs">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
               </button>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ── TIER 3: Category Nav Strip with Hover Mega-Menus ─────────── */}
-      <div
-        onMouseLeave={handleFlyoutLeave}
-        className={cn(
-          "relative z-40 hidden w-full border-b transition-colors duration-300 lg:block",
-          isScrolled
-            ? "border-rose-100/60 bg-white/95 backdrop-blur-md"
-            : "border-gray-100 bg-white"
-        )}
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <nav
-            className="grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-4"
-            aria-label="Main navigation"
-          >
-            {/* Left Column: Discreet Delivery Trust Note */}
-            <div className="flex items-center justify-start text-[11px] font-medium tracking-wide text-neutral-500">
-              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
-                <Truck className="h-3.5 w-3.5 text-[var(--accent)]" />
-                <span>Discreet Delivery & Free Returns</span>
-              </span>
-            </div>
-
-            {/* Center Column: Core Categories Aligned Directly Below Logo */}
-            <div className="flex items-center justify-center gap-0.5 xl:gap-1">
-              {NAV_CATEGORY_LINKS.map((cat) => {
-                const isActive =
-                  pathname === cat.href || pathname.startsWith(`${cat.href}/`);
-                const isFlyoutOpen = activeFlyout === cat.label;
-                return (
-                  <div
-                    key={cat.label}
-                    onMouseEnter={() => handleFlyoutEnter(cat.label)}
-                    className="relative"
-                  >
-                    <Link
-                      href={cat.href}
-                      className={cn(
-                        "relative flex items-center gap-1.5 px-3 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:px-3.5 xl:text-xs",
-                        isActive || isFlyoutOpen
-                          ? "text-[var(--accent)]"
-                          : "text-neutral-800 hover:text-[var(--accent)]"
-                      )}
-                    >
-                      <span>{cat.label}</span>
-                      {cat.badge && (
-                        <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-[var(--accent)]">
-                          {cat.badge}
-                        </span>
-                      )}
-                      {(isActive || isFlyoutOpen) && (
-                        <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--accent)] transition-all duration-200" />
-                      )}
-                    </Link>
-                  </div>
-                );
-              })}
-
-              {/* SALE link */}
-              <Link
-                href="/sale"
-                className={cn(
-                  "relative flex items-center gap-1 px-3 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:px-3.5 xl:text-xs",
-                  pathname === "/sale"
-                    ? "text-[var(--accent)]"
-                    : "text-[var(--accent)] hover:text-[var(--accent-dark)]"
-                )}
-              >
-                <span>Sale</span>
-                <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-2xs">
-                  Offers
-                </span>
-                {pathname === "/sale" && (
-                  <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--accent)] transition-all duration-200" />
-                )}
-              </Link>
-            </div>
-
-            {/* Right Column: Combo Deals Quick Action */}
-            <div className="flex items-center justify-end">
-              <Link
-                href="/p/seamless-undie-pack-of-3"
-                className="group inline-flex items-center gap-1.5 rounded-full bg-rose-50/80 px-3 py-1 text-[11px] font-semibold tracking-wide text-neutral-800 transition-all hover:bg-rose-100 hover:text-[var(--accent)]"
-              >
-                <Sparkles className="h-3 w-3 text-[var(--accent)] transition-transform duration-300 group-hover:rotate-12" />
-                <span>
-                  3-Packs from{" "}
-                  <strong className="font-bold text-[var(--accent)]">
-                    ₹750
-                  </strong>
-                </span>
-              </Link>
-            </div>
-          </nav>
         </div>
 
         {/* Hover Mega-Menu Flyouts */}

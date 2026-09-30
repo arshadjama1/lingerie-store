@@ -28,6 +28,7 @@ interface SearchAutocompleteProps {
   autoFocus?: boolean;
   isMobileOverlay?: boolean;
   showShortcutHint?: boolean;
+  dropdownAlign?: "left" | "right";
 }
 
 const TRENDING_SEARCHES = [
@@ -56,6 +57,7 @@ export function SearchAutocomplete({
   autoFocus = false,
   isMobileOverlay = false,
   showShortcutHint = false,
+  dropdownAlign = "left",
 }: SearchAutocompleteProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
@@ -309,7 +311,10 @@ export function SearchAutocomplete({
           className={cn(
             isMobileOverlay
               ? "fixed inset-x-0 top-16 bottom-0 z-50 overflow-y-auto overscroll-contain bg-white pb-16"
-              : "absolute top-full left-0 z-50 mt-1.5 w-full max-w-lg min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl sm:min-w-[420px]"
+              : cn(
+                  "absolute top-full z-50 mt-1.5 w-full max-w-lg min-w-0 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl sm:min-w-[420px]",
+                  dropdownAlign === "right" ? "right-0" : "left-0"
+                )
           )}
         >
           {/* STATE A: User has typed a query */}
