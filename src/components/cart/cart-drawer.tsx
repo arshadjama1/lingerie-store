@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 import { FastCheckoutModal } from "../checkout/FastCheckoutModal";
 import { CartItemCard } from "./cart-item-card";
@@ -62,7 +62,49 @@ export function CartDrawer() {
     getUserProfile();
   }, [isOpen]);
 
-  if (!isOpen && !isFastCheckoutOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMounted(true);
+      const rAF = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setActive(true);
+        });
+      });
+      document.body.style.overflow = "hidden";
+      return () => cancelAnimationFrame(rAF);
+    } else {
+      setActive(false);
+      const timer = setTimeout(() => {
+        setMounted(false);
+        if (!isFastCheckoutOpen) {
+          document.body.style.overflow = "";
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, isFastCheckoutOpen]);
+
+  // Clean up body overflow on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  // Escape key listener to close drawer
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeCart();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, closeCart]);
+
+  if (!mounted && !isFastCheckoutOpen) return null;
 
   const items = cart?.items || [];
   const itemCount = cart?.itemCount || 0;
@@ -87,16 +129,25 @@ export function CartDrawer() {
 
   return (
     <>
-      {isOpen && (
+      {mounted && (
         <div className="fixed inset-0 z-50 overflow-hidden">
-          {/* Backdrop */}
+          {/* Backdrop with smooth fade in/out */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
+            className={cn(
+              "fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-out",
+              active ? "opacity-100" : "pointer-events-none opacity-0"
+            )}
             onClick={closeCart}
+            aria-hidden="true"
           />
 
-          <div className="fixed inset-y-0 right-0 flex max-w-full pl-10">
-            <div className="flex w-screen max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl duration-300">
+          <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div
+              className={cn(
+                "pointer-events-auto flex w-screen max-w-md flex-col border-l border-neutral-200 bg-white shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
+                active ? "translate-x-0" : "translate-x-full"
+              )}
+            >
               {/* ── TIER 1: Header (User Greeting & Urgency Countdown) ── */}
               <div className="border-b border-neutral-100 bg-white px-5 py-3.5">
                 <div className="flex items-center justify-between">
@@ -115,7 +166,7 @@ export function CartDrawer() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={closeCart}
-                      className="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                      className="cursor-pointer rounded-full p-1 text-neutral-400 transition-all hover:bg-neutral-100 hover:text-neutral-700 active:scale-90"
                       aria-label="Close cart drawer"
                     >
                       <X className="h-5 w-5" />
