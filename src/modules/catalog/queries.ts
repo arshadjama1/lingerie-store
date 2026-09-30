@@ -448,10 +448,72 @@ export async function getProductBySlug(
 // searchProducts
 // ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Transforms a raw user search query into a safe, normalized PostgreSQL tsquery string.
+ * Supports prefix wildcards, intimate apparel vocabulary / pluralization, and prevents SQL injection / syntax errors.
+ */
+export function buildSearchTsQuery(rawQuery: string): string {
+  const tokens = rawQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return "";
+
+  const clauses = tokens
+    .map((token, idx) => {
+      // Remove any characters that could break tsquery syntax: & | ! ( ) : * ' " \
+      let clean = token.replace(/[^a-z0-9]/gi, "");
+      if (!clean) return "";
+
+      // Intimate apparel domain synonyms & irregular plural handling
+      if (clean === "bras" || clean === "bra") {
+        clean = "(bra | bras)";
+      } else if (
+        [
+          "panties",
+          "panty",
+          "undies",
+          "undie",
+          "brief",
+          "briefs",
+          "underwear",
+          "boyleg",
+          "hipster",
+        ].includes(clean)
+      ) {
+        clean =
+          "(panty | panties | undie | undies | underwear | brief | briefs | boyleg | hipster)";
+      } else if (["camisoles", "camisole", "cami"].includes(clean)) {
+        clean = "(camisole | camisoles | cami)";
+      } else if (["bralettes", "bralette"].includes(clean)) {
+        clean = "(bralette | bralettes)";
+      } else if (["sets", "set"].includes(clean)) {
+        clean = "(set | sets)";
+      } else if (
+        idx === tokens.length - 1 &&
+        clean.length >= 2 &&
+        !clean.includes("|")
+      ) {
+        // Only append prefix wildcard to the last word if length >= 2
+        clean = `${clean}:*`;
+      }
+
+      return clean;
+    })
+    .filter(Boolean);
+
+  return clauses.join(" & ");
+}
+
 export async function searchProducts(
   params: SearchProductsParams
 ): Promise<SearchProductsResult> {
-  const { q, categoryPath, priceMin, priceMax, page = 1, limit = 24 } = params;
+  const {
+    q,
+    categoryPath,
+    priceMin,
+    priceMax,
+    sort = "relevance",
+    page = 1,
+    limit = 24,
+  } = params;
   const offset = (page - 1) * limit;
 
   const baseConditions = [
@@ -485,11 +547,54 @@ export async function searchProducts(
     );
   }
 
-  // ── Phase 1: FTS ──────────────────────────────────────────────────
+  // ── Phase 1: FTS with Domain Normalization & Prefix Wildcards ────
+  const tsquery = buildSearchTsQuery(q);
+  const ftsQuerySql = tsquery
+    ? sql`to_tsquery('english', ${tsquery})`
+    : sql`plainto_tsquery('english', ${q})`;
+
   const ftsConditions = [
     ...baseConditions,
-    sql`${products}.search_vector @@ plainto_tsquery('english', ${q})`,
+    sql`${products}.search_vector @@ ${ftsQuerySql}`,
   ];
+
+  // Build sorting order clauses
+  const ftsOrderClauses = [];
+  switch (sort) {
+    case "price_asc":
+      ftsOrderClauses.push(
+        asc(
+          sql`(SELECT MIN(pv.price) FROM ${productVariants} pv WHERE pv.product_id = ${products.id} AND pv.is_active = true)`
+        )
+      );
+      break;
+    case "price_desc":
+      ftsOrderClauses.push(
+        desc(
+          sql`(SELECT MIN(pv.price) FROM ${productVariants} pv WHERE pv.product_id = ${products.id} AND pv.is_active = true)`
+        )
+      );
+      break;
+    case "newest":
+      ftsOrderClauses.push(desc(products.createdAt));
+      break;
+    case "popular":
+      ftsOrderClauses.push(desc(products.soldCount));
+      break;
+    case "rating":
+      ftsOrderClauses.push(
+        desc(products.ratingAvg),
+        desc(products.ratingCount)
+      );
+      break;
+    case "relevance":
+    default:
+      ftsOrderClauses.push(
+        desc(sql`ts_rank(${products}.search_vector, ${ftsQuerySql})`),
+        desc(products.soldCount)
+      );
+      break;
+  }
 
   const [ftsRows, ftsCount] = await Promise.all([
     db
@@ -596,18 +701,13 @@ export async function searchProducts(
         isInStock: sql<boolean>`true`,
         rank: sql<number>`ts_rank(
           ${products}.search_vector,
-          plainto_tsquery('english', ${q})
+          ${ftsQuerySql}
         )`,
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
       .where(and(...ftsConditions))
-      .orderBy(
-        desc(
-          sql`ts_rank(${products}.search_vector, plainto_tsquery('english', ${q}))`
-        ),
-        desc(products.soldCount)
-      )
+      .orderBy(...ftsOrderClauses)
       .limit(limit)
       .offset(offset),
 
@@ -636,7 +736,44 @@ export async function searchProducts(
     gt(sql<number>`similarity(${products.name}, ${q})`, SIMILARITY_THRESHOLD),
   ];
 
-  const [fuzzyRows] = await Promise.all([
+  const fuzzyOrderClauses = [];
+  switch (sort) {
+    case "price_asc":
+      fuzzyOrderClauses.push(
+        asc(
+          sql`(SELECT MIN(pv.price) FROM ${productVariants} pv WHERE pv.product_id = ${products.id} AND pv.is_active = true)`
+        )
+      );
+      break;
+    case "price_desc":
+      fuzzyOrderClauses.push(
+        desc(
+          sql`(SELECT MIN(pv.price) FROM ${productVariants} pv WHERE pv.product_id = ${products.id} AND pv.is_active = true)`
+        )
+      );
+      break;
+    case "newest":
+      fuzzyOrderClauses.push(desc(products.createdAt));
+      break;
+    case "popular":
+      fuzzyOrderClauses.push(desc(products.soldCount));
+      break;
+    case "rating":
+      fuzzyOrderClauses.push(
+        desc(products.ratingAvg),
+        desc(products.ratingCount)
+      );
+      break;
+    case "relevance":
+    default:
+      fuzzyOrderClauses.push(
+        desc(sql`similarity(${products.name}, ${q})`),
+        desc(products.soldCount)
+      );
+      break;
+  }
+
+  const [fuzzyRows, fuzzyCount] = await Promise.all([
     db
       .select({
         id: products.id,
@@ -744,24 +881,18 @@ export async function searchProducts(
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
       .where(and(...fuzzyConditions))
-      .orderBy(desc(sql`similarity(${products.name}, ${q})`))
-      .limit(Math.max(100, page * limit * 4)),
+      .orderBy(...fuzzyOrderClauses)
+      .limit(limit)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(products)
+      .where(and(...fuzzyConditions)),
   ]);
 
-  const rawFuzzyItems = fuzzyRows.map(toProductListItem);
-  const expandedFuzzy = expandProductItemsByColor(
-    rawFuzzyItems,
-    undefined,
-    undefined,
-    priceMin,
-    priceMax
-  );
-
-  const total = expandedFuzzy.length;
-  const paginated = expandedFuzzy.slice(offset, offset + limit);
-
+  const total = fuzzyCount[0]?.count ?? 0;
   return {
-    products: paginated,
+    products: fuzzyRows.map(toProductListItem),
     total,
     page,
     totalPages: Math.max(1, Math.ceil(total / limit)),
@@ -829,31 +960,40 @@ export async function getSearchSuggestions(
       .catch(() => []),
   ]);
 
-  // 1. Scoped Category suggestions (e.g. "bras upto 60% off in SALE")
-  const categorySuggestions: SearchSuggestionsResult["categories"] = [
-    {
-      label: `${q} upto 65% off`,
-      categoryName: "SALE",
-      href: `/sale?q=${encodeURIComponent(q)}`,
-    },
-    {
-      label: q,
-      categoryName: "NEW ARRIVALS",
-      href: `/search?q=${encodeURIComponent(q)}&sort=newest`,
-    },
-  ];
+  // 1. Scoped Category suggestions (Prioritize direct category matches)
+  const categorySuggestions: SearchSuggestionsResult["categories"] = [];
+
+  // Synonym / stem hints for category matching
+  const isPantyQuery =
+    normalizedQ.startsWith("pan") ||
+    normalizedQ.startsWith("und") ||
+    normalizedQ.includes("brief") ||
+    normalizedQ.includes("boyleg") ||
+    normalizedQ.includes("thong");
+
+  const isBraQuery =
+    normalizedQ.startsWith("br") || normalizedQ.includes("bralette");
+
+  const isSetQuery =
+    normalizedQ.startsWith("set") || normalizedQ.includes("lingerie");
+
+  const isLoungeQuery =
+    normalizedQ.startsWith("lounge") ||
+    normalizedQ.startsWith("cami") ||
+    normalizedQ.startsWith("night");
 
   for (const cat of activeCategories) {
     const catLower = cat.name.toLowerCase();
-    if (
-      catLower.includes(normalizedQ) ||
-      normalizedQ.includes(catLower) ||
-      previewResult.products.some(
-        (p) =>
-          p.slug.toLowerCase().includes(cat.slug.toLowerCase()) ||
-          p.name.toLowerCase().includes(catLower)
-      )
-    ) {
+    const matchesExplicit =
+      catLower.includes(normalizedQ) || normalizedQ.includes(catLower);
+    const matchesSynonym =
+      (catLower === "panties" && isPantyQuery) ||
+      (catLower === "bras" && isBraQuery) ||
+      (catLower === "sets" && isSetQuery) ||
+      (catLower === "loungewear" && isLoungeQuery) ||
+      (catLower === "nightwear" && isLoungeQuery);
+
+    if (matchesExplicit || matchesSynonym) {
       categorySuggestions.push({
         label: q,
         categoryName: cat.name.toUpperCase(),
@@ -862,53 +1002,167 @@ export async function getSearchSuggestions(
     }
   }
 
-  // 2. Keyword suggestions derived from matching product titles and tags
+  // Add default discovery scopes
+  categorySuggestions.push(
+    {
+      label: q,
+      categoryName: "SALE",
+      href: `/sale?q=${encodeURIComponent(q)}`,
+    },
+    {
+      label: q,
+      categoryName: "NEW ARRIVALS",
+      href: `/search?q=${encodeURIComponent(q)}&sort=newest`,
+    }
+  );
+
+  // 2. Keyword suggestions derived from matching product titles, tags, and domain terms
   const rawKeywords: string[] = [];
 
   for (const row of keywordRows) {
-    if (row.name && row.name.toLowerCase().includes(normalizedQ)) {
+    if (row.name) {
       rawKeywords.push(row.name);
     }
     if (Array.isArray(row.tags)) {
       for (const tag of row.tags) {
         if (tag.toLowerCase().includes(normalizedQ)) {
-          rawKeywords.push(tag);
+          rawKeywords.push(tag.replace(/-/g, " "));
         }
       }
     }
   }
 
-  // Common attribute prefixes if query matches innerwear terms
-  const curatedAttributes = [
-    `backless ${q}`,
-    `lace ${q}`,
-    `full coverage ${q}`,
-    `cotton ${q}`,
-    `seamless ${q}`,
-    `padded ${q}`,
-  ];
+  // Domain terms dictionary for high-intent suggestions
+  const DOMAIN_SUGGESTIONS: Record<string, string[]> = {
+    br: [
+      "Bamboo Fabric Bra",
+      "Padded Lycra Bra",
+      "Mischief Lounge Bra",
+      "Overlap Bralette Set",
+      "Bralettes",
+    ],
+    bra: [
+      "Bamboo Fabric Bra",
+      "Padded Lycra Bra",
+      "Mischief Lounge Bra",
+      "T-Shirt Bra",
+      "Bralettes",
+    ],
+    bras: [
+      "Bamboo Fabric Bra",
+      "Padded Lycra Bra",
+      "Mischief Lounge Bra",
+      "T-Shirt Bra",
+    ],
+    bralette: [
+      "Overlap Bralette with Hipster Set",
+      "Lace Bralette",
+      "Wirefree Bralette",
+    ],
+    pan: [
+      "Seamless Undie pack of 3",
+      "Bamboo Fabric Undie",
+      "Boyleg Undies",
+      "Pack of 3 Floral Undie",
+    ],
+    panty: [
+      "Seamless Undies",
+      "Bamboo Fabric Undie",
+      "Boyleg Undies",
+      "Pack of 3 Floral Undie",
+    ],
+    panties: [
+      "Seamless Undies",
+      "Bamboo Fabric Undies",
+      "Boyleg Undies",
+      "Pack of 3 Undies",
+    ],
+    undie: [
+      "Bamboo Fabric Undie",
+      "Boyleg Undies",
+      "Seamless Undie pack of 3",
+      "Pack of 3 Floral Undie",
+    ],
+    undies: [
+      "Bamboo Fabric Undies",
+      "Boyleg Undies",
+      "Seamless Undie pack of 3",
+      "Pack of 3 Floral Undie",
+    ],
+    set: ["Luxuria Pad Lingerie set", "Overlap Bralette with Hipster Set"],
+    sets: ["Luxuria Pad Lingerie set", "Overlap Bralette with Hipster Set"],
+    seam: ["Seamless Undie pack of 3", "Seamless Panties", "Seamless Bra"],
+    seamless: ["Seamless Undie pack of 3", "Seamless Panties", "Seamless Bra"],
+    bam: ["Bamboo Fabric Bra", "Bamboo Fabric Undie", "Bamboo Lounge Bra"],
+    bamboo: ["Bamboo Fabric Bra", "Bamboo Fabric Undie", "Bamboo Lounge Bra"],
+    cot: ["Cotton Camisole", "Cotton Panties", "Cotton Daily Bra"],
+    cotton: ["Cotton Camisole", "Cotton Panties", "Cotton Daily Bra"],
+    pad: ["Padded Lycra Bra", "Luxuria Pad Lingerie set"],
+    padded: ["Padded Lycra Bra", "Luxuria Pad Lingerie set"],
+    wire: ["Bamboo Fabric Bra", "Mischief Lounge Bra"],
+    wirefree: ["Bamboo Fabric Bra", "Mischief Lounge Bra"],
+    cami: ["Camisole", "Cotton Camisole"],
+    camisole: ["Camisole", "Cotton Camisole"],
+    boy: ["Boyleg Undies"],
+    boyleg: ["Boyleg Undies"],
+    flor: ["Pack of 3 Floral Undie"],
+    floral: ["Pack of 3 Floral Undie"],
+  };
 
-  for (const attr of curatedAttributes) {
-    if (!rawKeywords.some((k) => k.toLowerCase() === attr.toLowerCase())) {
-      rawKeywords.push(attr);
+  for (const [key, suggestionsList] of Object.entries(DOMAIN_SUGGESTIONS)) {
+    if (key.startsWith(normalizedQ) || normalizedQ.startsWith(key)) {
+      for (const s of suggestionsList) {
+        rawKeywords.push(s);
+      }
     }
   }
 
-  const uniqueSuggestions = Array.from(new Set(rawKeywords))
-    .filter(
-      (k) => k.trim().length > 0 && k.trim().toLowerCase() !== normalizedQ
-    )
-    .slice(0, 6)
-    .map((text) => ({
-      text,
-      href: `/search?q=${encodeURIComponent(text)}`,
-    }));
+  // Deduplicate and prioritize suggestions where a word begins with the query
+  const seenTexts = new Set<string>();
+  const prefixWordMatches: string[] = [];
+  const otherMatches: string[] = [];
+
+  for (const raw of rawKeywords) {
+    const trimmed = raw.trim();
+    const lower = trimmed.toLowerCase();
+    if (!trimmed || lower === normalizedQ || seenTexts.has(lower)) {
+      continue;
+    }
+    seenTexts.add(lower);
+    const words = lower.split(/[\s-]+/);
+    if (words.some((w) => w.startsWith(normalizedQ))) {
+      prefixWordMatches.push(trimmed);
+    } else {
+      otherMatches.push(trimmed);
+    }
+  }
+
+  const uniqueSuggestions: Array<{ text: string; href: string }> = [];
+  for (const trimmed of [...prefixWordMatches, ...otherMatches]) {
+    uniqueSuggestions.push({
+      text: trimmed,
+      href: `/search?q=${encodeURIComponent(trimmed)}`,
+    });
+    if (uniqueSuggestions.length >= 6) {
+      break;
+    }
+  }
+
+  // Deduplicate product previews
+  const seenProductIds = new Set<string>();
+  const previewProducts: ProductListItem[] = [];
+  for (const prod of previewResult.products) {
+    if (!seenProductIds.has(prod.id)) {
+      seenProductIds.add(prod.id);
+      previewProducts.push(prod);
+    }
+  }
 
   return {
     query: q,
     categories: categorySuggestions.slice(0, 4),
     suggestions: uniqueSuggestions,
-    products: previewResult.products,
+    products: previewProducts,
     totalMatches: previewResult.total,
   };
 }
