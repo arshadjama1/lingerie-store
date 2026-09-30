@@ -9,10 +9,12 @@ import {
   getCatalogCategories,
   getCatalogFilters,
   searchCatalog,
+  searchSortOptionSchema,
 } from "@/modules/catalog";
 
 import { EmptyState } from "@/components/common/empty-state";
 import { Pagination } from "@/components/common/pagination";
+import { SortDropdown } from "@/components/filters/sort-dropdown";
 import { ProductGrid } from "@/components/product/product-grid";
 import { SearchFilterSidebar } from "@/components/search/SearchFilterSidebar";
 
@@ -21,11 +23,22 @@ export const dynamic = "force-dynamic";
 interface SearchPageProps {
   searchParams: Promise<{
     q?: string;
+    sort?: string;
+    category?: string;
     priceMin?: string;
     priceMax?: string;
     page?: string;
   }>;
 }
+
+const SEARCH_SORT_OPTIONS = [
+  { value: "relevance", label: "Relevance" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "newest", label: "Newest First" },
+  { value: "popular", label: "Most Popular" },
+  { value: "rating", label: "Customer Rating" },
+];
 
 export async function generateMetadata({
   searchParams,
@@ -43,19 +56,35 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const { q, priceMin, priceMax, page: pageStr } = await searchParams;
+  const {
+    q,
+    sort: rawSort,
+    category,
+    priceMin,
+    priceMax,
+    page: pageStr,
+  } = await searchParams;
 
   const query = q?.trim() ?? "";
   const page = Math.max(1, parseInt(pageStr ?? "1", 10));
   const min = priceMin ? Number(priceMin) : undefined;
   const max = priceMax ? Number(priceMax) : undefined;
 
-  // Parallel fetches — filters are always global (no query-scoped bounds for MVP)
+  // Validate sort option
+  const parsedSort = searchSortOptionSchema.safeParse(rawSort);
+  const sort = parsedSort.success ? parsedSort.data : "relevance";
+
+  // Parallel fetches
   const [results, filterData, categories] = await Promise.all([
     query
-      ? searchCatalog({ q: query, priceMin: min, priceMax: max, page }).catch(
-          () => null
-        )
+      ? searchCatalog({
+          q: query,
+          sort,
+          categoryPath: category || undefined,
+          priceMin: min,
+          priceMax: max,
+          page,
+        }).catch(() => null)
       : null,
     getCatalogFilters().catch(() => ({
       sizes: [],
@@ -63,13 +92,20 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       brands: [],
       priceRange: { min: 0, max: 10000 },
     })),
-    query ? Promise.resolve([]) : getCatalogCategories().catch(() => []),
+    getCatalogCategories().catch(() => []),
   ]);
 
   function buildPageUrl(p: number) {
     return (
       "/search" +
-      buildQueryString({ q: query || undefined, priceMin, priceMax, page: p })
+      buildQueryString({
+        q: query || undefined,
+        sort: sort !== "relevance" ? sort : undefined,
+        category: category || undefined,
+        priceMin,
+        priceMax,
+        page: p,
+      })
     );
   }
 
@@ -154,7 +190,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <div className="h-48 w-full animate-pulse rounded-none border border-gray-100 bg-[var(--surface)]" />
               }
             >
-              <SearchFilterSidebar priceRange={filterData.priceRange} />
+              <SearchFilterSidebar
+                priceRange={filterData.priceRange}
+                categories={categories}
+              />
             </Suspense>
           </div>
 
@@ -167,12 +206,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 action={{ label: "Browse all categories", href: "/" }}
               />
             ) : (
-              <div className="space-y-10">
-                <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-3">
                   <span className="text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
                     {results.total}{" "}
                     {results.total === 1 ? "Product" : "Products"} Found
                   </span>
+                  <SortDropdown
+                    options={SEARCH_SORT_OPTIONS}
+                    defaultSort="relevance"
+                  />
                 </div>
 
                 <Suspense
