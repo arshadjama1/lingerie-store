@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 interface Slide {
   id: number;
   badge: string;
@@ -14,6 +16,7 @@ interface Slide {
   ctaText: string;
   ctaLink: string;
   image: string;
+  imagePosition?: string;
 }
 
 const SLIDES: Slide[] = [
@@ -26,6 +29,7 @@ const SLIDES: Slide[] = [
     ctaText: "SHOP BAMBOO RANGE",
     ctaLink: "/bras",
     image: "/images/home/slider-3.png",
+    imagePosition: "object-[70%_top] sm:object-top",
   },
   {
     id: 2,
@@ -36,6 +40,7 @@ const SLIDES: Slide[] = [
     ctaText: "SHOP SEAMLESS UNDIES",
     ctaLink: "/panties",
     image: "/images/home/slider-2.png",
+    imagePosition: "object-[80%_center] sm:object-top",
   },
   {
     id: 3,
@@ -46,6 +51,7 @@ const SLIDES: Slide[] = [
     ctaText: "EXPLORE CAMISOLES",
     ctaLink: "/loungewear",
     image: "/images/home/slider-1.png",
+    imagePosition: "object-[78%_top] sm:object-top",
   },
 ];
 
@@ -92,16 +98,20 @@ export function HeroCarousel() {
                 alt={slide.title}
                 fill
                 priority={index === 0}
-                className="scale-105 transform object-cover object-center transition-transform duration-10000 ease-out sm:object-top"
+                className={cn(
+                  "scale-105 transform object-cover transition-transform duration-10000 ease-out",
+                  slide.imagePosition || "object-[75%_center] sm:object-top"
+                )}
                 sizes="100vw"
               />
 
-              {/* Gradient Overlay: mobile bottom-up + desktop left-to-right for optimal text contrast */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/30 sm:bg-gradient-to-r sm:from-black/85 sm:via-black/45 sm:to-transparent" />
+              {/* Gradient Overlay: Left-to-right vignette for text contrast + subtle bottom vignette for indicators */}
+              <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/10 sm:from-black/85 sm:via-black/40 sm:to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent sm:hidden" />
 
               {/* Text Overlay Box */}
               <div className="relative mx-auto flex h-full max-w-7xl flex-col justify-center px-6 text-white sm:px-14 lg:px-16">
-                <div className="max-w-xl space-y-4 lg:max-w-2xl lg:space-y-5">
+                <div className="max-w-[78%] space-y-3.5 sm:max-w-xl sm:space-y-4 lg:max-w-2xl lg:space-y-5">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[var(--accent)] to-rose-500 px-3.5 py-1.5 text-[11px] font-black tracking-widest text-white uppercase shadow-md">
                     <Sparkles className="h-3 w-3" />
                     {slide.badge}
@@ -115,10 +125,10 @@ export function HeroCarousel() {
                     {slide.subtitle}
                   </p>
 
-                  <div className="pt-3">
+                  <div className="pt-2 sm:pt-3">
                     <Link
                       href={slide.ctaLink}
-                      className="inline-flex transform items-center justify-center rounded-full bg-white px-8 py-3.5 text-xs font-black tracking-wider text-black uppercase shadow-xl transition-all hover:-translate-y-0.5 hover:bg-[var(--accent)] hover:text-white sm:text-sm"
+                      className="inline-flex transform items-center justify-center rounded-full bg-white px-7 py-3 text-xs font-black tracking-wider text-black uppercase shadow-xl transition-all hover:-translate-y-0.5 hover:bg-[var(--accent)] hover:text-white sm:px-8 sm:py-3.5 sm:text-sm"
                     >
                       {slide.ctaText} →
                     </Link>
