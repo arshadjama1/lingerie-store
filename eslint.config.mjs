@@ -11,6 +11,7 @@ export default tseslint.config(
       "node_modules/**",
       "db/migrations/**",
       "*.config.{js,mjs,ts}",
+      "scratch/**",
     ],
   },
   js.configs.recommended,
