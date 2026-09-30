@@ -69,13 +69,6 @@ export default async function ProductPage({
     notFound();
   }
 
-  // Fetch related products from the same category path, excluding current product
-  const relatedProducts = await getCatalogRelated(
-    product.id,
-    product.categoryPath || "",
-    4
-  ).catch(() => []);
-
   // Format schema.org JSON-LD structured data
   const prices = product.variants.map((v) => Number(v.price));
   const lowPrice = prices.length > 0 ? Math.min(...prices) : 0;
@@ -165,27 +158,54 @@ export default async function ProductPage({
           </Suspense>
         </div>
 
-        {/* Related Products Section */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16 border-t border-gray-100 pt-10">
-            <div className="mb-6">
-              <span className="mb-1 inline-block rounded-none bg-[var(--accent-subtle)] px-3 py-1 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase shadow-xs">
-                YOU MIGHT ALSO LIKE
-              </span>
-              <h2 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-3xl">
-                Recommended Pairings
-              </h2>
+        {/* Related Products Section (Streamed via Suspense) */}
+        <Suspense
+          fallback={
+            <div className="mt-16 border-t border-gray-100 pt-10">
+              <div className="mb-6 space-y-2">
+                <div className="h-4 w-28 animate-pulse rounded bg-rose-100" />
+                <div className="h-7 w-52 animate-pulse rounded bg-stone-200" />
+              </div>
+              <div className="h-96 w-full animate-pulse rounded-none bg-[var(--surface)]" />
             </div>
-            <Suspense
-              fallback={
-                <div className="h-96 w-full animate-pulse rounded-none bg-[var(--surface)]" />
-              }
-            >
-              <ProductGrid products={relatedProducts} priorityCount={0} />
-            </Suspense>
-          </div>
-        )}
+          }
+        >
+          <RelatedProductsSection
+            productId={product.id}
+            categoryPath={product.categoryPath}
+          />
+        </Suspense>
       </div>
+    </div>
+  );
+}
+
+async function RelatedProductsSection({
+  productId,
+  categoryPath,
+}: {
+  productId: string;
+  categoryPath?: string | null;
+}) {
+  const relatedProducts = await getCatalogRelated(
+    productId,
+    categoryPath || "",
+    4
+  ).catch(() => []);
+
+  if (relatedProducts.length === 0) return null;
+
+  return (
+    <div className="mt-16 border-t border-gray-100 pt-10">
+      <div className="mb-6">
+        <span className="mb-1 inline-block rounded-none bg-[var(--accent-subtle)] px-3 py-1 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase shadow-xs">
+          YOU MIGHT ALSO LIKE
+        </span>
+        <h2 className="font-serif text-2xl font-black tracking-tight text-[var(--accent-plum)] uppercase sm:text-3xl">
+          Recommended Pairings
+        </h2>
+      </div>
+      <ProductGrid products={relatedProducts} priorityCount={0} />
     </div>
   );
 }
