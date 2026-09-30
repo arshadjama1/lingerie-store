@@ -38,17 +38,55 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
-  // Lock body scroll on mobile when search overlay is open
+  // Lock body scroll on mobile when search overlay or mobile menu is open
+  const [mobileMounted, setMobileMounted] = useState(false);
+  const [mobileActive, setMobileActive] = useState(false);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      setMobileMounted(true);
+      const rAF = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setMobileActive(true);
+        });
+      });
+      document.body.style.overflow = "hidden";
+      return () => cancelAnimationFrame(rAF);
+    } else {
+      setMobileActive(false);
+      const timer = setTimeout(() => {
+        setMobileMounted(false);
+        if (!mobileSearchOpen) {
+          document.body.style.overflow = "";
+        }
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [mobileOpen, mobileSearchOpen]);
+
+  // Lock body scroll when mobile search overlay is open
   useEffect(() => {
     if (mobileSearchOpen) {
       document.body.style.overflow = "hidden";
-    } else {
+    } else if (!mobileOpen) {
       document.body.style.overflow = "";
     }
-    return () => {
-      document.body.style.overflow = "";
+  }, [mobileSearchOpen, mobileOpen]);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Escape key to close mobile drawer
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMobileOpen(false);
     };
-  }, [mobileSearchOpen]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
 
   const { cart, openCart } = useCartStore();
   const itemCount = cart?.itemCount || 0;
@@ -227,24 +265,33 @@ export function Header() {
       </div>
 
       {/* ── Mobile Drawer ─────────────────────────────────────────────── */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+      {mobileMounted && (
+        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            className={cn(
+              "fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-out",
+              mobileActive ? "opacity-100" : "pointer-events-none opacity-0"
+            )}
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
 
-          <div className="fixed inset-y-0 left-0 flex w-80 flex-col overflow-y-auto bg-white shadow-2xl">
+          <div
+            className={cn(
+              "fixed inset-y-0 left-0 flex w-80 flex-col overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
+              mobileActive ? "translate-x-0" : "-translate-x-full"
+            )}
+          >
             <div className="flex h-16 items-center justify-between border-b bg-[var(--surface)] px-5">
               <Link
                 href="/"
                 className="font-serif text-xl font-black text-[#3d0a20]"
+                onClick={() => setMobileOpen(false)}
               >
                 Surekh<span className="text-[var(--accent)]">.</span>
               </Link>
               <button
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-colors hover:text-black"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-gray-500 transition-all hover:bg-rose-50 hover:text-black active:scale-90"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Close menu"
               >
