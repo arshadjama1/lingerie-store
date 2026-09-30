@@ -16,6 +16,7 @@ import {
   Search,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Truck,
   User,
   X,
@@ -201,7 +202,7 @@ export function Header() {
                 key={i}
                 className="flex items-center gap-3 px-6 whitespace-nowrap"
               >
-                <span className="inline-block h-1 w-1 rounded-full bg-pink-400" />
+                <span className="inline-block h-1 w-1 rounded-full bg-rose-300/80" />
                 {item}
               </span>
             )
@@ -227,7 +228,7 @@ export function Header() {
                 <SearchAutocomplete
                   placeholder="Search bras, panties, sets..."
                   showShortcutHint={true}
-                  inputClassName="bg-rose-50/40 hover:bg-white focus:bg-white border-rose-100/80 focus:border-[var(--accent)]"
+                  inputClassName="h-10 bg-rose-50/40 hover:bg-white focus:bg-white border-rose-100/80 focus:border-[var(--accent)]"
                 />
               </div>
             </div>
@@ -245,13 +246,13 @@ export function Header() {
               </Link>
             </div>
 
-            {/* Column 3: User, Wishlist, Cart Actions */}
-            <div className="flex items-center justify-end gap-1 sm:gap-2">
+            {/* Column 3: User, Wishlist, Cart Actions (Unified 40px Baseline) */}
+            <div className="flex items-center justify-end gap-1.5 sm:gap-2">
               <UserDropdown />
 
               <Link
                 href="/wishlist"
-                className="group relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                className="group relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)]"
                 aria-label={
                   wishlistCount > 0
                     ? `Wishlist (${wishlistCount} items)`
@@ -268,13 +269,13 @@ export function Header() {
 
               <button
                 onClick={openCart}
-                className="group relative flex h-9 items-center gap-2 rounded-full pr-3 pl-2.5 text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)]"
+                className="group relative flex h-10 items-center gap-2 rounded-full pr-3.5 pl-2.5 text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)]"
                 aria-label="Cart"
               >
-                <div className="relative">
+                <div className="relative flex items-center justify-center">
                   <ShoppingBag className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
+                    <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
                       {itemCount > 99 ? "99+" : itemCount}
                     </span>
                   )}
@@ -288,10 +289,10 @@ export function Header() {
 
           {/* ── Mobile Header (Balanced 3-Column Grid) ───────────────── */}
           <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center sm:h-16 lg:hidden">
-            {/* Left: Hamburger + Search Triggers (Balanced ~80px) */}
-            <div className="flex items-center justify-start gap-0.5">
+            {/* Left: Hamburger + Search Triggers */}
+            <div className="flex items-center justify-start gap-1">
               <button
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
                 onClick={() => setMobileOpen(true)}
                 aria-label="Open menu"
               >
@@ -301,7 +302,7 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setMobileSearchOpen(true)}
-                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
                 aria-label="Search"
               >
                 <Search className="h-5 w-5" />
@@ -312,17 +313,20 @@ export function Header() {
             <div className="flex items-center justify-center">
               <Link
                 href="/"
-                className="flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
+                className="group flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
               >
-                Surekh<span className="text-[var(--accent)]">.</span>
+                Surekh
+                <span className="text-[var(--accent)] transition-transform duration-300 group-hover:scale-125">
+                  .
+                </span>
               </Link>
             </div>
 
-            {/* Right: Wishlist + Cart Actions (Balanced ~80px) */}
-            <div className="flex items-center justify-end gap-0.5">
+            {/* Right: Wishlist + Cart Actions */}
+            <div className="flex items-center justify-end gap-1">
               <Link
                 href="/wishlist"
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
                 aria-label={
                   wishlistCount > 0
                     ? `Wishlist (${wishlistCount} items)`
@@ -331,7 +335,7 @@ export function Header() {
               >
                 <Heart className="h-5 w-5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-0.5 text-[10px] leading-none font-bold text-white shadow-2xs">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
                     {wishlistCount > 99 ? "99+" : wishlistCount}
                   </span>
                 )}
@@ -339,12 +343,12 @@ export function Header() {
 
               <button
                 onClick={openCart}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-pink-50 hover:text-[var(--accent)] active:scale-90"
+                className="relative flex h-9 w-9 items-center justify-center rounded-full text-neutral-700 transition-colors hover:bg-rose-50 hover:text-[var(--accent)] active:scale-95"
                 aria-label="Cart"
               >
                 <ShoppingBag className="h-5 w-5" />
                 {itemCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-0.5 text-[10px] leading-none font-bold text-white shadow-2xs">
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[10px] leading-none font-bold text-white shadow-2xs">
                     {itemCount > 99 ? "99+" : itemCount}
                   </span>
                 )}
@@ -366,11 +370,19 @@ export function Header() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <nav
-            className="no-scrollbar flex max-w-full items-center justify-center gap-1 overflow-x-auto py-0.5"
+            className="grid h-11 grid-cols-[1fr_auto_1fr] items-center gap-4"
             aria-label="Main navigation"
           >
-            {/* Category standalone links with hover flyout trigger */}
-            <div className="flex flex-shrink-0 items-center gap-0.5">
+            {/* Left Column: Discreet Delivery Trust Note */}
+            <div className="flex items-center justify-start text-[11px] font-medium tracking-wide text-neutral-500">
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+                <Truck className="h-3.5 w-3.5 text-[var(--accent)]" />
+                <span>Discreet Delivery & Free Returns</span>
+              </span>
+            </div>
+
+            {/* Center Column: Core Categories Aligned Directly Below Logo */}
+            <div className="flex items-center justify-center gap-0.5 xl:gap-1">
               {NAV_CATEGORY_LINKS.map((cat) => {
                 const isActive =
                   pathname === cat.href || pathname.startsWith(`${cat.href}/`);
@@ -384,7 +396,7 @@ export function Header() {
                     <Link
                       href={cat.href}
                       className={cn(
-                        "relative flex items-center gap-1.5 px-3.5 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:text-xs",
+                        "relative flex items-center gap-1.5 px-3 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:px-3.5 xl:text-xs",
                         isActive || isFlyoutOpen
                           ? "text-[var(--accent)]"
                           : "text-neutral-800 hover:text-[var(--accent)]"
@@ -392,11 +404,10 @@ export function Header() {
                     >
                       <span>{cat.label}</span>
                       {cat.badge && (
-                        <span className="py-0.2 rounded-full bg-rose-50 px-1.5 text-[9px] font-bold text-[var(--accent)]">
+                        <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[9px] font-bold text-[var(--accent)]">
                           {cat.badge}
                         </span>
                       )}
-                      {/* Active underline indicator */}
                       {(isActive || isFlyoutOpen) && (
                         <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--accent)] transition-all duration-200" />
                       )}
@@ -404,29 +415,40 @@ export function Header() {
                   </div>
                 );
               })}
-            </div>
 
-            {/* Separator */}
-            <span className="mx-2 h-4 w-px flex-shrink-0 bg-rose-100" />
-
-            {/* Quick deal offer links */}
-            <div className="flex flex-shrink-0 items-center gap-1">
-              {COMBO_QUICK_LINKS.map((deal) => (
-                <Link
-                  key={deal.label}
-                  href={deal.href}
-                  className="px-2.5 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap text-[var(--accent)] uppercase underline-offset-4 transition-all hover:underline hover:opacity-80 xl:text-xs"
-                >
-                  {deal.label}
-                </Link>
-              ))}
-
-              {/* SALE high-contrast badge */}
+              {/* SALE link */}
               <Link
                 href="/sale"
-                className="ml-2 rounded-full bg-[var(--accent)] px-3.5 py-1 text-[10px] font-black tracking-wider whitespace-nowrap text-white uppercase shadow-xs transition-colors hover:bg-[var(--accent-dark)] xl:text-[11px]"
+                className={cn(
+                  "relative flex items-center gap-1 px-3 py-2.5 text-[11px] font-bold tracking-wider whitespace-nowrap uppercase transition-colors xl:px-3.5 xl:text-xs",
+                  pathname === "/sale"
+                    ? "text-[var(--accent)]"
+                    : "text-[var(--accent)] hover:text-[var(--accent-dark)]"
+                )}
               >
-                SALE
+                <span>Sale</span>
+                <span className="rounded-full bg-[var(--accent)] px-1.5 py-0.5 text-[9px] font-black tracking-wider text-white uppercase shadow-2xs">
+                  Offers
+                </span>
+                {pathname === "/sale" && (
+                  <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[var(--accent)] transition-all duration-200" />
+                )}
+              </Link>
+            </div>
+
+            {/* Right Column: Combo Deals Quick Action */}
+            <div className="flex items-center justify-end">
+              <Link
+                href="/p/seamless-undie-pack-of-3"
+                className="group inline-flex items-center gap-1.5 rounded-full bg-rose-50/80 px-3 py-1 text-[11px] font-semibold tracking-wide text-neutral-800 transition-all hover:bg-rose-100 hover:text-[var(--accent)]"
+              >
+                <Sparkles className="h-3 w-3 text-[var(--accent)] transition-transform duration-300 group-hover:rotate-12" />
+                <span>
+                  3-Packs from{" "}
+                  <strong className="font-bold text-[var(--accent)]">
+                    ₹750
+                  </strong>
+                </span>
               </Link>
             </div>
           </nav>
