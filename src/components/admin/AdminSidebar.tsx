@@ -57,10 +57,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     name: "Inventory Hub",
-    href: "#",
+    href: "/admin/inventory",
     icon: Boxes,
-    badge: "Phase 3",
-    isPlanned: true,
   },
   {
     name: "Returns & Exchanges",
