@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
         pathname: "/**",
       },
     ],
-    formats: ["image/webp"],
+    formats: ["image/avif", "image/webp"],
   },
 
   turbopack: {

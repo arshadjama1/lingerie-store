@@ -95,6 +95,7 @@ export function ProductCard({
   const [isSizePickerOpen, setIsSizePickerOpen] = useState(false);
   const [addingVariantId, setAddingVariantId] = useState<string | null>(null);
   const [justAddedId, setJustAddedId] = useState<string | null>(null);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   // Filter & sort variants for the product card
   const availableVariants = useMemo(() => {
@@ -187,7 +188,11 @@ export function ProductCard({
               alt={product.primaryImage.alt ?? product.name}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              className="object-cover transition-transform duration-500 ease-out will-change-transform group-hover:scale-105"
+              onLoad={() => setIsImageLoaded(true)}
+              className={cn(
+                "object-cover transition-all duration-500 ease-out will-change-transform group-hover:scale-105",
+                isImageLoaded ? "opacity-100" : "opacity-0"
+              )}
               priority={priority}
             />
           ) : (

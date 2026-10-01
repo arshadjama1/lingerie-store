@@ -225,7 +225,7 @@ export function UserDropdown({ className }: UserDropdownProps) {
                 >
                   <span className="flex items-center gap-2.5">
                     <Ruler className="h-4 w-4 text-neutral-400" />
-                    <span>FitCode™ Bra Calculator</span>
+                    <span>Bra Size Calculator</span>
                   </span>
                   <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-[var(--accent)]">
                     Free

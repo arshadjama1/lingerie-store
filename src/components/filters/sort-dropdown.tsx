@@ -14,17 +14,33 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Price: High to Low" },
 ];
 
-export function SortDropdown({ className }: { className?: string }) {
+interface SortDropdownProps {
+  className?: string;
+  options?: Array<{ value: string; label: string }>;
+  defaultSort?: string;
+}
+
+export function SortDropdown({
+  className,
+  options = SORT_OPTIONS,
+  defaultSort = "newest",
+}: SortDropdownProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const currentSort = searchParams.get("sort") || "newest";
+  const currentSort = searchParams.get("sort") || defaultSort;
 
   const setSort = useCallback(
     (value: string) => {
       const params: Record<string, string | string[] | undefined> = {};
       params.sort = value;
+
+      const q = searchParams.get("q");
+      if (q) params.q = q;
+
+      const category = searchParams.get("category");
+      if (category) params.category = category;
 
       const currentPriceMin = searchParams.get("priceMin");
       const currentPriceMax = searchParams.get("priceMax");
@@ -62,7 +78,7 @@ export function SortDropdown({ className }: { className?: string }) {
           className="h-9 cursor-pointer appearance-none rounded-xs border border-stone-200 bg-white py-1.5 pr-8 pl-3 text-xs font-semibold text-stone-800 shadow-xs transition-colors hover:border-stone-400 focus:border-stone-900 focus:outline-none"
           aria-label="Sort products by"
         >
-          {SORT_OPTIONS.map((opt) => (
+          {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>

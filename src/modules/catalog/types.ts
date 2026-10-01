@@ -95,11 +95,20 @@ export type ListProductsResult = {
   totalPages: number;
 };
 
+export type SearchSortOption =
+  | "relevance"
+  | "price_asc"
+  | "price_desc"
+  | "newest"
+  | "popular"
+  | "rating";
+
 export type SearchProductsParams = {
   q: string;
   categoryPath?: string;
   priceMin?: number;
   priceMax?: number;
+  sort?: SearchSortOption;
   page?: number;
   limit?: number;
 };

@@ -48,11 +48,21 @@ const listProductsSchema = z.object({
   featuredOnly: z.boolean().optional(),
 });
 
+export const searchSortOptionSchema = z.enum([
+  "relevance",
+  "price_asc",
+  "price_desc",
+  "newest",
+  "popular",
+  "rating",
+]);
+
 const searchProductsSchema = z.object({
   q: z.string().trim().min(1).max(200),
   categoryPath: z.string().optional(),
   priceMin: z.number().nonnegative().optional(),
   priceMax: z.number().nonnegative().optional(),
+  sort: searchSortOptionSchema.optional(),
   page: z.number().int().positive().optional(),
   limit: z.number().int().positive().optional(),
 });

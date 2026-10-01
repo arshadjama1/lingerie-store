@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap");
 @import "tailwindcss";
 
 /* ── Design tokens — Clovia Fuchsia + Luxe Rose fusion ─────────────── */
@@ -47,8 +46,11 @@
   --color-success: var(--success);
 
   /* Typography */
-  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-sans: Poppins, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif:
+    var(--font-serif), "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans:
+    var(--font-sans), Poppins, ui-sans-serif, system-ui, -apple-system,
+    sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 }
 
@@ -57,6 +59,16 @@
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* Remove duplicate native browser search cancel button */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 html {
@@ -209,4 +221,33 @@ h4 {
 }
 .star-empty {
   color: #e5e7eb;
+}
+
+/* ── Page & Image Transitions ───────────────────────────────────────── */
+@keyframes page-enter {
+  from {
+    opacity: 0.88;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-enter {
+  animation: page-enter 180ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes img-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-img-fade {
+  animation: img-fade 300ms ease-out forwards;
 }
