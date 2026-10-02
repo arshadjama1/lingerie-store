@@ -1,11 +1,25 @@
-import { getAdminCategories } from "@/modules/admin/catalog";
+import {
+  getAdminCatalogStats,
+  getAdminCategories,
+} from "@/modules/admin/catalog";
 
 import { AdminCategoriesClient } from "@/components/admin/AdminCategoriesClient";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminCategoriesPage() {
-  const categories = await getAdminCategories();
+  const [categories, catalogStats] = await Promise.all([
+    getAdminCategories(),
+    getAdminCatalogStats(),
+  ]);
 
-  return <AdminCategoriesClient categories={categories} />;
+  return (
+    <AdminCategoriesClient
+      categories={categories}
+      stats={{
+        productCount: catalogStats.totalProducts,
+        categoryCount: catalogStats.categoryCount,
+      }}
+    />
+  );
 }
