@@ -133,6 +133,7 @@ export const productImages = pgTable(
       onDelete: "cascade",
     }),
     url: text("url").notNull(),
+    storagePath: text("storage_path"),
     alt: text("alt"),
     isPrimary: boolean("is_primary").default(false).notNull(),
     sortOrder: smallint("sort_order").default(0).notNull(),
