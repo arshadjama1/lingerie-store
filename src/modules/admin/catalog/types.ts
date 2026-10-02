@@ -114,3 +114,12 @@ export type ListAdminProductsResult = {
   page: number;
   totalPages: number;
 };
+
+export type AdminCatalogStats = {
+  totalProducts: number;
+  activeProducts: number;
+  totalVariants: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  categoryCount: number;
+};

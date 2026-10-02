@@ -13,6 +13,7 @@ import "server-only";
 
 import type {
   AdminBrandOption,
+  AdminCatalogStats,
   AdminCategoryOption,
   AdminProductDetail,
   AdminProductInput,
@@ -205,6 +206,43 @@ export async function getAdminBrands(): Promise<AdminBrandOption[]> {
   return result;
 }
 
+export async function getAdminCatalogStats(): Promise<AdminCatalogStats> {
+  const [prodStats] = await db
+    .select({
+      totalProducts: sql<number>`count(distinct ${products.id})::int`,
+      activeProducts: sql<number>`count(distinct case when ${products.isActive} = true then ${products.id} end)::int`,
+    })
+    .from(products);
+
+  const [varStats] = await db
+    .select({
+      totalVariants: sql<number>`count(*)::int`,
+    })
+    .from(productVariants);
+
+  const [invStats] = await db
+    .select({
+      lowStockCount: sql<number>`count(case when ${inventory.quantity} <= ${inventory.lowStockAlert} and ${inventory.quantity} > 0 then 1 end)::int`,
+      outOfStockCount: sql<number>`count(case when ${inventory.quantity} = 0 then 1 end)::int`,
+    })
+    .from(inventory);
+
+  const [catStats] = await db
+    .select({
+      categoryCount: sql<number>`count(*)::int`,
+    })
+    .from(categories);
+
+  return {
+    totalProducts: prodStats?.totalProducts ?? 0,
+    activeProducts: prodStats?.activeProducts ?? 0,
+    totalVariants: varStats?.totalVariants ?? 0,
+    lowStockCount: invStats?.lowStockCount ?? 0,
+    outOfStockCount: invStats?.outOfStockCount ?? 0,
+    categoryCount: catStats?.categoryCount ?? 0,
+  };
+}
+
 export async function createAdminProduct(
   input: AdminProductInput
 ): Promise<string> {
@@ -324,7 +362,6 @@ export async function updateAdminProduct(
               weightGrams: v.weightGrams,
               isActive: v.isActive,
               sortOrder: v.sortOrder,
-              updatedAt: new Date(),
             })
             .where(eq(productVariants.id, v.id));
 
@@ -333,7 +370,6 @@ export async function updateAdminProduct(
             .set({
               quantity: v.stock,
               lowStockAlert: v.lowStockAlert,
-              updatedAt: new Date(),
             })
             .where(eq(inventory.variantId, v.id));
         } else {
@@ -375,7 +411,6 @@ export async function updateAdminProduct(
               isPrimary: img.isPrimary,
               sortOrder: img.sortOrder,
               variantId: img.variantId,
-              updatedAt: new Date(),
             })
             .where(eq(productImages.id, img.id));
         } else {
