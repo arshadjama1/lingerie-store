@@ -7,6 +7,7 @@ import {
   ExternalLink,
   LayoutDashboard,
   MessageSquare,
+  Package,
   Search,
   ShoppingBag,
   Tag,
@@ -68,6 +69,27 @@ const COMMANDS: CommandItem[] = [
     category: "Store",
     href: "/",
     icon: ExternalLink,
+  },
+  {
+    id: "products-all",
+    title: "Products: View All",
+    category: "Catalog",
+    href: "/admin/products",
+    icon: Package,
+  },
+  {
+    id: "products-new",
+    title: "Products: Add New",
+    category: "Catalog",
+    href: "/admin/products/new",
+    icon: Package,
+  },
+  {
+    id: "categories-manage",
+    title: "Categories: Manage",
+    category: "Catalog",
+    href: "/admin/categories",
+    icon: Package,
   },
 ];
 

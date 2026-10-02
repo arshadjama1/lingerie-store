@@ -50,10 +50,8 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     name: "Catalog & Products",
-    href: "#",
+    href: "/admin/products",
     icon: Package,
-    badge: "Phase 2",
-    isPlanned: true,
   },
   {
     name: "Inventory Hub",
