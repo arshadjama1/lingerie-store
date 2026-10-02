@@ -8,4 +8,4 @@ ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
 minimumReleaseAgeExclude:
-  - '@netlify/plugin-nextjs@5.16.1'
+  - "@netlify/plugin-nextjs@5.16.1"
