@@ -23,8 +23,10 @@ export default async function EditProductPage({ params }: EditPageProps) {
     notFound();
   }
 
-  const categories = await getAdminCategories();
-  const brands = await getAdminBrands();
+  const [categories, brands] = await Promise.all([
+    getAdminCategories(),
+    getAdminBrands(),
+  ]);
 
   // Map backend types to form types
   const mappedProduct = {
@@ -48,14 +50,7 @@ export default async function EditProductPage({ params }: EditPageProps) {
   };
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
-        <p className="mt-0.5 text-sm text-gray-500">
-          Update product details, variants, and images.
-        </p>
-      </div>
-
+    <div className="space-y-6">
       <AdminProductForm
         mode="edit"
         initialData={mappedProduct}
