@@ -123,7 +123,10 @@ export function AdminSidebar({ email, onCloseMobile }: AdminSidebarProps) {
           const isActive =
             item.href === "/admin/dashboard"
               ? pathname === "/admin" || pathname === "/admin/dashboard"
-              : item.href !== "#" && pathname.startsWith(item.href);
+              : item.href === "/admin/products"
+                ? pathname.startsWith("/admin/products") ||
+                  pathname.startsWith("/admin/categories")
+                : item.href !== "#" && pathname.startsWith(item.href);
 
           if (item.isPlanned) {
             return (

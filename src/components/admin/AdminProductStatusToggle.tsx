@@ -7,14 +7,12 @@ import { toast } from "sonner";
 
 interface AdminProductStatusToggleProps {
   productId: string;
-  field: "isActive" | "isFeatured";
   initialValue: boolean;
-  label: string;
+  label?: string;
 }
 
 export function AdminProductStatusToggle({
   productId,
-  field,
   initialValue,
   label,
 }: AdminProductStatusToggleProps) {
@@ -22,7 +20,8 @@ export function AdminProductStatusToggle({
   const [isLoading, setIsLoading] = useState(false);
   const [value, setValue] = useState(initialValue);
 
-  const toggle = async () => {
+  const toggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       setIsLoading(true);
       const newValue = !value;
@@ -32,19 +31,21 @@ export function AdminProductStatusToggle({
       const res = await fetch(`/api/admin/products/${productId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ field, value: newValue }),
+        body: JSON.stringify({ field: "isActive", value: newValue }),
       });
 
       if (!res.ok) {
         throw new Error("Failed to update status");
       }
 
-      toast.success(`${label} updated`);
+      toast.success(
+        newValue ? "Product activated" : "Product archived as draft"
+      );
       router.refresh();
     } catch {
       // Revert optimistic update
       setValue(!value);
-      toast.error("Failed to update");
+      toast.error("Failed to update status");
     } finally {
       setIsLoading(false);
     }
@@ -52,15 +53,26 @@ export function AdminProductStatusToggle({
 
   return (
     <button
+      type="button"
       onClick={toggle}
       disabled={isLoading}
-      className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+      title={
         value
-          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+          ? "Active on store (Click to set as Draft)"
+          : "Draft (Click to set as Active)"
+      }
+      className={`inline-flex items-center gap-1.5 rounded-none border px-2.5 py-1 text-xs font-semibold transition-all disabled:opacity-50 ${
+        value
+          ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+          : "border-gray-200 bg-gray-100 text-gray-500 hover:bg-gray-200"
       }`}
     >
-      {label}
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          value ? "bg-emerald-500" : "bg-gray-400"
+        }`}
+      />
+      <span>{label ?? (value ? "Active" : "Draft / Inactive")}</span>
     </button>
   );
 }
