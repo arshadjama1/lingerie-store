@@ -103,7 +103,10 @@ export async function listAdminProducts(
   const total = countQuery[0]?.count ?? 0;
 
   return {
-    products: items,
+    products: items.map((p) => ({
+      ...p,
+      categoryName: p.categoryName || "Uncategorized",
+    })),
     total,
     page,
     totalPages: Math.ceil(total / limit),

@@ -16,8 +16,6 @@ import {
   updateAdminProduct,
 } from "@/modules/admin/catalog";
 
-type RouteCtx = { params: Promise<Record<string, string>> };
-
 const priceField = z.coerce
   .string()
   .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid price (e.g. 499 or 499.99)");
@@ -65,7 +63,7 @@ const updateProductSchema = z.object({
   categoryId: z.string().min(1),
   brandId: z.string().nullable().default(null),
   hsnCode: z.string().max(10).nullable().default(null),
-  attributes: z.record(z.string()).default({}),
+  attributes: z.record(z.string(), z.string()).default({}),
   tags: z.array(z.string()).default([]),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),
@@ -75,37 +73,35 @@ const updateProductSchema = z.object({
   images: z.array(imageSchema).default([]),
 });
 
-export const GET = withErrorHandling(
-  async (_req: NextRequest, ctx: RouteCtx) => {
-    await assertAdmin();
-    const { id } = await ctx.params;
+export const GET = withErrorHandling(async (_req: Request, ctx?: unknown) => {
+  await assertAdmin();
+  const params = (ctx as { params: Promise<{ id: string }> })?.params;
+  const { id } = await params;
 
-    const product = await getAdminProductById(id);
-    if (!product) throw new NotFoundError("Product");
+  const product = await getAdminProductById(id);
+  if (!product) throw new NotFoundError("Product");
 
-    return NextResponse.json(product);
+  return NextResponse.json(product);
+});
+
+export const PUT = withErrorHandling(async (req: Request, ctx?: unknown) => {
+  await assertAdmin();
+  const params = (ctx as { params: Promise<{ id: string }> })?.params;
+  const { id } = await params;
+
+  const body = await (req as NextRequest).json().catch(() => ({}));
+  const result = updateProductSchema.safeParse(body);
+
+  if (!result.success) {
+    const msg = result.error.issues[0]?.message ?? "Invalid product data";
+    throw new ValidationError(msg);
   }
-);
 
-export const PUT = withErrorHandling(
-  async (req: NextRequest, ctx: RouteCtx) => {
-    await assertAdmin();
-    const { id } = await ctx.params;
+  await updateAdminProduct(id, result.data);
 
-    const body = await req.json().catch(() => ({}));
-    const result = updateProductSchema.safeParse(body);
+  revalidatePath("/");
+  revalidatePath("/products");
+  revalidatePath(`/products/${result.data.slug}`);
 
-    if (!result.success) {
-      const msg = result.error.issues[0]?.message ?? "Invalid product data";
-      throw new ValidationError(msg);
-    }
-
-    await updateAdminProduct(id, result.data);
-
-    revalidatePath("/");
-    revalidatePath("/products");
-    revalidatePath(`/products/${result.data.slug}`);
-
-    return NextResponse.json({ success: true });
-  }
-);
+  return NextResponse.json({ success: true });
+});

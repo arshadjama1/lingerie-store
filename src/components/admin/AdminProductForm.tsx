@@ -10,16 +10,20 @@ import {
   AlertTriangle,
   ArrowLeft,
   Check,
+  ChevronDown,
+  ChevronUp,
   Copy,
   ExternalLink,
   Globe,
   ImageIcon,
   Loader2,
   Plus,
+  Star,
   Trash2,
   UploadCloud,
   Wand2,
   X,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -35,12 +39,12 @@ const variantSchema = z
     colorHex: z
       .string()
       .regex(/^#[0-9A-Fa-f]{6}$/, "Must be valid hex code (e.g. #000000)"),
-    price: z.coerce.number().min(0, "Price must be ≥ 0"),
-    mrp: z.coerce.number().min(0, "MRP must be ≥ 0"),
-    weightInGrams: z.coerce.number().min(0).optional(),
-    stockQuantity: z.coerce.number().int().min(0, "Stock must be ≥ 0"),
-    lowStockAlert: z.coerce.number().int().min(0).optional(),
-    isActive: z.boolean().default(true),
+    price: z.number().min(0, "Price must be ≥ 0"),
+    mrp: z.number().min(0, "MRP must be ≥ 0"),
+    weightInGrams: z.number().min(0).optional(),
+    stockQuantity: z.number().int().min(0, "Stock must be ≥ 0"),
+    lowStockAlert: z.number().int().min(0).optional(),
+    isActive: z.boolean(),
   })
   .refine((data) => data.price <= data.mrp, {
     message: "Price cannot exceed MRP",
@@ -52,8 +56,8 @@ const imageSchema = z.object({
   url: z.string().min(1),
   storagePath: z.string().nullable().optional(),
   altText: z.string().optional(),
-  isPrimary: z.boolean().default(false),
-  sortOrder: z.coerce.number().int().default(0),
+  isPrimary: z.boolean(),
+  sortOrder: z.number().int(),
 });
 
 const productSchema = z.object({
@@ -70,8 +74,8 @@ const productSchema = z.object({
   brandId: z.string().optional(),
   hsnCode: z.string().optional(),
   tags: z.string().optional(),
-  isActive: z.boolean().default(true),
-  isFeatured: z.boolean().default(false),
+  isActive: z.boolean(),
+  isFeatured: z.boolean(),
   metaTitle: z.string().max(255).optional(),
   metaDescription: z.string().optional(),
   variants: z.array(variantSchema).min(1, "At least one variant is required"),
@@ -107,6 +111,15 @@ const inputCls =
 const labelCls =
   "block text-xs font-semibold uppercase tracking-wider text-gray-700 mb-1.5";
 
+const SIZE_PRESETS = [
+  { label: "Bra B-Cup (32B–38B)", sizes: ["32B", "34B", "36B", "38B"] },
+  { label: "Bra C-Cup (32C–38C)", sizes: ["32C", "34C", "36C", "38C"] },
+  { label: "Bra D-Cup (32D–38D)", sizes: ["32D", "34D", "36D", "38D"] },
+  { label: "Apparel (XS–XXL)", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
+  { label: "Apparel (S–XL)", sizes: ["S", "M", "L", "XL"] },
+  { label: "Free Size", sizes: ["Free Size"] },
+];
+
 export function AdminProductForm({
   mode,
   initialData,
@@ -129,6 +142,8 @@ export function AdminProductForm({
     }
     return [];
   });
+  const [showPresetPicker, setShowPresetPicker] = useState(false);
+  const [customSizesInput, setCustomSizesInput] = useState("");
 
   const {
     register,
@@ -235,6 +250,79 @@ export function AdminProductForm({
     });
     setValue("variants", updatedVariants, { shouldValidate: true });
     toast.success("Generated SKUs for variants with missing SKU");
+  };
+
+  const handleApplySizes = (sizes: string[]) => {
+    if (!sizes.length) return;
+
+    const currentVariants = watchVariants || [];
+    const baseVariant = currentVariants[0] || {
+      price: 0,
+      mrp: 0,
+      colorName: "Black",
+      colorHex: "#000000",
+      weightInGrams: 100,
+      stockQuantity: 10,
+      lowStockAlert: 5,
+      isActive: true,
+    };
+
+    const baseSlug = watchSlug || slugify(watchName || "PROD");
+    const colorClean = (baseVariant.colorName || "COLOR")
+      .toUpperCase()
+      .replace(/\s+/g, "");
+
+    // If currently only 1 variant with empty SKU and default size, replace it with first preset size
+    const isDefaultSingle =
+      currentVariants.length === 1 &&
+      (!currentVariants[0].sku || currentVariants[0].sku.trim() === "") &&
+      !currentVariants[0].id;
+
+    let newVariants: typeof currentVariants = [];
+
+    if (isDefaultSingle) {
+      newVariants = sizes.map((size) => {
+        const sizeClean = size.toUpperCase().replace(/\s+/g, "");
+        const generatedSku = `${baseSlug.toUpperCase().slice(0, 10)}-${colorClean.slice(0, 4)}-${sizeClean}`;
+        return {
+          ...baseVariant,
+          size,
+          sku: generatedSku,
+        };
+      });
+    } else {
+      // Keep existing variants, and append sizes that are not already present
+      const existingSizes = new Set(
+        currentVariants.map((v) => (v.size || "").trim().toUpperCase())
+      );
+      const additionalSizes = sizes.filter(
+        (s) => !existingSizes.has(s.trim().toUpperCase())
+      );
+
+      if (additionalSizes.length === 0) {
+        toast.info("All sizes in this preset are already added");
+        return;
+      }
+
+      const addedVariants = additionalSizes.map((size) => {
+        const sizeClean = size.toUpperCase().replace(/\s+/g, "");
+        const generatedSku = `${baseSlug.toUpperCase().slice(0, 10)}-${colorClean.slice(0, 4)}-${sizeClean}`;
+        return {
+          ...baseVariant,
+          id: undefined,
+          size,
+          sku: generatedSku,
+        };
+      });
+
+      newVariants = [...currentVariants, ...addedVariants];
+    }
+
+    setValue("variants", newVariants, { shouldValidate: true });
+    setShowPresetPicker(false);
+    toast.success(
+      `Applied ${sizes.length} size variants with auto-generated SKUs!`
+    );
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -655,6 +743,25 @@ export function AdminProductForm({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  onClick={() => setShowPresetPicker(!showPresetPicker)}
+                  className={`inline-flex items-center gap-1.5 border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    showPresetPicker
+                      ? "border-[#3d0a20] bg-[#3d0a20]/5 text-[#3d0a20]"
+                      : "border border-gray-200 bg-gray-50 text-gray-700 hover:bg-gray-100"
+                  }`}
+                  title="Generate standard size curve variants in one click"
+                >
+                  <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                  <span>Size Presets</span>
+                  {showPresetPicker ? (
+                    <ChevronUp className="h-3 w-3 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="h-3 w-3 text-gray-500" />
+                  )}
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleAutoGenerateSkus}
                   className="inline-flex items-center gap-1.5 border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
                   title="Auto-fill missing SKUs based on slug, color, and size"
@@ -686,6 +793,67 @@ export function AdminProductForm({
                 </button>
               </div>
             </div>
+
+            {showPresetPicker && (
+              <div className="mb-4 space-y-3 border border-gray-200 bg-gray-50/80 p-4">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-bold tracking-wider text-gray-700 uppercase">
+                    <Zap className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />
+                    Quick Size Curve Presets
+                  </span>
+                  <span className="text-[11px] text-gray-500">
+                    Click a curve to generate all size variants with auto SKUs
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {SIZE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => handleApplySizes(preset.sizes)}
+                      className="inline-flex items-center gap-1.5 border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-800 transition-all hover:border-[#3d0a20] hover:text-[#3d0a20]"
+                    >
+                      <span className="font-semibold">{preset.label}</span>
+                      <span className="text-[11px] text-gray-400">
+                        ({preset.sizes.join(", ")})
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2 border-t border-gray-200 pt-2 sm:flex-row sm:items-center">
+                  <span className="text-xs font-medium whitespace-nowrap text-gray-600">
+                    Or enter custom sizes:
+                  </span>
+                  <div className="flex flex-1 items-center gap-2">
+                    <input
+                      type="text"
+                      value={customSizesInput}
+                      onChange={(e) => setCustomSizesInput(e.target.value)}
+                      placeholder="e.g. 30B, 32B, 34B, 36C"
+                      className="w-full border border-gray-200 bg-white px-3 py-1.5 text-xs placeholder:text-gray-400 focus:border-[#3d0a20] focus:ring-1 focus:ring-[#3d0a20] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const parsed = customSizesInput
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        if (!parsed.length) {
+                          toast.error("Please enter at least one size");
+                          return;
+                        }
+                        handleApplySizes(parsed);
+                        setCustomSizesInput("");
+                      }}
+                      className="shrink-0 border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                    >
+                      Add Sizes
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {errors.variants?.message && (
               <div className="mb-4 flex items-center gap-2 border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700">
@@ -794,7 +962,9 @@ export function AdminProductForm({
                           <input
                             type="number"
                             step="0.01"
-                            {...register(`variants.${index}.price`)}
+                            {...register(`variants.${index}.price`, {
+                              valueAsNumber: true,
+                            })}
                             className={`${inputCls} w-24 text-xs font-medium`}
                           />
                           {hasPriceError ? (
@@ -813,7 +983,9 @@ export function AdminProductForm({
                           <input
                             type="number"
                             step="0.01"
-                            {...register(`variants.${index}.mrp`)}
+                            {...register(`variants.${index}.mrp`, {
+                              valueAsNumber: true,
+                            })}
                             className={`${inputCls} w-24 text-xs`}
                           />
                         </td>
@@ -822,7 +994,9 @@ export function AdminProductForm({
                         <td className="p-2">
                           <input
                             type="number"
-                            {...register(`variants.${index}.stockQuantity`)}
+                            {...register(`variants.${index}.stockQuantity`, {
+                              valueAsNumber: true,
+                            })}
                             className={`${inputCls} w-20 text-center text-xs font-bold`}
                           />
                         </td>
@@ -831,7 +1005,9 @@ export function AdminProductForm({
                         <td className="p-2">
                           <input
                             type="number"
-                            {...register(`variants.${index}.lowStockAlert`)}
+                            {...register(`variants.${index}.lowStockAlert`, {
+                              valueAsNumber: true,
+                            })}
                             className={`${inputCls} w-20 text-center text-xs`}
                           />
                         </td>

@@ -55,7 +55,7 @@ const createProductSchema = z.object({
   categoryId: z.string().min(1),
   brandId: z.string().nullable().default(null),
   hsnCode: z.string().max(10).nullable().default(null),
-  attributes: z.record(z.string()).default({}),
+  attributes: z.record(z.string(), z.string()).default({}),
   tags: z.array(z.string()).default([]),
   isActive: z.boolean().default(true),
   isFeatured: z.boolean().default(false),

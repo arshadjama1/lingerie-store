@@ -50,8 +50,8 @@ const formSchema = z.object({
       "Slug must only contain lowercase letters, numbers, and hyphens"
     ),
   parentId: z.string().optional(),
-  sortOrder: z.coerce.number().int().default(0),
-  isActive: z.boolean().default(true),
+  sortOrder: z.number().int(),
+  isActive: z.boolean(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -521,7 +521,7 @@ export function AdminCategoriesClient({
                       Sort Order
                     </label>
                     <input
-                      {...register("sortOrder")}
+                      {...register("sortOrder", { valueAsNumber: true })}
                       type="number"
                       className="w-full rounded-none border border-gray-200 px-3 py-2 text-sm focus:border-[#3d0a20] focus:ring-1 focus:ring-[#3d0a20] focus:outline-none"
                     />
