@@ -50,17 +50,13 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     name: "Catalog & Products",
-    href: "#",
+    href: "/admin/products",
     icon: Package,
-    badge: "Phase 2",
-    isPlanned: true,
   },
   {
     name: "Inventory Hub",
-    href: "#",
+    href: "/admin/inventory",
     icon: Boxes,
-    badge: "Phase 3",
-    isPlanned: true,
   },
   {
     name: "Returns & Exchanges",
@@ -127,7 +123,10 @@ export function AdminSidebar({ email, onCloseMobile }: AdminSidebarProps) {
           const isActive =
             item.href === "/admin/dashboard"
               ? pathname === "/admin" || pathname === "/admin/dashboard"
-              : item.href !== "#" && pathname.startsWith(item.href);
+              : item.href === "/admin/products"
+                ? pathname.startsWith("/admin/products") ||
+                  pathname.startsWith("/admin/categories")
+                : item.href !== "#" && pathname.startsWith(item.href);
 
           if (item.isPlanned) {
             return (

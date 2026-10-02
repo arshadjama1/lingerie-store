@@ -7,3 +7,5 @@ allowBuilds:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+minimumReleaseAgeExclude:
+  - "@netlify/plugin-nextjs@5.16.1"

@@ -61,7 +61,10 @@ export default async function AdminDashboardPage() {
         metrics.pendingReturnsCount > 0) && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {metrics.lowStockCount > 0 && (
-            <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-900">
+            <Link
+              href="/admin/inventory?lowStockOnly=true"
+              className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 text-xs text-amber-900 transition hover:bg-amber-100/60"
+            >
               <div className="flex items-center gap-2.5">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <span>
@@ -70,8 +73,10 @@ export default async function AdminDashboardPage() {
                   threshold
                 </span>
               </div>
-              <span className="font-semibold text-amber-700">Stock Alert</span>
-            </div>
+              <span className="flex items-center gap-1 font-semibold text-amber-700">
+                View Stock <ArrowUpRight className="h-3 w-3" />
+              </span>
+            </Link>
           )}
 
           {metrics.pendingReviewsCount > 0 && (
