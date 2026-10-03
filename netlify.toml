@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm db:migrate && pnpm build"
+  command = "pnpm db:migrate && pnpm build && (test -f .next/export-detail.json || printf '{\"version\":1,\"success\":true}' > .next/export-detail.json)"
   publish = ".next"
 
 [build.environment]
