@@ -43,14 +43,6 @@ const nextConfig: NextConfig = {
     resolveAlias: { "@/db": "./db/index.ts" },
   },
 
-  webpack(config) {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@/db": path.resolve(__dirname, "db/index.ts"),
-    };
-    return config;
-  },
-
   async headers() {
     return [
       {
