@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 import { createServerClient } from "@supabase/ssr";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
   const bypassSecret = process.env.PRELAUNCH_BYPASS_KEY || "linge2026";
@@ -192,3 +192,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon\\.ico|images/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
   ],
 };
+
+export const proxy = middleware;
+export default middleware;

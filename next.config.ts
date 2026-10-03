@@ -1,6 +1,43 @@
 import type { NextConfig } from "next";
 
+import fs from "fs";
 import path from "path";
+
+// Standalone build ENOENT guard for Netlify / OpenNext builds:
+// In Next.js standalone tracing with webpack, Next.js can attempt to copy
+// files that are either deleted during build (export-detail.json) or renamed
+// between proxy.js <-> middleware.js.
+if (process.env.NETLIFY || process.env.NEXT_PRIVATE_STANDALONE) {
+  const originalCopyFile = fs.promises.copyFile;
+  fs.promises.copyFile = async function patchedCopyFile(
+    src: fs.PathLike,
+    dest: fs.PathLike,
+    ...rest: Parameters<typeof originalCopyFile> extends [
+      unknown,
+      unknown,
+      ...infer R,
+    ]
+      ? R
+      : never[]
+  ) {
+    const srcStr = String(src);
+    if (!fs.existsSync(src)) {
+      if (srcStr.endsWith("export-detail.json")) {
+        return;
+      }
+      if (srcStr.endsWith("proxy.js")) {
+        const middlewareSrc = srcStr.replace(/proxy\.js$/, "middleware.js");
+        if (fs.existsSync(middlewareSrc)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return originalCopyFile(middlewareSrc, dest, ...(rest as any[]));
+        }
+        return;
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return originalCopyFile(src, dest, ...(rest as any[]));
+  } as typeof originalCopyFile;
+}
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "localhost"],
