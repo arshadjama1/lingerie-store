@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 
+import fs from "fs";
 import path from "path";
 
 const nextConfig: NextConfig = {
@@ -43,11 +44,48 @@ const nextConfig: NextConfig = {
     resolveAlias: { "@/db": "./db/index.ts" },
   },
 
-  webpack(config) {
+  webpack(config, { isServer, nextRuntime }) {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@/db": path.resolve(__dirname, "db/index.ts"),
     };
+
+    // @netlify/plugin-nextjs v5 sets NEXT_PRIVATE_BUILD_STANDALONE=true in its
+    // onPreBuild hook, causing Next.js to run in standalone output mode and copy
+    // .next/export-detail.json to .next/standalone/.next/export-detail.json.
+    // That file only exists when output:'export' is configured, so on normal SSR
+    // builds the copyfile call throws ENOENT and crashes the build.
+    //
+    // Fix: write a minimal stub after the server webpack compilation finishes
+    // (via the done hook) so the file exists before Next.js performs the copy.
+    if (isServer && !nextRuntime) {
+      config.plugins ??= [];
+      config.plugins.push({
+        apply(compiler: {
+          hooks: { done: { tap: (id: string, fn: () => void) => void } };
+        }) {
+          compiler.hooks.done.tap("WriteExportDetailJson", () => {
+            const dest = path.join(
+              process.cwd(),
+              ".next",
+              "export-detail.json"
+            );
+            try {
+              if (!fs.existsSync(dest)) {
+                fs.mkdirSync(path.dirname(dest), { recursive: true });
+                fs.writeFileSync(
+                  dest,
+                  JSON.stringify({ version: 1, success: true })
+                );
+              }
+            } catch {
+              // best-effort — never fail the build over this
+            }
+          });
+        },
+      });
+    }
+
     return config;
   },
 
