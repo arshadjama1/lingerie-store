@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/utils";
 import type { OrderDetails } from "@/modules/orders";
 
 const resend = new Resend(serverEnv.RESEND_API_KEY);
+const FROM_EMAIL = `Surekh <${serverEnv.RESEND_FROM_EMAIL}>`;
 
 // ─────────────────────────────────────────────────────────────────────
 // Shared HTML helpers
@@ -35,7 +36,7 @@ function wrapLayout(body: string): string {
       <!-- Footer -->
       <div style="background:#f3f4f6;padding:20px 40px;text-align:center;font-size:12px;color:#6b7280;">
         Need help? Reply to this email or contact
-        <a href="mailto:support@surekh.in" style="color:#3d0a20;">support@surekh.in</a>
+        <a href="mailto:support@surekh.co.in" style="color:#3d0a20;">support@surekh.co.in</a>
       </div>
 
     </div>
@@ -161,7 +162,8 @@ export async function sendOrderConfirmationEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: serverEnv.RESEND_FROM_EMAIL,
+      from: FROM_EMAIL,
+      replyTo: serverEnv.RESEND_FROM_EMAIL,
       to: order.customerEmail,
       subject: `Order confirmed – ${order.orderNumber} | Surekh`,
       html: buildConfirmationHtml(order),
@@ -221,7 +223,8 @@ export async function sendOrderShippedEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: serverEnv.RESEND_FROM_EMAIL,
+      from: FROM_EMAIL,
+      replyTo: serverEnv.RESEND_FROM_EMAIL,
       to: order.customerEmail,
       subject: `Your order ${order.orderNumber} has shipped! | Surekh`,
       html: buildShippedHtml(order),
@@ -268,7 +271,7 @@ ${orderNumberPill(data.orderNumber)}
   <li>Once received and verified, we'll process your refund.</li>
 </ul>
 
-<p style="margin:0;font-size:14px;color:#6b7280;">If you have any questions, reply to this email or contact <a href="mailto:support@surekh.in" style="color:#3d0a20;">support@surekh.in</a>.</p>`;
+<p style="margin:0;font-size:14px;color:#6b7280;">If you have any questions, reply to this email or contact <a href="mailto:support@surekh.co.in" style="color:#3d0a20;">support@surekh.co.in</a>.</p>`;
 
   return wrapLayout(body);
 }
@@ -286,7 +289,8 @@ export async function sendReturnApprovedEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: serverEnv.RESEND_FROM_EMAIL,
+      from: FROM_EMAIL,
+      replyTo: serverEnv.RESEND_FROM_EMAIL,
       to: data.customerEmail,
       subject: `Return approved – ${data.orderNumber} | Surekh`,
       html: buildReturnApprovedHtml(data),
@@ -323,7 +327,7 @@ ${orderNumberPill(data.orderNumber)}
 </p>
 
 <p style="margin:0;font-size:14px;color:#6b7280;">
-  Contact us at <a href="mailto:support@surekh.in" style="color:#3d0a20;">support@surekh.in</a> 
+  Contact us at <a href="mailto:support@surekh.co.in" style="color:#3d0a20;">support@surekh.co.in</a> 
   — we're happy to help clarify or reconsider.
 </p>`;
 
@@ -343,7 +347,8 @@ export async function sendReturnRejectedEmail(
 
   try {
     const { error } = await resend.emails.send({
-      from: serverEnv.RESEND_FROM_EMAIL,
+      from: FROM_EMAIL,
+      replyTo: serverEnv.RESEND_FROM_EMAIL,
       to: data.customerEmail,
       subject: `Update on your return request – ${data.orderNumber} | Surekh`,
       html: buildReturnRejectedHtml(data),
