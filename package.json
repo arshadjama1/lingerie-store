@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@netlify/plugin-nextjs": "^5.10.1",
+    "@netlify/plugin-nextjs": "5.15.13",
     "@next/eslint-plugin-next": "16.2.9",
     "@tailwindcss/postcss": "^4",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
