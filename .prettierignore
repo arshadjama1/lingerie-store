@@ -4,3 +4,8 @@ public/
 *.svg
 pnpm-lock.yaml
 db/migrations/
+*.zip
+*.xlsx
+dtdc-docs/
+scratch/
+
