@@ -94,8 +94,8 @@ importers:
         specifier: ^9.39.4
         version: 9.39.4
       '@netlify/plugin-nextjs':
-        specifier: ^5.16.1
-        version: 5.16.1
+        specifier: 5.15.13
+        version: 5.15.13
       '@next/eslint-plugin-next':
         specifier: 16.2.9
         version: 16.2.9
@@ -1104,8 +1104,8 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
-  '@netlify/plugin-nextjs@5.16.1':
-    resolution: {integrity: sha512-dSj8BDCwEAF5FRniQdim0SSLuTHxivRmmCNAl0kHsSTJ0196ExFKgiWrouC09RsXVghdaNXmZyQZ3pXn/NpCKw==}
+  '@netlify/plugin-nextjs@5.15.13':
+    resolution: {integrity: sha512-gBmWtgG13ZW4ytNMCvacfwZemtdtV/Ekc+6RBYvI5fndjmDvKxgFHylsw7oli+PHMGAtNqaJrN8QccGnDReu6A==}
     engines: {node: '>=18.0.0'}
 
   '@next/env@16.3.8':
@@ -4672,7 +4672,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
-  '@netlify/plugin-nextjs@5.16.1': {}
+  '@netlify/plugin-nextjs@5.15.13': {}
 
   '@next/env@16.3.8': {}
 
