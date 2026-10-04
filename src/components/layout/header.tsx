@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/account/LogoutButton";
 import { LogoutModal } from "@/components/account/LogoutModal";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { SurekhLogo } from "@/components/common/SurekhLogo";
 import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 import { CategoryFlyout } from "./CategoryFlyout";
@@ -275,12 +276,15 @@ export function Header() {
               {/* Left: Brand Identity Logo */}
               <Link
                 href="/"
-                className="group flex shrink-0 items-center font-serif text-2xl font-black tracking-[0.16em] text-[#3d0a20] transition-opacity hover:opacity-90 xl:text-3xl xl:tracking-[0.18em]"
+                className="group flex shrink-0 items-center transition-opacity hover:opacity-90"
+                aria-label="Surekh Home"
               >
-                Surekh
-                <span className="inline-block text-2xl leading-none text-[var(--accent)] transition-transform duration-300 group-hover:scale-125 xl:text-3xl">
-                  .
-                </span>
+                <SurekhLogo
+                  variant="horizontal"
+                  theme="dark"
+                  className="h-10 w-auto xl:h-11"
+                  priority
+                />
               </Link>
 
               {/* Center: Primary Category Navigation with Hover Flyout Triggers */}
@@ -425,9 +429,15 @@ export function Header() {
               <div className="flex items-center justify-center">
                 <Link
                   href="/"
-                  className="flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
+                  className="flex items-center transition-opacity hover:opacity-90"
+                  aria-label="Surekh Home"
                 >
-                  Surekh<span className="text-[var(--accent)]">.</span>
+                  <SurekhLogo
+                    variant="horizontal"
+                    theme="dark"
+                    className="h-8 w-auto sm:h-9"
+                    priority
+                  />
                 </Link>
               </div>
 
@@ -503,13 +513,18 @@ export function Header() {
               <div>
                 <Link
                   href="/"
-                  className="font-serif text-xl font-black tracking-wider text-[#3d0a20]"
+                  className="flex items-center transition-opacity hover:opacity-90"
                   onClick={() => setMobileOpen(false)}
+                  aria-label="Surekh Home"
                 >
-                  Surekh<span className="text-[var(--accent)]">.</span>
+                  <SurekhLogo
+                    variant="horizontal-clean"
+                    theme="dark"
+                    className="h-7 w-auto"
+                  />
                 </Link>
-                <p className="text-[10px] font-medium tracking-wide text-neutral-400">
-                  Pure Comfort, Naturally
+                <p className="mt-1 text-[9px] font-semibold tracking-wider text-neutral-400 uppercase">
+                  Beautiful Lines &bull; Effortless Comfort
                 </p>
               </div>
 
