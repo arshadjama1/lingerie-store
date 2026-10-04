@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Sparkles } from "lucide-react";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 export function ComingSoonHeader() {
   return (
     <header className="relative z-20 w-full border-b border-white/10 bg-black/20 backdrop-blur-md">
@@ -18,13 +20,16 @@ export function ComingSoonHeader() {
           <div className="mx-auto flex flex-shrink-0 flex-col items-center justify-center sm:mx-0">
             <Link
               href="/"
-              className="font-serif text-3xl font-bold tracking-[0.25em] text-white transition-opacity hover:opacity-90 sm:text-4xl"
+              className="flex items-center transition-opacity hover:opacity-90"
+              aria-label="Surekh Home"
             >
-              Surekh<span className="text-[#c83c7e]">.</span>
+              <SurekhLogo
+                variant="horizontal"
+                theme="light"
+                className="h-10 w-auto sm:h-12"
+                priority
+              />
             </Link>
-            <span className="mt-0.5 text-[9px] font-medium tracking-[0.35em] text-[#d4af37] uppercase">
-              HAUTE INTIMATES
-            </span>
           </div>
 
           {/* Right: VIP Pill */}

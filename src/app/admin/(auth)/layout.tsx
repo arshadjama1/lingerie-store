@@ -1,7 +1,9 @@
 import Link from "next/link";
 import React from "react";
 
-import { ArrowLeft, Shield } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+
+import { SurekhLogo } from "@/components/common/SurekhLogo";
 
 export default function AdminAuthLayout({
   children,
@@ -24,12 +26,11 @@ export default function AdminAuthLayout({
       {/* Brand & Security Header */}
       <div className="mb-6 flex flex-col items-center text-center">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#571030] to-[#250512] shadow-lg ring-1 shadow-[#3d0a20]/40 ring-rose-500/20">
-            <Shield className="h-5 w-5 text-rose-300" />
-          </div>
-          <span className="font-mono text-xl font-bold tracking-widest text-white">
-            SUREKH
-          </span>
+          <SurekhLogo
+            variant="horizontal-clean"
+            theme="light"
+            className="h-8 w-auto"
+          />
           <span className="rounded-md bg-rose-500/10 px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider text-rose-300 uppercase ring-1 ring-rose-500/20">
             Backoffice
           </span>

@@ -7,6 +7,8 @@ import { LogOut } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 interface AdminNavProps {
   email: string | null;
 }
@@ -23,9 +25,16 @@ export function AdminNav({ email }: AdminNavProps) {
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center border-b border-gray-200 bg-white px-6">
       {/* Brand */}
-      <span className="font-mono text-sm font-bold tracking-widest text-[#3d0a20]">
-        SUREKH ADMIN
-      </span>
+      <div className="flex items-center gap-2">
+        <SurekhLogo
+          variant="horizontal-clean"
+          theme="dark"
+          className="h-6 w-auto"
+        />
+        <span className="rounded bg-[#3d0a20]/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-wider text-[#3d0a20] uppercase">
+          Admin
+        </span>
+      </div>
 
       {/* Center nav */}
       <nav className="ml-10 flex items-center gap-6">

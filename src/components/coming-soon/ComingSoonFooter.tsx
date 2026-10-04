@@ -1,5 +1,7 @@
 import { Mail, MessageCircle } from "lucide-react";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 function InstagramIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -25,8 +27,12 @@ export function ComingSoonFooter() {
         <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
           {/* Brand & Mission */}
           <div className="text-center md:text-left">
-            <div className="font-serif text-xl font-bold tracking-[0.2em] text-white">
-              Surekh<span className="text-[#c83c7e]">.</span>
+            <div className="flex items-center justify-center md:justify-start">
+              <SurekhLogo
+                variant="horizontal-clean"
+                theme="light"
+                className="h-7 w-auto"
+              />
             </div>
             <p className="mt-1 max-w-sm text-xs text-rose-200/60">
               Sculpted intimacy, French laces, and certified mulberry silks.

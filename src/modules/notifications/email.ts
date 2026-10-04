@@ -24,8 +24,9 @@ function wrapLayout(body: string): string {
     <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
 
       <!-- Header -->
-      <div style="background:#3d0a20;padding:28px 40px;">
-        <h1 style="color:#ffffff;font-size:28px;margin:0;letter-spacing:4px;font-family:Georgia,serif;">SUREKH.</h1>
+      <div style="background:#3d0a20;padding:28px 40px;text-align:center;">
+        <h1 style="color:#ffffff;font-size:26px;margin:0;letter-spacing:4px;font-family:Georgia,serif;font-weight:700;">SUREKH</h1>
+        <p style="color:#fbcfe8;font-size:10px;margin:6px 0 0 0;letter-spacing:2px;font-family:sans-serif;text-transform:uppercase;">BEAUTIFUL LINES &bull; EFFORTLESS COMFORT</p>
       </div>
 
       <!-- Body -->
