@@ -36,10 +36,29 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    console.error("[auth/send-otp]", error.message);
+    console.error("[auth/send-otp]", error);
+    const isPhoneDisabled =
+      error.code === "phone_provider_disabled" ||
+      error.message?.toLowerCase().includes("unsupported phone provider");
+    if (isPhoneDisabled) {
+      return Response.json(
+        {
+          error:
+            "Mobile OTP is currently not enabled. Please sign in with Email Magic Link.",
+        },
+        { status: 503 }
+      );
+    }
+    const isRateLimited =
+      error.message?.toLowerCase().includes("rate limit") ||
+      error.status === 429;
     return Response.json(
-      { error: "Failed to send OTP. Please try again." },
-      { status: 500 }
+      {
+        error: isRateLimited
+          ? "Too many OTP requests. Please wait a few minutes."
+          : error.message || "Failed to send OTP. Please try again.",
+      },
+      { status: isRateLimited ? 429 : error.status || 500 }
     );
   }
 

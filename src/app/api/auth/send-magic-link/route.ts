@@ -54,10 +54,17 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    console.error("[auth/send-magic-link]", error.message);
+    console.error("[auth/send-magic-link]", error);
+    const status = error.status || 500;
+    const isRateLimited =
+      error.message?.toLowerCase().includes("rate limit") || status === 429;
     return Response.json(
-      { error: "Failed to send magic link. Please try again." },
-      { status: 500 }
+      {
+        error: isRateLimited
+          ? "Too many login attempts. Please wait a few minutes and try again."
+          : error.message || "Failed to send magic link. Please try again.",
+      },
+      { status: isRateLimited ? 429 : status }
     );
   }
 
