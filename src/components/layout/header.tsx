@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
@@ -29,6 +29,15 @@ export function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  const handleCloseMobile = useCallback(() => {
+    setMobileOpen(false);
+  }, []);
+
+  const handleOpenSearch = useCallback(() => {
+    setMobileOpen(false);
+    setMobileSearchOpen(true);
+  }, []);
 
   // Dynamic Scroll Elevation & Hide-on-Scroll UX
   const [isScrolled, setIsScrolled] = useState(false);
@@ -422,11 +431,8 @@ export function Header() {
       {/* ── Mobile Luxury Drawer ──────────────────────────────────────── */}
       <MobileDrawer
         isOpen={mobileOpen}
-        onClose={() => setMobileOpen(false)}
-        onOpenSearch={() => {
-          setMobileOpen(false);
-          setMobileSearchOpen(true);
-        }}
+        onClose={handleCloseMobile}
+        onOpenSearch={handleOpenSearch}
         wishlistCount={wishlistCount}
         isAuthenticated={isAuthenticated}
         profile={profile}

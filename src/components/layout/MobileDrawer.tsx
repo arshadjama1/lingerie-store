@@ -106,10 +106,16 @@ export function MobileDrawer({
     }));
   };
 
-  // Close drawer on path change
+  // Close drawer on path change (only after initial mount)
+  const prevPathnameRef = useRef(pathname);
   useEffect(() => {
-    onClose();
-  }, [pathname, onClose]);
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      if (isOpen) {
+        onClose();
+      }
+    }
+  }, [pathname, isOpen, onClose]);
 
   // Mount, animation, and scroll lock handling
   useEffect(() => {
@@ -138,6 +144,16 @@ export function MobileDrawer({
     }
   }, [isOpen]);
 
+  // Clean up lock on unmount
+  useEffect(() => {
+    return () => {
+      if (isLockedRef.current) {
+        unlockScroll();
+        isLockedRef.current = false;
+      }
+    };
+  }, []);
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -153,14 +169,14 @@ export function MobileDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 overflow-hidden lg:hidden"
+      className="fixed inset-0 z-[70] overflow-hidden lg:hidden"
       role="dialog"
       aria-modal="true"
     >
       {/* Dimmed Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300 ease-out",
+          "fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
           active ? "opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={onClose}
