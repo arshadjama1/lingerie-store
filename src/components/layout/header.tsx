@@ -2,37 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
 import { useWishlistStore } from "@/stores/useWishlistStore";
-import {
-  ArrowLeft,
-  ChevronDown,
-  ChevronRight,
-  Heart,
-  Menu,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Truck,
-  User,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Heart, Menu, Search, ShoppingBag } from "lucide-react";
 
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
-import { LogoutButton } from "@/components/account/LogoutButton";
 import { LogoutModal } from "@/components/account/LogoutModal";
 import { CartDrawer } from "@/components/cart/cart-drawer";
+import { SurekhLogo } from "@/components/common/SurekhLogo";
 import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 import { CategoryFlyout } from "./CategoryFlyout";
+import { MobileDrawer } from "./MobileDrawer";
 import { UserDropdown } from "./UserDropdown";
 import {
-  COMBO_QUICK_LINKS,
   MARQUEE_ANNOUNCEMENTS,
   NAV_CATEGORY_LINKS,
 } from "./data/navigationData";
@@ -41,6 +29,15 @@ export function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
+  const handleCloseMobile = useCallback(() => {
+    setMobileOpen(false);
+  }, []);
+
+  const handleOpenSearch = useCallback(() => {
+    setMobileOpen(false);
+    setMobileSearchOpen(true);
+  }, []);
 
   // Dynamic Scroll Elevation & Hide-on-Scroll UX
   const [isScrolled, setIsScrolled] = useState(false);
@@ -117,6 +114,13 @@ export function Header() {
     }, 150);
   };
 
+  const handleFlyoutClear = () => {
+    if (flyoutTimeoutRef.current) {
+      clearTimeout(flyoutTimeoutRef.current);
+    }
+    setActiveFlyout(null);
+  };
+
   // Close flyout on pathname change or escape key
   useEffect(() => {
     setActiveFlyout(null);
@@ -128,64 +132,6 @@ export function Header() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Mobile Drawer accordion expand/collapse state
-  const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>(
-    {
-      Bras: true,
-      Panties: false,
-      Sets: false,
-      Loungewear: false,
-    }
-  );
-
-  const toggleAccordion = (label: string) => {
-    setOpenAccordions((prev) => ({
-      ...prev,
-      [label]: !prev[label],
-    }));
-  };
-
-  // Lock body scroll on mobile when search overlay or mobile menu is open
-  const [mobileMounted, setMobileMounted] = useState(false);
-  const [mobileActive, setMobileActive] = useState(false);
-  const isMobileMenuLockedRef = useRef(false);
-
-  useEffect(() => {
-    if (mobileOpen) {
-      setMobileMounted(true);
-      const rAF = requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setMobileActive(true);
-        });
-      });
-      if (!isMobileMenuLockedRef.current) {
-        lockScroll();
-        isMobileMenuLockedRef.current = true;
-      }
-      return () => cancelAnimationFrame(rAF);
-    } else {
-      setMobileActive(false);
-      const timer = setTimeout(() => {
-        setMobileMounted(false);
-        if (isMobileMenuLockedRef.current) {
-          unlockScroll();
-          isMobileMenuLockedRef.current = false;
-        }
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [mobileOpen]);
-
-  // Clean up lock on unmount if menu was open
-  useEffect(() => {
-    return () => {
-      if (isMobileMenuLockedRef.current) {
-        unlockScroll();
-        isMobileMenuLockedRef.current = false;
-      }
-    };
   }, []);
 
   // Lock body scroll when mobile search overlay is open
@@ -275,12 +221,16 @@ export function Header() {
               {/* Left: Brand Identity Logo */}
               <Link
                 href="/"
-                className="group flex shrink-0 items-center font-serif text-2xl font-black tracking-[0.16em] text-[#3d0a20] transition-opacity hover:opacity-90 xl:text-3xl xl:tracking-[0.18em]"
+                onMouseEnter={handleFlyoutClear}
+                className="group flex shrink-0 items-center transition-opacity hover:opacity-90"
+                aria-label="Surekh Home"
               >
-                Surekh
-                <span className="inline-block text-2xl leading-none text-[var(--accent)] transition-transform duration-300 group-hover:scale-125 xl:text-3xl">
-                  .
-                </span>
+                <SurekhLogo
+                  variant="horizontal"
+                  theme="dark"
+                  className="h-10 w-auto xl:h-11"
+                  priority
+                />
               </Link>
 
               {/* Center: Primary Category Navigation with Hover Flyout Triggers */}
@@ -323,10 +273,14 @@ export function Header() {
                   );
                 })}
 
-                {/* High-Contrast SALE link */}
-                <div className="relative flex h-full items-center">
+                {/* Direct High-Contrast SALE link (direct destination, no dropdown) */}
+                <div
+                  onMouseEnter={handleFlyoutClear}
+                  className="relative flex h-full items-center"
+                >
                   <Link
                     href="/sale"
+                    onClick={handleFlyoutClear}
                     className={cn(
                       "relative flex h-full items-center gap-1.5 px-3 text-xs font-black tracking-wider whitespace-nowrap uppercase transition-colors xl:px-4 xl:text-[13px]",
                       pathname === "/sale"
@@ -346,7 +300,10 @@ export function Header() {
               </nav>
 
               {/* Right: Search + Account + Wishlist + Cart */}
-              <div className="flex shrink-0 items-center justify-end gap-2 xl:gap-3">
+              <div
+                onMouseEnter={handleFlyoutClear}
+                className="flex shrink-0 items-center justify-end gap-2 xl:gap-3"
+              >
                 {/* Responsive expanding search bar */}
                 <div className="w-36 transition-all duration-300 focus-within:w-56 xl:w-56 xl:focus-within:w-68 2xl:w-64 2xl:focus-within:w-76">
                   <SearchAutocomplete
@@ -425,9 +382,15 @@ export function Header() {
               <div className="flex items-center justify-center">
                 <Link
                   href="/"
-                  className="flex items-center font-serif text-2xl font-black tracking-widest text-[#3d0a20]"
+                  className="flex items-center transition-opacity hover:opacity-90"
+                  aria-label="Surekh Home"
                 >
-                  Surekh<span className="text-[var(--accent)]">.</span>
+                  <SurekhLogo
+                    variant="horizontal"
+                    theme="dark"
+                    className="h-8 w-auto sm:h-9"
+                    priority
+                  />
                 </Link>
               </div>
 
@@ -481,274 +444,14 @@ export function Header() {
       </header>
 
       {/* ── Mobile Luxury Drawer ──────────────────────────────────────── */}
-      {mobileMounted && (
-        <div className="fixed inset-0 z-50 overflow-hidden lg:hidden">
-          <div
-            className={cn(
-              "fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ease-out",
-              mobileActive ? "opacity-100" : "pointer-events-none opacity-0"
-            )}
-            onClick={() => setMobileOpen(false)}
-            aria-hidden="true"
-          />
-
-          <div
-            className={cn(
-              "fixed inset-y-0 left-0 flex w-[86vw] max-w-[340px] flex-col overflow-y-auto bg-white shadow-2xl transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform",
-              mobileActive ? "translate-x-0" : "-translate-x-full"
-            )}
-          >
-            {/* Drawer Header */}
-            <div className="flex h-16 items-center justify-between border-b border-rose-100 bg-gradient-to-r from-rose-50/70 via-white to-pink-50/40 px-5">
-              <div>
-                <Link
-                  href="/"
-                  className="font-serif text-xl font-black tracking-wider text-[#3d0a20]"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  Surekh<span className="text-[var(--accent)]">.</span>
-                </Link>
-                <p className="text-[10px] font-medium tracking-wide text-neutral-400">
-                  Pure Comfort, Naturally
-                </p>
-              </div>
-
-              <button
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-neutral-400 transition-colors hover:bg-rose-100 hover:text-neutral-800 active:scale-90"
-                onClick={() => setMobileOpen(false)}
-                aria-label="Close menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* Quick Search Action Bar inside drawer */}
-            <div className="border-b border-rose-50 px-4 py-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileOpen(false);
-                  setMobileSearchOpen(true);
-                }}
-                className="flex w-full items-center gap-2.5 rounded-full border border-rose-100 bg-rose-50/40 px-3.5 py-2 text-xs text-neutral-400 transition-colors hover:border-[var(--accent)] hover:bg-white"
-              >
-                <Search className="h-4 w-4 text-neutral-400" />
-                <span>Search bras, panties, sets...</span>
-              </button>
-            </div>
-
-            {/* Drawer Content */}
-            <nav className="flex-1 px-4 py-3">
-              {/* Account Card (Logged-in vs Guest) */}
-              <div className="mb-4">
-                {isAuthenticated ? (
-                  <div className="rounded-2xl border border-rose-100 bg-rose-50/50 p-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] font-serif text-xs font-bold text-white shadow-xs">
-                        {profile?.firstName ? (
-                          profile.firstName[0].toUpperCase()
-                        ) : (
-                          <User className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-xs font-bold text-neutral-900">
-                          {profile?.firstName
-                            ? `${profile.firstName} ${profile.lastName || ""}`.trim()
-                            : "Valued Customer"}
-                        </p>
-                        <p className="text-[10px] text-neutral-500">
-                          Welcome back
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-2.5 grid grid-cols-2 gap-1.5 border-t border-rose-100/70 pt-2.5 text-center">
-                      <Link
-                        href="/account"
-                        onClick={() => setMobileOpen(false)}
-                        className="rounded-lg bg-white px-2 py-1.5 text-[11px] font-semibold text-neutral-700 shadow-2xs hover:text-[var(--accent)]"
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/account/orders"
-                        onClick={() => setMobileOpen(false)}
-                        className="rounded-lg bg-white px-2 py-1.5 text-[11px] font-semibold text-neutral-700 shadow-2xs hover:text-[var(--accent)]"
-                      >
-                        Orders
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-rose-100 bg-gradient-to-br from-rose-50/60 to-pink-50/40 p-3.5 text-center">
-                    <p className="font-serif text-xs font-bold text-[var(--accent-plum)]">
-                      Welcome to Surekh
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-neutral-500">
-                      Sign in for express checkout & order tracking
-                    </p>
-                    <Link
-                      href="/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="mt-2.5 flex w-full items-center justify-center rounded-xl bg-[var(--accent)] py-2 text-xs font-bold tracking-wider text-white uppercase shadow-xs transition-colors hover:bg-[var(--accent-dark)]"
-                    >
-                      Sign In / Register
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              {/* Collapsible Category Accordions */}
-              <div className="space-y-1">
-                <p className="mb-1.5 px-2 text-[10px] font-black tracking-widest text-neutral-400 uppercase">
-                  Categories
-                </p>
-
-                {NAV_CATEGORY_LINKS.map((cat) => {
-                  const isExpanded = !!openAccordions[cat.label];
-                  const hasStyles = cat.styles && cat.styles.length > 0;
-
-                  return (
-                    <div
-                      key={cat.label}
-                      className="overflow-hidden rounded-xl border border-transparent transition-colors hover:border-rose-100"
-                    >
-                      <div className="flex items-center justify-between">
-                        <Link
-                          href={cat.href}
-                          onClick={() => setMobileOpen(false)}
-                          className="flex flex-1 items-center justify-between px-3 py-2.5 text-sm font-semibold text-neutral-800 transition-colors hover:text-[var(--accent)]"
-                        >
-                          <span className="flex items-center gap-2">
-                            <span>{cat.label}</span>
-                            {cat.badge && (
-                              <span className="py-0.2 rounded-full bg-rose-50 px-1.5 text-[9px] font-bold text-[var(--accent)]">
-                                {cat.badge}
-                              </span>
-                            )}
-                          </span>
-                        </Link>
-
-                        {hasStyles && (
-                          <button
-                            type="button"
-                            onClick={() => toggleAccordion(cat.label)}
-                            className="flex h-9 w-9 items-center justify-center text-neutral-400 hover:text-[var(--accent)]"
-                            aria-label={`Toggle ${cat.label} submenu`}
-                          >
-                            <ChevronDown
-                              className={cn(
-                                "h-4 w-4 transition-transform duration-200",
-                                isExpanded && "rotate-180"
-                              )}
-                            />
-                          </button>
-                        )}
-                      </div>
-
-                      {/* Subcategory links when expanded */}
-                      {hasStyles && isExpanded && (
-                        <div className="space-y-1 bg-rose-50/30 px-3 py-2 text-xs">
-                          {cat.styles?.map((sub) => (
-                            <Link
-                              key={sub.label}
-                              href={sub.href}
-                              onClick={() => setMobileOpen(false)}
-                              className="flex items-center justify-between rounded-lg px-2 py-1.5 text-neutral-600 transition-colors hover:bg-white hover:text-[var(--accent)]"
-                            >
-                              <span>{sub.label}</span>
-                              {sub.badge && (
-                                <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-bold text-[var(--accent)] shadow-2xs">
-                                  {sub.badge}
-                                </span>
-                              )}
-                            </Link>
-                          ))}
-                          <Link
-                            href={cat.href}
-                            onClick={() => setMobileOpen(false)}
-                            className="mt-1 flex items-center gap-1 px-2 py-1.5 text-[11px] font-bold text-[var(--accent)]"
-                          >
-                            <span>Shop All {cat.label}</span>
-                            <ChevronRight className="h-3 w-3" />
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Quick Deals Pills */}
-              <div className="mt-5 border-t border-rose-100 pt-3.5">
-                <p className="mb-2 px-2 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
-                  Quick Deals & Combos
-                </p>
-                <div className="flex flex-wrap gap-1.5 px-1">
-                  {COMBO_QUICK_LINKS.map((deal) => (
-                    <Link
-                      key={deal.label}
-                      href={deal.href}
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-full border border-pink-200 bg-pink-50 px-2.5 py-1 text-[11px] font-semibold text-[var(--accent)] transition-colors hover:bg-[var(--accent)] hover:text-white"
-                    >
-                      {deal.label}
-                    </Link>
-                  ))}
-                  <Link
-                    href="/sale"
-                    onClick={() => setMobileOpen(false)}
-                    className="rounded-full bg-[var(--accent)] px-3 py-1 text-[11px] font-black text-white shadow-2xs hover:bg-[var(--accent-dark)]"
-                  >
-                    SALE & OFFERS
-                  </Link>
-                </div>
-              </div>
-
-              {/* Wishlist Link & Logout (if authenticated) */}
-              <div className="mt-4 border-t border-rose-100 pt-3">
-                <Link
-                  href="/wishlist"
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-semibold text-neutral-800 transition-colors hover:bg-rose-50 hover:text-[var(--accent)]"
-                >
-                  <span className="flex items-center gap-2">
-                    <Heart className="h-4 w-4 text-[var(--accent)]" />
-                    Wishlist
-                  </span>
-                  {wishlistCount > 0 && (
-                    <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-[10px] font-bold text-white">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-
-                {isAuthenticated && (
-                  <div className="mt-1">
-                    <LogoutButton
-                      variant="menu-item"
-                      className="w-full rounded-xl px-3 py-2 text-sm font-semibold text-neutral-700 hover:bg-rose-50 hover:text-rose-700"
-                      onSuccess={() => setMobileOpen(false)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Trust Badges Strip inside drawer */}
-              <div className="mt-6 rounded-xl border border-rose-100/60 bg-neutral-50/70 p-3 text-[10px] text-neutral-500">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent)]" />
-                  <span>Tamper-Proof Hygiene Sealed Packaging</span>
-                </div>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <Truck className="h-3.5 w-3.5 text-[var(--accent)]" />
-                  <span>Free Express Delivery Above ₹1,299</span>
-                </div>
-              </div>
-            </nav>
-          </div>
-        </div>
-      )}
+      <MobileDrawer
+        isOpen={mobileOpen}
+        onClose={handleCloseMobile}
+        onOpenSearch={handleOpenSearch}
+        wishlistCount={wishlistCount}
+        isAuthenticated={isAuthenticated}
+        profile={profile}
+      />
 
       {/* ── Mobile Full-Screen Search Overlay ─────────────────────── */}
       {mobileSearchOpen && (

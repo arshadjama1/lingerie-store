@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Lock, Mail, ShieldCheck, Truck } from "lucide-react";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 import { FOOTER_LINK_GROUPS } from "./data/navigationData";
 
 export function Footer() {
@@ -14,10 +16,14 @@ export function Footer() {
           <div className="col-span-2 space-y-4 sm:col-span-4 lg:col-span-1">
             <Link
               href="/"
-              className="flex items-center gap-1 font-serif text-2xl font-black tracking-widest text-white"
+              className="inline-block transition-opacity hover:opacity-90"
+              aria-label="Surekh Home"
             >
-              <span>Surekh</span>
-              <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+              <SurekhLogo
+                variant="horizontal"
+                theme="light"
+                className="h-10 w-auto"
+              />
             </Link>
             <p className="text-xs leading-relaxed font-normal text-pink-100/90">
               India&apos;s premier intimate wear destination designed for every

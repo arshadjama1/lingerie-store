@@ -1,6 +1,8 @@
 import Link from "next/link";
 import React from "react";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 export default function AuthLayout({
   children,
 }: {
@@ -11,9 +13,15 @@ export default function AuthLayout({
       {/* Brand Header */}
       <Link
         href="/"
-        className="mb-8 font-serif text-3xl font-black tracking-widest text-[#3d0a20] transition-opacity hover:opacity-90"
+        className="mb-8 transition-opacity hover:opacity-90"
+        aria-label="Surekh Home"
       >
-        Surekh<span className="text-[var(--accent)]">.</span>
+        <SurekhLogo
+          variant="horizontal"
+          theme="dark"
+          className="h-12 w-auto"
+          priority
+        />
       </Link>
 
       {/* Main Luxury Auth Card */}

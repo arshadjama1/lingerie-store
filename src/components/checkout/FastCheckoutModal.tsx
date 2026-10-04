@@ -32,6 +32,8 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { formatPrice } from "@/lib/utils";
 
+import { SurekhLogo } from "@/components/common/SurekhLogo";
+
 import { AddressSelectionSheet } from "./AddressSelectionSheet";
 import { CouponDrawer } from "./CouponDrawer";
 
@@ -675,7 +677,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         key: orderData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount: orderData.amount,
         currency: orderData.currency || "INR",
-        name: "Surekh.",
+        name: "Surekh",
+        image: "/icon.png",
         description: `Order Checkout (${itemCount} items) • 100% Discreet Packaging`,
         order_id: orderData.razorpayOrderId,
         prefill: {
@@ -765,10 +768,12 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
             </button>
 
             {/* Centered Brand Mark */}
-            <div className="flex items-center gap-1.5">
-              <span className="font-serif text-xl font-bold tracking-tight text-neutral-900">
-                Surekh<span className="text-[var(--accent)]">.</span>
-              </span>
+            <div className="flex items-center justify-center">
+              <SurekhLogo
+                variant="horizontal-clean"
+                theme="dark"
+                className="h-7 w-auto"
+              />
             </div>
 
             {/* 100% Secured Payment Badge */}

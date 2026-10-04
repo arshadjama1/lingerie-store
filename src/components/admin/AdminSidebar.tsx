@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import {
-  BarChart3,
   Boxes,
   ExternalLink,
   LayoutDashboard,
@@ -14,17 +13,17 @@ import {
   RotateCcw,
   ShoppingBag,
   Tag,
-  Users,
 } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+
+import { SurekhLogo } from "@/components/common/SurekhLogo";
 
 interface NavItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string;
-  isPlanned?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -63,21 +62,6 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/returns",
     icon: RotateCcw,
   },
-
-  {
-    name: "Customer CRM",
-    href: "#",
-    icon: Users,
-    badge: "Phase 5",
-    isPlanned: true,
-  },
-  {
-    name: "Financial Reports",
-    href: "#",
-    icon: BarChart3,
-    badge: "Phase 6",
-    isPlanned: true,
-  },
 ];
 
 interface AdminSidebarProps {
@@ -104,9 +88,11 @@ export function AdminSidebar({ email, onCloseMobile }: AdminSidebarProps) {
           onClick={onCloseMobile}
           className="flex items-center gap-2"
         >
-          <span className="font-mono text-base font-bold tracking-widest text-[#3d0a20]">
-            SUREKH
-          </span>
+          <SurekhLogo
+            variant="horizontal-clean"
+            theme="dark"
+            className="h-6 w-auto"
+          />
           <span className="rounded bg-[#3d0a20]/10 px-1.5 py-0.5 text-[10px] font-bold tracking-wider text-[#3d0a20] uppercase">
             Admin
           </span>
@@ -127,26 +113,6 @@ export function AdminSidebar({ email, onCloseMobile }: AdminSidebarProps) {
                 ? pathname.startsWith("/admin/products") ||
                   pathname.startsWith("/admin/categories")
                 : item.href !== "#" && pathname.startsWith(item.href);
-
-          if (item.isPlanned) {
-            return (
-              <div
-                key={item.name}
-                className="flex cursor-not-allowed items-center justify-between rounded-md px-3 py-2 text-xs font-medium text-gray-400 opacity-60"
-                title={`${item.name} is scheduled for rollout in ${item.badge}`}
-              >
-                <div className="flex items-center gap-3">
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </div>
-                {item.badge && (
-                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold text-gray-500">
-                    {item.badge}
-                  </span>
-                )}
-              </div>
-            );
-          }
 
           return (
             <Link

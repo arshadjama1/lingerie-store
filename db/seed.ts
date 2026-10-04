@@ -100,6 +100,7 @@ async function seed() {
     id: brandId,
     name: "Surekh",
     slug: "surekh",
+    logoUrl: "/images/logo/surekh-logo-stacked.png",
     description:
       "Surekh — thoughtfully designed innerwear and loungewear crafted from premium bamboo, modal and seamless fabrics for everyday comfort naturally.",
     isActive: true,
