@@ -44,7 +44,7 @@
     "drizzle-orm": "^0.45.2",
     "drizzle-zod": "^0.8.3",
     "lucide-react": "^1.17.0",
-    "next": "16.3.8",
+    "next": "16.2.9",
     "next-themes": "^0.4.6",
     "postgres": "^3.4.9",
     "posthog-js": "^1.382.0",
@@ -62,7 +62,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
-    "@netlify/plugin-nextjs": "5.15.13",
+    "@netlify/plugin-nextjs": "5.16.1",
     "@next/eslint-plugin-next": "16.2.9",
     "@tailwindcss/postcss": "^4",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
