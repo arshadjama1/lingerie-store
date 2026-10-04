@@ -114,6 +114,13 @@ export function Header() {
     }, 150);
   };
 
+  const handleFlyoutClear = () => {
+    if (flyoutTimeoutRef.current) {
+      clearTimeout(flyoutTimeoutRef.current);
+    }
+    setActiveFlyout(null);
+  };
+
   // Close flyout on pathname change or escape key
   useEffect(() => {
     setActiveFlyout(null);
@@ -214,6 +221,7 @@ export function Header() {
               {/* Left: Brand Identity Logo */}
               <Link
                 href="/"
+                onMouseEnter={handleFlyoutClear}
                 className="group flex shrink-0 items-center transition-opacity hover:opacity-90"
                 aria-label="Surekh Home"
               >
@@ -265,10 +273,14 @@ export function Header() {
                   );
                 })}
 
-                {/* High-Contrast SALE link */}
-                <div className="relative flex h-full items-center">
+                {/* Direct High-Contrast SALE link (direct destination, no dropdown) */}
+                <div
+                  onMouseEnter={handleFlyoutClear}
+                  className="relative flex h-full items-center"
+                >
                   <Link
                     href="/sale"
+                    onClick={handleFlyoutClear}
                     className={cn(
                       "relative flex h-full items-center gap-1.5 px-3 text-xs font-black tracking-wider whitespace-nowrap uppercase transition-colors xl:px-4 xl:text-[13px]",
                       pathname === "/sale"
@@ -288,7 +300,10 @@ export function Header() {
               </nav>
 
               {/* Right: Search + Account + Wishlist + Cart */}
-              <div className="flex shrink-0 items-center justify-end gap-2 xl:gap-3">
+              <div
+                onMouseEnter={handleFlyoutClear}
+                className="flex shrink-0 items-center justify-end gap-2 xl:gap-3"
+              >
                 {/* Responsive expanding search bar */}
                 <div className="w-36 transition-all duration-300 focus-within:w-56 xl:w-56 xl:focus-within:w-68 2xl:w-64 2xl:focus-within:w-76">
                   <SearchAutocomplete
