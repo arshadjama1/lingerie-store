@@ -35,7 +35,9 @@ export function LoginForm() {
       ? "Authentication failed. Please try again."
       : errorParam === "missing_code"
         ? "Authorization code was missing or expired."
-        : null
+        : errorParam
+          ? decodeURIComponent(errorParam)
+          : null
   );
   const [emailSent, setEmailSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
