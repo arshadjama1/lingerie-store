@@ -23,13 +23,24 @@ export function LoginForm() {
   const redirect = searchParams.get("redirect") || "/";
   const errorParam = searchParams.get("error");
 
+  // ── Tab ──
   const [activeTab, setActiveTab] = useState<"phone" | "email">("phone");
+
+  // ── Phone OTP state ──
   const [phoneStep, setPhoneStep] = useState<"enter-phone" | "enter-otp">(
     "enter-phone"
   );
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const [phoneOtp, setPhoneOtp] = useState<string[]>(Array(6).fill(""));
+  const phoneOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // ── Email state ──
   const [email, setEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false); // true once email is dispatched
+  const [emailOtp, setEmailOtp] = useState<string[]>(Array(6).fill(""));
+  const emailOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  // ── Shared state ──
   const [error, setError] = useState<string | null>(
     errorParam === "auth_failed"
       ? "Authentication failed. Please try again."
@@ -39,30 +50,36 @@ export function LoginForm() {
           ? decodeURIComponent(errorParam)
           : null
   );
-  const [emailSent, setEmailSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [isPending, startTransition] = useTransition();
 
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { fetchUser } = useAuthStore();
 
-  // Cooldown countdown for OTP / Magic Link
+  // Cooldown countdown
   useEffect(() => {
     if (cooldown <= 0) return;
     const timer = setTimeout(() => setCooldown((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  // Focus first OTP box when entering OTP step
+  // Focus first OTP box on phone step transition
   useEffect(() => {
     if (phoneStep === "enter-otp") {
-      setTimeout(() => {
-        otpInputRefs.current[0]?.focus();
-      }, 150);
+      setTimeout(() => phoneOtpRefs.current[0]?.focus(), 150);
     }
   }, [phoneStep]);
 
-  // Handle Phone Submit (Send OTP)
+  // Focus first email OTP box when the sent state appears
+  useEffect(() => {
+    if (emailSent) {
+      setTimeout(() => emailOtpRefs.current[0]?.focus(), 150);
+    }
+  }, [emailSent]);
+
+  // ────────────────────────────────────────────────
+  // PHONE OTP HANDLERS
+  // ────────────────────────────────────────────────
+
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -82,7 +99,6 @@ export function LoginForm() {
         });
 
         const data = await response.json();
-
         if (!response.ok) {
           throw new Error(
             data.error || "Failed to send OTP. Please try again."
@@ -91,65 +107,52 @@ export function LoginForm() {
 
         setPhoneStep("enter-otp");
         setCooldown(30);
-        setOtp(Array(6).fill(""));
+        setPhoneOtp(Array(6).fill(""));
         toast.success(`Verification code sent to +91 ${cleanPhone}`);
       } catch (err) {
-        const errMsg =
-          err instanceof Error ? err.message : "Failed to send OTP";
-        setError(errMsg);
+        setError(err instanceof Error ? err.message : "Failed to send OTP");
       }
     });
   };
 
-  // Handle OTP digit changes
-  const handleOtpChange = (index: number, value: string) => {
+  const handlePhoneOtpChange = (index: number, value: string) => {
     if (value && !/^\d$/.test(value)) return;
 
-    const newOtp = [...otp];
+    const newOtp = [...phoneOtp];
     newOtp[index] = value;
-    setOtp(newOtp);
+    setPhoneOtp(newOtp);
 
-    // Auto advance to next box
-    if (value && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-
-    // Auto submit if all 6 digits are filled
-    if (newOtp.every((digit) => digit !== "")) {
-      triggerVerifyOtp(newOtp.join(""));
-    }
+    if (value && index < 5) phoneOtpRefs.current[index + 1]?.focus();
+    if (newOtp.every((d) => d !== "")) triggerVerifyPhoneOtp(newOtp.join(""));
   };
 
-  const handleOtpKeyDown = (
+  const handlePhoneOtpKeyDown = (
     index: number,
     e: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (e.key === "Backspace") {
-      if (!otp[index] && index > 0) {
-        const newOtp = [...otp];
+      const newOtp = [...phoneOtp];
+      if (!phoneOtp[index] && index > 0) {
         newOtp[index - 1] = "";
-        setOtp(newOtp);
-        otpInputRefs.current[index - 1]?.focus();
+        setPhoneOtp(newOtp);
+        phoneOtpRefs.current[index - 1]?.focus();
       } else {
-        const newOtp = [...otp];
         newOtp[index] = "";
-        setOtp(newOtp);
+        setPhoneOtp(newOtp);
       }
     }
   };
 
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+  const handlePhoneOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
     if (pasted.length !== 6) return;
-
-    const digits = pasted.split("");
-    setOtp(digits);
-    otpInputRefs.current[5]?.focus();
-    triggerVerifyOtp(pasted);
+    setPhoneOtp(pasted.split(""));
+    phoneOtpRefs.current[5]?.focus();
+    triggerVerifyPhoneOtp(pasted);
   };
 
-  const triggerVerifyOtp = (otpCode: string) => {
+  const triggerVerifyPhoneOtp = (otpCode: string) => {
     setError(null);
     startTransition(async () => {
       try {
@@ -161,30 +164,26 @@ export function LoginForm() {
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error(data.error || "Invalid or expired OTP");
-        }
 
         await fetchUser();
         toast.success("Signed in successfully!");
         router.push(redirect);
         router.refresh();
       } catch (err) {
-        const errMsg =
-          err instanceof Error ? err.message : "Verification failed";
-        setError(errMsg);
-        setOtp(Array(6).fill(""));
-        otpInputRefs.current[0]?.focus();
+        setError(err instanceof Error ? err.message : "Verification failed");
+        setPhoneOtp(Array(6).fill(""));
+        phoneOtpRefs.current[0]?.focus();
       }
     });
   };
 
-  const handleResendOtp = async () => {
+  const handleResendPhoneOtp = async () => {
     if (cooldown > 0) return;
     setError(null);
     setCooldown(30);
-    setOtp(Array(6).fill(""));
+    setPhoneOtp(Array(6).fill(""));
 
     try {
       const cleanPhone = phone.replace(/\D/g, "");
@@ -196,15 +195,18 @@ export function LoginForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to resend code");
       toast.success("New verification code sent!");
-      otpInputRefs.current[0]?.focus();
+      phoneOtpRefs.current[0]?.focus();
     } catch (err) {
-      const errMsg =
-        err instanceof Error ? err.message : "Failed to resend code";
-      setError(errMsg);
+      setError(err instanceof Error ? err.message : "Failed to resend code");
     }
   };
 
-  // Handle Email Magic Link Submit
+  // ────────────────────────────────────────────────
+  // EMAIL HANDLERS
+  // ────────────────────────────────────────────────
+
+  // Sends one email containing both a magic link button and a 6-digit {{ .Token }} code.
+  // The combined post-send UI lets the user choose whichever works for them.
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -227,21 +229,111 @@ export function LoginForm() {
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to send magic link");
-        }
+        if (!response.ok) throw new Error(data.error || "Failed to send email");
 
         setEmailSent(true);
+        setEmailOtp(Array(6).fill(""));
         setCooldown(60);
-        toast.success("Magic sign-in link dispatched to your email!");
+        toast.success(`Sign-in email sent to ${email.trim().toLowerCase()}`);
       } catch (err) {
-        const errMsg =
-          err instanceof Error ? err.message : "Failed to send magic link";
-        setError(errMsg);
+        setError(err instanceof Error ? err.message : "Failed to send email");
       }
     });
   };
+
+  const handleEmailOtpChange = (index: number, value: string) => {
+    if (value && !/^\d$/.test(value)) return;
+
+    const newOtp = [...emailOtp];
+    newOtp[index] = value;
+    setEmailOtp(newOtp);
+
+    if (value && index < 5) emailOtpRefs.current[index + 1]?.focus();
+    if (newOtp.every((d) => d !== "")) triggerVerifyEmailOtp(newOtp.join(""));
+  };
+
+  const handleEmailOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (e.key === "Backspace") {
+      const newOtp = [...emailOtp];
+      if (!emailOtp[index] && index > 0) {
+        newOtp[index - 1] = "";
+        setEmailOtp(newOtp);
+        emailOtpRefs.current[index - 1]?.focus();
+      } else {
+        newOtp[index] = "";
+        setEmailOtp(newOtp);
+      }
+    }
+  };
+
+  const handleEmailOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "");
+    if (pasted.length !== 6) return;
+    setEmailOtp(pasted.split(""));
+    emailOtpRefs.current[5]?.focus();
+    triggerVerifyEmailOtp(pasted);
+  };
+
+  const triggerVerifyEmailOtp = (otpCode: string) => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        const response = await fetch("/api/auth/verify-email-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim().toLowerCase(),
+            otp: otpCode,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok)
+          throw new Error(data.error || "Invalid or expired OTP");
+
+        await fetchUser();
+        toast.success("Signed in successfully!");
+        router.push(redirect);
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Verification failed");
+        setEmailOtp(Array(6).fill(""));
+        emailOtpRefs.current[0]?.focus();
+      }
+    });
+  };
+
+  const handleResendEmailOtp = async () => {
+    if (cooldown > 0) return;
+    setError(null);
+    setCooldown(60);
+    setEmailOtp(Array(6).fill(""));
+
+    try {
+      const res = await fetch("/api/auth/send-magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          redirectTo: redirect,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resend code");
+      toast.success("New OTP code sent!");
+      emailOtpRefs.current[0]?.focus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to resend code");
+    }
+  };
+
+  // ────────────────────────────────────────────────
+  // RENDER
+  // ────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-6">
@@ -285,11 +377,11 @@ export function LoginForm() {
           }`}
         >
           <Mail className="h-3.5 w-3.5" />
-          <span>Email Link</span>
+          <span>Email</span>
         </button>
       </div>
 
-      {/* Error Alert Box */}
+      {/* Error Alert */}
       {error && (
         <div className="animate-in fade-in flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs font-medium text-rose-700">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
@@ -301,7 +393,6 @@ export function LoginForm() {
       {activeTab === "phone" && (
         <>
           {phoneStep === "enter-phone" ? (
-            /* Step 1: Enter Phone Number */
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <label
@@ -350,7 +441,7 @@ export function LoginForm() {
               </button>
             </form>
           ) : (
-            /* Step 2: Inline 6-Digit OTP Verification */
+            /* Phone OTP Entry */
             <div className="animate-in fade-in slide-in-from-right-4 space-y-5 duration-200">
               <div className="flex items-center justify-between rounded-xl border border-rose-100 bg-rose-50/50 p-3">
                 <div className="text-xs">
@@ -370,24 +461,25 @@ export function LoginForm() {
                 </button>
               </div>
 
-              {/* 6-box OTP digits */}
               <div>
                 <label className="mb-2 block text-center text-xs font-semibold text-neutral-700">
                   Enter 6-Digit Code
                 </label>
                 <div className="flex justify-between gap-1.5 sm:gap-2">
-                  {otp.map((digit, index) => (
+                  {phoneOtp.map((digit, index) => (
                     <input
                       key={index}
                       type="text"
                       inputMode="numeric"
                       maxLength={1}
                       value={digit}
-                      onChange={(e) => handleOtpChange(index, e.target.value)}
-                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      onPaste={handleOtpPaste}
+                      onChange={(e) =>
+                        handlePhoneOtpChange(index, e.target.value)
+                      }
+                      onKeyDown={(e) => handlePhoneOtpKeyDown(index, e)}
+                      onPaste={handlePhoneOtpPaste}
                       ref={(el) => {
-                        otpInputRefs.current[index] = el;
+                        phoneOtpRefs.current[index] = el;
                       }}
                       disabled={isPending}
                       className="h-12 w-11 rounded-xl border border-neutral-300 bg-white text-center font-serif text-lg font-bold text-neutral-900 shadow-2xs focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:opacity-50 sm:h-13 sm:w-12"
@@ -396,11 +488,10 @@ export function LoginForm() {
                 </div>
               </div>
 
-              {/* Resend & Status */}
               <div className="flex flex-col items-center gap-2.5 text-center">
                 <button
                   type="button"
-                  onClick={handleResendOtp}
+                  onClick={handleResendPhoneOtp}
                   disabled={cooldown > 0 || isPending}
                   className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50 disabled:hover:no-underline"
                 >
@@ -424,39 +515,100 @@ export function LoginForm() {
         </>
       )}
 
-      {/* ── EMAIL MAGIC LINK FLOW ── */}
+      {/* ── EMAIL FLOW ── */}
       {activeTab === "email" && (
         <>
+          {/* Magic link success state */}
           {emailSent ? (
-            <div className="animate-in fade-in space-y-4">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 text-xs text-emerald-900">
+            /* Combined: magic link shortcut + inline OTP entry */
+            <div className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-200">
+              {/* Sent confirmation banner */}
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-900">
                 <div className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-                  <div className="space-y-1">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <div>
                     <p className="font-bold text-emerald-950">
-                      Magic Link Dispatched!
+                      Email dispatched!
                     </p>
-                    <p className="leading-relaxed text-emerald-800">
-                      We sent a secure, one-click sign-in link to{" "}
+                    <p className="mt-0.5 leading-relaxed text-emerald-800">
+                      We sent a sign-in link and a 6-digit code to{" "}
                       <strong className="font-bold text-neutral-900">
                         {email}
                       </strong>
-                      .
+                      . You can click the link or enter the code below.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2">
-                <a
-                  href="https://mail.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-xs font-bold text-white transition-colors hover:bg-neutral-800"
+              {/* Open Gmail shortcut */}
+              <a
+                href="https://mail.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 py-3 text-xs font-bold text-white transition-colors hover:bg-neutral-800"
+              >
+                <span>Open Gmail</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-neutral-200" />
+                <span className="text-[11px] font-semibold tracking-wider text-neutral-400 uppercase">
+                  or enter 6-digit code
+                </span>
+                <div className="h-px flex-1 bg-neutral-200" />
+              </div>
+
+              {/* Inline OTP entry */}
+              <div>
+                <label className="mb-2 block text-center text-xs font-semibold text-neutral-700">
+                  Enter 6-Digit Code
+                </label>
+                <div className="flex justify-between gap-1.5 sm:gap-2">
+                  {emailOtp.map((digit, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) =>
+                        handleEmailOtpChange(index, e.target.value)
+                      }
+                      onKeyDown={(e) => handleEmailOtpKeyDown(index, e)}
+                      onPaste={handleEmailOtpPaste}
+                      ref={(el) => {
+                        emailOtpRefs.current[index] = el;
+                      }}
+                      disabled={isPending}
+                      className="h-12 w-11 rounded-xl border border-neutral-300 bg-white text-center font-serif text-lg font-bold text-neutral-900 shadow-2xs focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none disabled:opacity-50 sm:h-13 sm:w-12"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Resend + verifying + change email */}
+              <div className="flex flex-col items-center gap-2.5 text-center">
+                <button
+                  type="button"
+                  onClick={handleResendEmailOtp}
+                  disabled={cooldown > 0 || isPending}
+                  className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50 disabled:hover:no-underline"
                 >
-                  <span>Open Gmail</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
+                  <RefreshCw className="h-3 w-3" />
+                  <span>
+                    {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend Email"}
+                  </span>
+                </button>
+
+                {isPending && (
+                  <div className="flex items-center gap-2 text-xs font-medium text-neutral-600">
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+                    <span>Verifying code...</span>
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -464,13 +616,14 @@ export function LoginForm() {
                     setEmailSent(false);
                     setError(null);
                   }}
-                  className="text-center text-xs font-semibold text-neutral-500 hover:text-neutral-900 hover:underline"
+                  className="text-[11px] font-semibold text-neutral-400 hover:text-neutral-700 hover:underline"
                 >
                   Entered wrong email? Change address
                 </button>
               </div>
             </div>
           ) : (
+            /* Email entry form */
             <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <label
@@ -489,7 +642,7 @@ export function LoginForm() {
                   className="w-full rounded-xl border border-neutral-300 bg-white px-3.5 py-3 text-sm font-semibold text-neutral-900 placeholder:text-neutral-400 focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)] focus:outline-none"
                 />
                 <p className="text-[11px] text-neutral-400">
-                  We'll send a passwordless sign-in link directly to your inbox.
+                  We'll send a sign-in link and a 6-digit code to your inbox.
                 </p>
               </div>
 
@@ -502,7 +655,7 @@ export function LoginForm() {
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
                   <>
-                    <span>Send Magic Link</span>
+                    <span>Continue with Email</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -512,7 +665,7 @@ export function LoginForm() {
         </>
       )}
 
-      {/* Discreet Shopping & Encrypted Security Strip */}
+      {/* Security Strip */}
       <div className="flex items-center justify-center gap-2 rounded-xl border border-rose-100/80 bg-rose-50/40 p-3 text-[11px] text-neutral-600">
         <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
         <span>Discreet SMS • 256-Bit SSL Encrypted Security</span>
