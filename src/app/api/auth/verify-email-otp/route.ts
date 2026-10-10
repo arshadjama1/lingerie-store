@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+import type { AuthError, EmailOtpType } from "@supabase/supabase-js";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -41,24 +42,27 @@ export async function POST(req: Request) {
 
   const supabase = await createClient();
 
-  // type: 'email' covers magic link OTPs for existing users.
-  // type: 'signup' covers new users whose sign-up hasn't been confirmed yet.
-  // We try both so the caller doesn't need to know which case applies.
-  let { data, error } = await supabase.auth.verifyOtp({
-    email: result.data.email,
-    token: result.data.otp,
-    type: "email",
-  });
+  // Candidate OTP types across different Supabase Auth configurations
+  const candidateTypes: EmailOtpType[] = ["email", "magiclink", "signup"];
+  let data = null;
+  let error: AuthError | null = null;
 
-  if ((error || !data.user) && error?.status !== 500) {
-    ({ data, error } = await supabase.auth.verifyOtp({
+  for (const candidateType of candidateTypes) {
+    const res = await supabase.auth.verifyOtp({
       email: result.data.email,
       token: result.data.otp,
-      type: "signup",
-    }));
+      type: candidateType,
+    });
+
+    if (!res.error && res.data?.user) {
+      data = res.data;
+      error = null;
+      break;
+    }
+    error = res.error;
   }
 
-  if (error || !data.user) {
+  if (error || !data || !data.user) {
     return NextResponse.json(
       { error: "Invalid or expired OTP. Please try again." },
       { status: 400 }

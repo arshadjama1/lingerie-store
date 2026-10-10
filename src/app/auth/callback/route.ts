@@ -25,6 +25,15 @@ export async function GET(request: Request) {
       ? `https://${forwardedHost}`
       : origin.replace(/^http:\/\//, "https://");
 
+  // Ignore automated scanner/prefetch requests so they do not consume single-use tokens
+  const purpose =
+    request.headers.get("purpose") ||
+    request.headers.get("sec-purpose") ||
+    request.headers.get("x-purpose");
+  if (purpose === "prefetch" || purpose === "preview") {
+    return new NextResponse("Prefetch ignored", { status: 200 });
+  }
+
   // Handle upstream Supabase error redirects (e.g. expired link, link already used, access denied)
   if (errorParam || errorDescription) {
     console.error("[auth/callback] Supabase returned error:", {
@@ -73,13 +82,24 @@ export async function GET(request: Request) {
   let authError: AuthError | null = null;
 
   if (token_hash) {
-    // Cross-device and scanner-safe token verification
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type,
-    });
-    authUser = data?.user;
-    authError = error;
+    // Try candidate types in sequence (handles new signups, returning magiclink, or generic email tokens)
+    const candidateTypes: EmailOtpType[] = Array.from(
+      new Set([type, "signup", "magiclink", "email"])
+    );
+
+    for (const candidateType of candidateTypes) {
+      const res = await supabase.auth.verifyOtp({
+        token_hash,
+        type: candidateType,
+      });
+
+      if (!res.error && res.data?.user) {
+        authUser = res.data.user;
+        authError = null;
+        break;
+      }
+      authError = res.error;
+    }
   } else if (code) {
     // Traditional PKCE code exchange
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
