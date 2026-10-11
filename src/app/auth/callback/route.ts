@@ -11,7 +11,9 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = (searchParams.get("type") as EmailOtpType) || "email";
-  const next = searchParams.get("next") ?? "/";
+  // Only allow relative paths to prevent open redirect attacks
+  const rawNext = searchParams.get("next") ?? "/";
+  const next = rawNext.startsWith("/") ? rawNext : "/";
   const urlCartSession = searchParams.get("cart_session");
 
   const errorParam = searchParams.get("error");
@@ -24,6 +26,15 @@ export async function GET(request: Request) {
     : forwardedHost
       ? `https://${forwardedHost}`
       : origin.replace(/^http:\/\//, "https://");
+
+  // Ignore automated scanner/prefetch requests so they do not consume single-use tokens
+  const purpose =
+    request.headers.get("purpose") ||
+    request.headers.get("sec-purpose") ||
+    request.headers.get("x-purpose");
+  if (purpose === "prefetch" || purpose === "preview") {
+    return new NextResponse("Prefetch ignored", { status: 200 });
+  }
 
   // Handle upstream Supabase error redirects (e.g. expired link, link already used, access denied)
   if (errorParam || errorDescription) {
@@ -73,13 +84,24 @@ export async function GET(request: Request) {
   let authError: AuthError | null = null;
 
   if (token_hash) {
-    // Cross-device and scanner-safe token verification
-    const { data, error } = await supabase.auth.verifyOtp({
-      token_hash,
-      type,
-    });
-    authUser = data?.user;
-    authError = error;
+    // Try candidate types in sequence (handles new signups, returning magiclink, or generic email tokens)
+    const candidateTypes: EmailOtpType[] = Array.from(
+      new Set([type, "signup", "magiclink", "email"])
+    );
+
+    for (const candidateType of candidateTypes) {
+      const res = await supabase.auth.verifyOtp({
+        token_hash,
+        type: candidateType,
+      });
+
+      if (!res.error && res.data?.user) {
+        authUser = res.data.user;
+        authError = null;
+        break;
+      }
+      authError = res.error;
+    }
   } else if (code) {
     // Traditional PKCE code exchange
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
@@ -93,11 +115,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${redirectBase}/login?error=${errorMsg}`);
   }
 
-  await upsertProfile({
-    id: authUser.id,
-    email: authUser.email,
-    phone: authUser.phone,
-  });
+  // Upsert profile — wrapped so a transient DB error never blocks a successful login
+  try {
+    await upsertProfile({
+      id: authUser.id,
+      email: authUser.email,
+      phone: authUser.phone,
+    });
+  } catch (err) {
+    console.error("[auth/callback] Profile upsert failed (non-fatal):", err);
+  }
 
   if (sessionCookie) {
     try {
