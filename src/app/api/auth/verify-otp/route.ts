@@ -87,12 +87,6 @@ export async function POST(req: Request) {
     cart: mergedCart,
   });
 
-  // Mirror all cookies that the Supabase server client wrote (session tokens)
-  // onto the outgoing response so the browser stores them immediately.
-  cookieStore.getAll().forEach((c) => {
-    response.cookies.set(c.name, c.value);
-  });
-
   // Clear the guest cart session cookie now that the cart has been merged.
   if (sessionCookie) {
     response.cookies.delete("cart_session");

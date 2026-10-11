@@ -163,7 +163,14 @@ export function LoginForm() {
           body: JSON.stringify({ phone: cleanPhone, otp: otpCode }),
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data: { error?: string } = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { error: "Unexpected server response. Please try again." };
+        }
+
         if (!response.ok)
           throw new Error(data.error || "Invalid or expired OTP");
 
@@ -291,7 +298,14 @@ export function LoginForm() {
           }),
         });
 
-        const data = await response.json();
+        const text = await response.text();
+        let data: { error?: string } = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = { error: "Unexpected server response. Please try again." };
+        }
+
         if (!response.ok)
           throw new Error(data.error || "Invalid or expired OTP");
 
