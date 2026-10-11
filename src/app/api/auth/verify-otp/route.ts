@@ -20,77 +20,95 @@ const schema = z.object({
 });
 
 export async function POST(req: Request) {
-  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 }
-    );
-  }
-
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const errors = result.error.flatten().fieldErrors;
-    return NextResponse.json(
-      { error: errors.otp?.[0] ?? errors.phone?.[0] ?? "Invalid input" },
-      { status: 400 }
-    );
-  }
-
-  const cookieStore = await cookies();
-  const sessionCookie = cookieStore.get("cart_session")?.value;
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.verifyOtp({
-    phone: result.data.phone,
-    token: result.data.otp,
-    type: "sms",
-  });
-
-  if (error || !data.user) {
-    return NextResponse.json(
-      { error: "Invalid or expired OTP. Please try again." },
-      { status: 400 }
-    );
-  }
-
-  await upsertProfile({
-    id: data.user.id,
-    phone: data.user.phone,
-    email: data.user.email,
-  });
-
-  // Merge guest cart and capture the resulting cart to return to the client.
-  let mergedCart = null;
-  if (sessionCookie) {
+    let body: unknown;
     try {
-      const { mergeGuestCartToUser } = await import("@/modules/cart");
-      mergedCart = await mergeGuestCartToUser(sessionCookie, data.user.id);
+      body = await req.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
+
+    const result = schema.safeParse(body);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      return NextResponse.json(
+        { error: errors.otp?.[0] ?? errors.phone?.[0] ?? "Invalid input" },
+        { status: 400 }
+      );
+    }
+
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("cart_session")?.value;
+
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: result.data.phone,
+      token: result.data.otp,
+      type: "sms",
+    });
+
+    if (error || !data.user) {
+      return NextResponse.json(
+        { error: "Invalid or expired OTP. Please try again." },
+        { status: 400 }
+      );
+    }
+
+    // Upsert profile safely — DB failure must not block a successful login
+    try {
+      await upsertProfile({
+        id: data.user.id,
+        phone: data.user.phone,
+        email: data.user.email,
+      });
     } catch (err) {
-      console.error("[verify-otp] Cart merge failed:", err);
-      // Fallback: just fetch the user's existing cart.
+      console.error("[verify-otp] Profile upsert failed (non-fatal):", err);
+    }
+
+    // Merge guest cart and capture the resulting cart to return to the client.
+    let mergedCart = null;
+    if (sessionCookie) {
+      try {
+        const { mergeGuestCartToUser } = await import("@/modules/cart");
+        mergedCart = await mergeGuestCartToUser(sessionCookie, data.user.id);
+      } catch (err) {
+        console.error("[verify-otp] Cart merge failed:", err);
+        // Fallback: just fetch the user's existing cart.
+        mergedCart = await getCart({ userId: data.user.id });
+      }
+    } else {
+      // No guest session — fetch any existing user cart directly.
       mergedCart = await getCart({ userId: data.user.id });
     }
-  } else {
-    // No guest session — fetch any existing user cart directly.
-    mergedCart = await getCart({ userId: data.user.id });
+
+    const response = NextResponse.json({
+      user: {
+        id: data.user.id,
+        phone: data.user.phone,
+        email: data.user.email,
+      },
+      cart: mergedCart,
+    });
+
+    // Clear the guest cart session cookie now that the cart has been merged.
+    if (sessionCookie) {
+      response.cookies.delete("cart_session");
+    }
+
+    return response;
+  } catch (err) {
+    console.error("[verify-otp] Unexpected error:", err);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to verify OTP. Please try again.",
+      },
+      { status: 500 }
+    );
   }
-
-  const response = NextResponse.json({
-    user: {
-      id: data.user.id,
-      phone: data.user.phone,
-      email: data.user.email,
-    },
-    cart: mergedCart,
-  });
-
-  // Clear the guest cart session cookie now that the cart has been merged.
-  if (sessionCookie) {
-    response.cookies.delete("cart_session");
-  }
-
-  return response;
 }

@@ -32,10 +32,11 @@ export async function POST(req: Request) {
   const sessionCookie =
     result.data.cartSession || cookieStore.get("cart_session")?.value;
 
-  const origin =
+  const origin = (
     req.headers.get("origin") ||
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000"
+  ).replace(/\/$/, "");
 
   const nextPath = result.data.redirectTo || "/";
   const callbackUrl = new URL(`${origin}/auth/callback`);

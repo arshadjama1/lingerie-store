@@ -50,17 +50,26 @@ export function LoginForm() {
           ? decodeURIComponent(errorParam)
           : null
   );
-  const [cooldown, setCooldown] = useState(0);
+  // Separate cooldowns so switching tabs doesn't mix up the timers
+  const [phoneCooldown, setPhoneCooldown] = useState(0);
+  const [emailCooldown, setEmailCooldown] = useState(0);
   const [isPending, startTransition] = useTransition();
 
   const { fetchUser } = useAuthStore();
 
-  // Cooldown countdown
+  // Phone cooldown countdown
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setTimeout(() => setCooldown((prev) => prev - 1), 1000);
+    if (phoneCooldown <= 0) return;
+    const timer = setTimeout(() => setPhoneCooldown((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
-  }, [cooldown]);
+  }, [phoneCooldown]);
+
+  // Email cooldown countdown
+  useEffect(() => {
+    if (emailCooldown <= 0) return;
+    const timer = setTimeout(() => setEmailCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [emailCooldown]);
 
   // Focus first OTP box on phone step transition
   useEffect(() => {
@@ -106,7 +115,7 @@ export function LoginForm() {
         }
 
         setPhoneStep("enter-otp");
-        setCooldown(30);
+        setPhoneCooldown(30);
         setPhoneOtp(Array(6).fill(""));
         toast.success(`Verification code sent to +91 ${cleanPhone}`);
       } catch (err) {
@@ -187,9 +196,9 @@ export function LoginForm() {
   };
 
   const handleResendPhoneOtp = async () => {
-    if (cooldown > 0) return;
+    if (phoneCooldown > 0) return;
     setError(null);
-    setCooldown(30);
+    setPhoneCooldown(30);
     setPhoneOtp(Array(6).fill(""));
 
     try {
@@ -240,7 +249,7 @@ export function LoginForm() {
 
         setEmailSent(true);
         setEmailOtp(Array(6).fill(""));
-        setCooldown(60);
+        setEmailCooldown(60);
         toast.success(`Sign-in email sent to ${email.trim().toLowerCase()}`);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to send email");
@@ -322,9 +331,9 @@ export function LoginForm() {
   };
 
   const handleResendEmailOtp = async () => {
-    if (cooldown > 0) return;
+    if (emailCooldown > 0) return;
     setError(null);
-    setCooldown(60);
+    setEmailCooldown(60);
     setEmailOtp(Array(6).fill(""));
 
     try {
@@ -506,13 +515,13 @@ export function LoginForm() {
                 <button
                   type="button"
                   onClick={handleResendPhoneOtp}
-                  disabled={cooldown > 0 || isPending}
+                  disabled={phoneCooldown > 0 || isPending}
                   className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50 disabled:hover:no-underline"
                 >
                   <RefreshCw className="h-3 w-3" />
                   <span>
-                    {cooldown > 0
-                      ? `Resend code in ${cooldown}s`
+                    {phoneCooldown > 0
+                      ? `Resend code in ${phoneCooldown}s`
                       : "Resend Verification Code"}
                   </span>
                 </button>
@@ -608,12 +617,14 @@ export function LoginForm() {
                 <button
                   type="button"
                   onClick={handleResendEmailOtp}
-                  disabled={cooldown > 0 || isPending}
+                  disabled={emailCooldown > 0 || isPending}
                   className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-[var(--accent)] hover:underline disabled:opacity-50 disabled:hover:no-underline"
                 >
                   <RefreshCw className="h-3 w-3" />
                   <span>
-                    {cooldown > 0 ? `Resend in ${cooldown}s` : "Resend Email"}
+                    {emailCooldown > 0
+                      ? `Resend in ${emailCooldown}s`
+                      : "Resend Email"}
                   </span>
                 </button>
 

@@ -11,7 +11,9 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = (searchParams.get("type") as EmailOtpType) || "email";
-  const next = searchParams.get("next") ?? "/";
+  // Only allow relative paths to prevent open redirect attacks
+  const rawNext = searchParams.get("next") ?? "/";
+  const next = rawNext.startsWith("/") ? rawNext : "/";
   const urlCartSession = searchParams.get("cart_session");
 
   const errorParam = searchParams.get("error");
@@ -113,11 +115,16 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${redirectBase}/login?error=${errorMsg}`);
   }
 
-  await upsertProfile({
-    id: authUser.id,
-    email: authUser.email,
-    phone: authUser.phone,
-  });
+  // Upsert profile — wrapped so a transient DB error never blocks a successful login
+  try {
+    await upsertProfile({
+      id: authUser.id,
+      email: authUser.email,
+      phone: authUser.phone,
+    });
+  } catch (err) {
+    console.error("[auth/callback] Profile upsert failed (non-fatal):", err);
+  }
 
   if (sessionCookie) {
     try {
