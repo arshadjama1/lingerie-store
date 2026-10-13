@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Banknote,
   Check,
-  CheckCircle2,
   ChevronDown,
   ChevronUp,
   CreditCard,
@@ -120,8 +119,10 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
-  const [isSendingMagicLink, setIsSendingMagicLink] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailOtpValue, setEmailOtpValue] = useState("");
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
   const [optInUpdates, setOptInUpdates] = useState(true);
 
   // Fetch addresses for an already-authenticated user and select the default.
@@ -516,8 +517,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     }
   };
 
-  // Inline Email Magic Link Handler
-  const handleSendMagicLink = async (e?: React.FormEvent) => {
+  // Inline Email OTP — Step 1: send the 6-digit code
+  const handleSendEmailOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanEmail = authEmail.trim().toLowerCase();
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
@@ -526,29 +527,92 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
     }
 
     try {
-      setIsSendingMagicLink(true);
+      setIsSendingEmailOtp(true);
       const res = await fetch("/api/auth/send-magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: cleanEmail,
-          redirectTo: "/checkout",
           cartSession: cart?.sessionId || undefined,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Failed to send magic link");
+        toast.error(data.error || "Failed to send OTP");
         return;
       }
 
-      setMagicLinkSent(true);
-      toast.success("Magic sign-in link sent to your email!");
+      setEmailOtpSent(true);
+      toast.success("Verification code sent to your email!");
     } catch {
       toast.error("Network error. Please try again.");
     } finally {
-      setIsSendingMagicLink(false);
+      setIsSendingEmailOtp(false);
+    }
+  };
+
+  // Inline Email OTP — Step 2: verify the 6-digit code
+  const handleVerifyEmailOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailOtpValue || emailOtpValue.length < 6) {
+      toast.error("Please enter the 6-digit OTP");
+      return;
+    }
+
+    try {
+      setIsVerifyingEmailOtp(true);
+      const res = await fetch("/api/auth/verify-email-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: authEmail.trim().toLowerCase(),
+          otp: emailOtpValue,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Invalid OTP");
+        return;
+      }
+
+      const verifiedUser = {
+        id: data.user.id,
+        phone: data.user.phone ?? null,
+        email: data.user.email ?? null,
+      };
+
+      // Immediately sync cart store with the merged cart returned by the server
+      if (data.cart) {
+        useCartStore.setState({ cart: data.cart, isLoading: false });
+      }
+
+      // Update local auth state instantly
+      setCurrentUser(verifiedUser);
+      setIsAuthLoading(false);
+
+      // Sync the GLOBAL auth store immediately so header / other consumers reflect sign-in
+      useAuthStore.setState({
+        user: verifiedUser,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+      // Re-fetch full profile in background to populate firstName/lastName
+      useAuthStore
+        .getState()
+        .fetchUser()
+        .catch(() => {});
+
+      toast.success("Logged in successfully!");
+      setEmailOtpSent(false);
+
+      // Fetch addresses in the background (non-blocking)
+      loadAddresses().catch(() => {});
+    } catch {
+      toast.error("Failed to verify OTP");
+    } finally {
+      setIsVerifyingEmailOtp(false);
     }
   };
 
@@ -969,7 +1033,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                         }`}
                       >
                         <Mail className="h-3.5 w-3.5" />
-                        <span>Email Link</span>
+                        <span>Email OTP</span>
                       </button>
                     </div>
 
@@ -1068,12 +1132,9 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                           </div>
                         </form>
                       )
-                    ) : /* Email Magic Link Auth Form */
-                    !magicLinkSent ? (
-                      <form
-                        onSubmit={handleSendMagicLink}
-                        className="space-y-3"
-                      >
+                    ) : /* Email OTP Auth Form */
+                    !emailOtpSent ? (
+                      <form onSubmit={handleSendEmailOtp} className="space-y-3">
                         <div>
                           <label className="block text-[11px] font-medium text-neutral-600">
                             Enter Email Address
@@ -1092,8 +1153,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                             />
                           </div>
                           <p className="mt-1 text-[10px] text-neutral-500">
-                            We&apos;ll send an instant passwordless sign-in link
-                            to your inbox.
+                            We&apos;ll send a 6-digit verification code to your
+                            inbox.
                           </p>
                         </div>
 
@@ -1105,59 +1166,89 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                             className="rounded accent-neutral-900"
                           />
                           <span>
-                            Send me order updates & offers - (no spam)
+                            Send me order updates &amp; offers - (no spam)
                           </span>
                         </label>
 
                         <button
                           type="submit"
-                          disabled={isSendingMagicLink || !authEmail.trim()}
+                          disabled={isSendingEmailOtp || !authEmail.trim()}
                           className="w-full rounded-2xl bg-black py-3 text-xs font-bold tracking-wider text-white uppercase hover:bg-neutral-800 disabled:opacity-50"
                         >
-                          {isSendingMagicLink
-                            ? "Sending Magic Link..."
-                            : "Send Magic Link"}
+                          {isSendingEmailOtp
+                            ? "Sending OTP..."
+                            : "Continue with Email OTP"}
                         </button>
                       </form>
                     ) : (
-                      <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs">
-                        <div className="flex items-start gap-2.5">
-                          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                          <div className="space-y-1">
-                            <p className="font-bold text-emerald-900">
-                              Magic Link Sent!
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-emerald-800">
-                              We sent a secure sign-in link to{" "}
-                              <strong className="font-bold text-neutral-900">
-                                {authEmail}
-                              </strong>
-                              . Click the link in your email to log in and
-                              return directly to checkout.
-                            </p>
-                          </div>
+                      <form
+                        onSubmit={handleVerifyEmailOtp}
+                        className="space-y-3"
+                      >
+                        <div>
+                          <label className="block text-[11px] font-medium text-neutral-600">
+                            Enter 6-digit OTP sent to{" "}
+                            <span className="font-bold text-neutral-800">
+                              {authEmail}
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            maxLength={6}
+                            value={emailOtpValue}
+                            onChange={(e) =>
+                              setEmailOtpValue(
+                                e.target.value.replace(/\D/g, "").slice(0, 6)
+                              )
+                            }
+                            placeholder="123456"
+                            autoFocus
+                            className="mt-1 w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-center font-mono text-base font-bold tracking-widest focus:border-[var(--accent)] focus:outline-none"
+                          />
+                          <p className="mt-1 text-[10px] text-neutral-500">
+                            Check your spam folder if you don&apos;t see it.
+                          </p>
                         </div>
 
-                        <div className="flex items-center gap-2 border-t border-emerald-200/60 pt-2.5">
+                        <div className="flex gap-2">
                           <button
                             type="button"
-                            onClick={() => setMagicLinkSent(false)}
-                            className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-neutral-700 hover:bg-neutral-50"
+                            onClick={() => {
+                              setEmailOtpSent(false);
+                              setEmailOtpValue("");
+                            }}
+                            className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-600"
                           >
                             Change Email
                           </button>
                           <button
-                            type="button"
-                            disabled={isSendingMagicLink}
-                            onClick={() => handleSendMagicLink()}
-                            className="rounded-lg bg-emerald-700 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
+                            type="submit"
+                            disabled={
+                              isVerifyingEmailOtp || emailOtpValue.length < 6
+                            }
+                            className="flex-1 rounded-xl bg-black py-2.5 text-xs font-bold tracking-wider text-white uppercase disabled:opacity-50"
                           >
-                            {isSendingMagicLink
-                              ? "Resending..."
-                              : "Resend Link"}
+                            {isVerifyingEmailOtp
+                              ? "Verifying..."
+                              : "Verify & Continue"}
                           </button>
                         </div>
-                      </div>
+
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-neutral-400">
+                            Didn&apos;t receive it?
+                          </span>
+                          <button
+                            type="button"
+                            disabled={isSendingEmailOtp}
+                            onClick={() => handleSendEmailOtp()}
+                            className="text-[10px] font-bold text-[var(--accent)] hover:underline disabled:opacity-50"
+                          >
+                            {isSendingEmailOtp ? "Resending..." : "Resend OTP"}
+                          </button>
+                        </div>
+                      </form>
                     )}
                   </div>
                 )}
