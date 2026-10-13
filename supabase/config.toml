@@ -12,6 +12,15 @@ additional_redirect_urls = [
 ]
 enable_signup = true
 
+[auth.email]
+enable_signup = true
+# Require users to confirm their email before signing in (false = passwordless OTP works immediately)
+enable_confirmations = false
+# Use our branded template that includes both the magic-link button AND {{ .Token }} OTP code
+[auth.email.template.magic_link]
+subject = "Your Surekh Sign-In Code"
+content_path = "./supabase/email-templates/magic-link.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = true
