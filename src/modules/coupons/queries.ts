@@ -202,7 +202,12 @@ export async function validateCoupon(
     couponId: coupon.id,
     code: coupon.code,
     discountAmount,
-    type: coupon.type === "percentage" ? "percentage" : "fixed",
+    type:
+      coupon.type === "percentage"
+        ? "percentage"
+        : coupon.type === "free_shipping"
+          ? "free_shipping"
+          : "fixed",
     value,
   };
 }
@@ -256,7 +261,9 @@ export async function createCoupon(input: CreateCouponInput) {
   const dbType =
     input.type === "fixed"
       ? ("fixed_amount" as const)
-      : ("percentage" as const);
+      : input.type === "free_shipping"
+        ? ("free_shipping" as const)
+        : ("percentage" as const);
 
   const [coupon] = await db
     .insert(coupons)
