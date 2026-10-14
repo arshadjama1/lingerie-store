@@ -56,6 +56,39 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // ── Public-route fast path ────────────────────────────────────────────
+  // supabase.auth.getUser() makes a network round-trip to Supabase Auth on
+  // every request. For public storefront pages (/, /[category], /p/*,
+  // /search, /sale, etc.) this adds 200–800 ms of unnecessary latency
+  // before any rendering can begin.
+  //
+  // Auth state is only required for three protected path prefixes:
+  //   /account  → redirect unauthenticated visitors to /login
+  //   /checkout → same
+  //   /admin    → role-gate to admin/staff users only
+  //
+  // Every other route gets a NextResponse.next() immediately.
+  const needsAuth =
+    pathname.startsWith("/account") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/admin");
+
+  if (!needsAuth) {
+    const publicResponse = NextResponse.next({ request });
+    // Re-stamp the preview bypass cookie so it isn't silently dropped for
+    // team members browsing public pages in prelaunch mode.
+    if (hasBypass) {
+      publicResponse.cookies.set("linge_preview_access", "true", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        httpOnly: false,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    }
+    return publicResponse;
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
