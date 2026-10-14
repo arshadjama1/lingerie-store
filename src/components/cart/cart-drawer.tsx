@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
@@ -16,8 +17,17 @@ import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { createClient } from "@/lib/supabase/client";
 import { cn, formatPrice } from "@/lib/utils";
 
-import { FastCheckoutModal } from "../checkout/FastCheckoutModal";
 import { CartItemCard } from "./cart-item-card";
+
+// Lazy-load FastCheckoutModal (1,650 lines: Razorpay, OTP auth, address forms,
+// pincode validators, coupon drawer). Only fetched when the user clicks Checkout.
+const FastCheckoutModal = dynamic(
+  () =>
+    import("../checkout/FastCheckoutModal").then((m) => ({
+      default: m.FastCheckoutModal,
+    })),
+  { ssr: false }
+);
 
 export function CartDrawer() {
   const {
