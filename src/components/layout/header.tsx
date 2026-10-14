@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -12,18 +13,36 @@ import { ArrowLeft, Heart, Menu, Search, ShoppingBag } from "lucide-react";
 import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
-import { LogoutModal } from "@/components/account/LogoutModal";
-import { CartDrawer } from "@/components/cart/cart-drawer";
 import { SurekhLogo } from "@/components/common/SurekhLogo";
 import { SearchAutocomplete } from "@/components/search/search-autocomplete";
 
 import { CategoryFlyout } from "./CategoryFlyout";
-import { MobileDrawer } from "./MobileDrawer";
 import { UserDropdown } from "./UserDropdown";
 import {
   MARQUEE_ANNOUNCEMENTS,
   NAV_CATEGORY_LINKS,
 } from "./data/navigationData";
+
+// Lazy-load heavy interactive overlays — excluded from the initial JS bundle.
+// Each is only fetched on first user interaction (cart click, menu open, etc.)
+const CartDrawer = dynamic(
+  () =>
+    import("@/components/cart/cart-drawer").then((m) => ({
+      default: m.CartDrawer,
+    })),
+  { ssr: false }
+);
+const MobileDrawer = dynamic(
+  () => import("./MobileDrawer").then((m) => ({ default: m.MobileDrawer })),
+  { ssr: false }
+);
+const LogoutModal = dynamic(
+  () =>
+    import("@/components/account/LogoutModal").then((m) => ({
+      default: m.LogoutModal,
+    })),
+  { ssr: false }
+);
 
 export function Header() {
   const pathname = usePathname();
