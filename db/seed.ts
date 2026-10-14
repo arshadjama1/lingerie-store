@@ -1853,12 +1853,84 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
     await db.insert(schema.productImages).values(chunk);
   }
 
+  // ── 5. Seed Coupons ─────────────────────────────────────────────────────────
+  console.log("🎟️  Seeding default coupons...");
+  const defaultCoupons = [
+    {
+      id: createId(),
+      code: "FIRST10",
+      name: "First Order Special",
+      type: "percentage" as const,
+      value: "10.00",
+      minOrderValue: "499.00",
+      maxDiscount: null,
+      maxUses: null,
+      usesCount: 0,
+      perUserLimit: 1,
+      isActive: true,
+      startsAt: new Date("2024-01-01T00:00:00Z"),
+      expiresAt: null,
+      isFirstOrderOnly: true,
+    },
+    {
+      id: createId(),
+      code: "SUREKH100",
+      name: "Surekh Delight",
+      type: "fixed_amount" as const,
+      value: "100.00",
+      minOrderValue: "999.00",
+      maxDiscount: null,
+      maxUses: null,
+      usesCount: 0,
+      perUserLimit: 1,
+      isActive: true,
+      startsAt: new Date("2024-01-01T00:00:00Z"),
+      expiresAt: null,
+      isFirstOrderOnly: false,
+    },
+    {
+      id: createId(),
+      code: "COMFORT20",
+      name: "Luxury Intimates Bundle",
+      type: "percentage" as const,
+      value: "20.00",
+      minOrderValue: "1999.00",
+      maxDiscount: null,
+      maxUses: null,
+      usesCount: 0,
+      perUserLimit: 1,
+      isActive: true,
+      startsAt: new Date("2024-01-01T00:00:00Z"),
+      expiresAt: null,
+      isFirstOrderOnly: false,
+    },
+    {
+      id: createId(),
+      code: "FREESHIP",
+      name: "Free Discreet Shipping",
+      type: "free_shipping" as const,
+      value: "0.00",
+      minOrderValue: "499.00",
+      maxDiscount: null,
+      maxUses: null,
+      usesCount: 0,
+      perUserLimit: 1,
+      isActive: true,
+      startsAt: new Date("2024-01-01T00:00:00Z"),
+      expiresAt: null,
+      isFirstOrderOnly: false,
+    },
+  ];
+
+  await db.insert(schema.coupons).values(defaultCoupons);
+
   console.log("\n✅ Seed complete!");
   console.log(`   • 1 brand (Surekh)`);
   console.log(`   • ${seededCategories.length} categories`);
   console.log(
     `   • ${products.length} products with real data, images, variants & inventory`
   );
+  console.log(`   • ${defaultCoupons.length} promotional coupons`);
 }
 
 seed()

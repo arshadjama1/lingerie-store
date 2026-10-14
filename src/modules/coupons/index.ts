@@ -15,14 +15,14 @@ export class CouponError extends AppError {
 
 export const applyCouponSchema = z.object({
   code: z.string().min(1, "Coupon code is required"),
-  cartSubtotal: z.number().positive("Cart subtotal must be positive"),
+  cartSubtotal: z.number().nonnegative("Cart subtotal must be non-negative"),
 });
 
 export const createCouponSchema = z.object({
   code: z.string().min(1).max(50),
   name: z.string().max(255).optional(),
-  type: z.enum(["percentage", "fixed"]),
-  value: z.number().positive("Value must be positive"),
+  type: z.enum(["percentage", "fixed", "free_shipping"]),
+  value: z.number().nonnegative("Value must be non-negative"),
   minOrderValue: z.number().min(0).default(0),
   maxDiscount: z.number().positive().optional(),
   maxUses: z.number().int().positive().optional(),
@@ -44,7 +44,7 @@ export type ValidatedCoupon = {
   couponId: string;
   code: string;
   discountAmount: number;
-  type: "percentage" | "fixed";
+  type: "percentage" | "fixed" | "free_shipping";
   value: number;
 };
 

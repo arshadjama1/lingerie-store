@@ -15,8 +15,8 @@ import type { CreateCouponInput } from "@/modules/coupons";
 const formSchema = z.object({
   code: z.string().min(1, "Code is required").max(50),
   name: z.string().max(255).optional(),
-  type: z.enum(["percentage", "fixed"]),
-  value: z.number().positive("Must be positive"),
+  type: z.enum(["percentage", "fixed", "free_shipping"]),
+  value: z.number().nonnegative("Must be non-negative"),
   minOrderValue: z.number().min(0),
   maxDiscount: z.number().positive().optional(),
   maxUses: z.number().int().positive().optional(),
@@ -75,9 +75,11 @@ export default function NewCouponPage() {
     setIsSubmitting(true);
     setServerError(null);
 
-    // Reconstruct the full CreateCouponInput with perUserLimit fixed at 1
+    // Reconstruct the full CreateCouponInput with perUserLimit fixed at 1.
+    // For free_shipping, value is always 0 (the field is hidden in the UI).
     const payload: CreateCouponInput = {
       ...values,
+      value: values.type === "free_shipping" ? 0 : values.value,
       perUserLimit: 1,
     };
 
@@ -151,8 +153,8 @@ export default function NewCouponPage() {
         {/* Type */}
         <div>
           <label className={labelCls}>Discount Type *</label>
-          <div className="flex gap-4">
-            {(["percentage", "fixed"] as const).map((t) => (
+          <div className="flex flex-wrap gap-4">
+            {(["percentage", "fixed", "free_shipping"] as const).map((t) => (
               <label
                 key={t}
                 className="flex cursor-pointer items-center gap-2 text-sm"
@@ -163,46 +165,56 @@ export default function NewCouponPage() {
                   {...register("type")}
                   className="accent-[#3d0a20]"
                 />
-                <span>{t === "fixed" ? "Fixed (₹)" : "Percentage (%)"}</span>
+                <span>
+                  {t === "fixed"
+                    ? "Fixed (₹)"
+                    : t === "free_shipping"
+                      ? "Free Shipping"
+                      : "Percentage (%)"}
+                </span>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Value + Max Discount */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className={labelCls}>
-              Value * {selectedType === "percentage" ? "(%)" : "(₹)"}
-            </label>
-            <input
-              {...register("value", { valueAsNumber: true })}
-              type="number"
-              step="0.01"
-              min="0.01"
-              placeholder={selectedType === "percentage" ? "10" : "100"}
-              className={inputCls}
-            />
-            {errors.value && <p className={errorCls}>{errors.value.message}</p>}
-          </div>
-
-          {selectedType === "percentage" && (
+        {/* Value + Max Discount (hidden for free_shipping) */}
+        {selectedType !== "free_shipping" && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelCls}>Max Discount (₹)</label>
+              <label className={labelCls}>
+                Value * {selectedType === "percentage" ? "(%)" : "(₹)"}
+              </label>
               <input
-                {...register("maxDiscount", { valueAsNumber: true })}
+                {...register("value", { valueAsNumber: true })}
                 type="number"
                 step="0.01"
                 min="0.01"
-                placeholder="200"
+                placeholder={selectedType === "percentage" ? "10" : "100"}
                 className={inputCls}
               />
-              {errors.maxDiscount && (
-                <p className={errorCls}>{errors.maxDiscount.message}</p>
+              {errors.value && (
+                <p className={errorCls}>{errors.value.message}</p>
               )}
             </div>
-          )}
-        </div>
+
+            {selectedType === "percentage" && (
+              <div>
+                <label className={labelCls}>Max Discount (₹)</label>
+                <input
+                  {...register("maxDiscount", { valueAsNumber: true })}
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="200"
+                  className={inputCls}
+                />
+                {errors.maxDiscount && (
+                  <p className={errorCls}>{errors.maxDiscount.message}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Min Order + Max Uses */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
