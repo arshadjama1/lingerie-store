@@ -1,5 +1,5 @@
-"use client";
-
+// Server Component — no "use client" needed. BestsellerShowcase (the only
+// interactive child) carries its own "use client" directive.
 import { BestsellerShowcase } from "./BestsellerShowcase";
 import type { ProductItem } from "./BestsellerShowcase";
 import { ComfortFoliageSection } from "./ComfortFoliageSection";
