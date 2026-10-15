@@ -10,7 +10,7 @@ import { HomeShowcase } from "@/components/home/HomeShowcase";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { TrustStrip } from "@/components/home/TrustStrip";
 
-export const revalidate = 600;
+export const revalidate = 3600;
 
 export default async function HomePage() {
   const featuredProducts = await getCatalogFeatured(12).catch(() => []);
