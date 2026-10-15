@@ -3,11 +3,11 @@ import { Lock, ShieldCheck, Star, Tag, Truck, Users } from "lucide-react";
 // ── Super Saver Combo Deals Strip ────────────────────────────────────
 export const COMBO_DEALS_DATA = [
   {
-    id: "combo-3-bamboo-undies",
-    label: "3 Bamboo Undies",
-    price: "₹750",
-    original: "₹900",
-    saving: "17% OFF",
+    id: "combo-bamboo-undies",
+    label: "Bamboo Undies (Pack of 2)",
+    price: "₹649",
+    original: "₹1,199",
+    saving: "46% OFF",
     href: "/p/bamboo-fabric-undie",
     color: "from-black/80 via-pink-950/45 to-transparent",
     image: "/images/products/bamboo-undie-black.png",
@@ -15,9 +15,9 @@ export const COMBO_DEALS_DATA = [
   {
     id: "combo-seamless-pack",
     label: "Seamless Pack of 3",
-    price: "₹750",
-    original: "₹950",
-    saving: "21% OFF",
+    price: "₹799",
+    original: "₹1,499",
+    saving: "47% OFF",
     href: "/p/seamless-undie-pack-of-3",
     color: "from-black/80 via-purple-950/45 to-transparent",
     image: "/images/products/seamless-undie-pack.png",
@@ -25,9 +25,9 @@ export const COMBO_DEALS_DATA = [
   {
     id: "combo-floral-pack",
     label: "3 Floral Undies",
-    price: "₹750",
-    original: "₹950",
-    saving: "21% OFF",
+    price: "₹799",
+    original: "₹1,799",
+    saving: "56% OFF",
     href: "/p/pack-of-3-floral-undie",
     color: "from-black/80 via-fuchsia-950/45 to-transparent",
     image: "/images/products/floral-undie-navy.png",
@@ -35,9 +35,9 @@ export const COMBO_DEALS_DATA = [
   {
     id: "combo-lingerie-set",
     label: "Lingerie Set",
-    price: "₹650",
-    original: "₹850",
-    saving: "24% OFF",
+    price: "₹749",
+    original: "₹1,499",
+    saving: "50% OFF",
     href: "/p/luxuria-pad-lingerie-set",
     color: "from-black/80 via-rose-950/45 to-transparent",
     image: "/images/products/lingerie-set-olive.png",
@@ -52,7 +52,7 @@ export const PLAYFUL_CATEGORIES_DATA = [
     bgGradient: "from-pink-400 via-rose-300 to-pink-200",
     href: "/bras",
     image: "/images/products/bamboo-bra-black.png",
-    badge: "FROM ₹400",
+    badge: "FROM ₹499",
   },
   {
     title: "Floral Undies",
@@ -60,7 +60,7 @@ export const PLAYFUL_CATEGORIES_DATA = [
     bgGradient: "from-sky-400 via-cyan-300 to-blue-200",
     href: "/panties",
     image: "/images/products/floral-undie-navy.png",
-    badge: "3 FOR ₹750",
+    badge: "3 FOR ₹799",
   },
   {
     title: "Lingerie Sets",
@@ -68,7 +68,7 @@ export const PLAYFUL_CATEGORIES_DATA = [
     bgGradient: "from-indigo-300 via-purple-200 to-pink-100",
     href: "/sets",
     image: "/images/products/lingerie-set-olive.png",
-    badge: "FROM ₹650",
+    badge: "FROM ₹749",
   },
   {
     title: "Camisoles",
@@ -76,7 +76,7 @@ export const PLAYFUL_CATEGORIES_DATA = [
     bgGradient: "from-amber-200 via-orange-200 to-pink-200",
     href: "/loungewear",
     image: "/images/products/camisole-black.png",
-    badge: "₹300 EACH",
+    badge: "₹250 EACH",
   },
 ];
 
@@ -109,25 +109,25 @@ export const RIBBON_EDITS_DATA = [
 export const FEATURED_COMFORT_CARDS_DATA = [
   {
     title: "BAMBOO BRAS",
-    discount: "FROM ₹400",
+    discount: "FROM ₹499",
     image: "/images/products/bamboo-bra-black.png",
     href: "/bras",
   },
   {
     title: "LOUNGE BRAS",
-    discount: "FROM ₹300",
+    discount: "FROM ₹399",
     image: "/images/products/mischief-lounge-bra-pink.png",
     href: "/bras",
   },
   {
     title: "LINGERIE SETS",
-    discount: "FROM ₹650",
+    discount: "FROM ₹749",
     image: "/images/products/lingerie-set-olive.png",
     href: "/sets",
   },
   {
     title: "CAMISOLES",
-    discount: "₹300 EACH",
+    discount: "₹250 EACH",
     image: "/images/products/camisole-pink.png",
     href: "/loungewear",
   },

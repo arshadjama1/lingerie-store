@@ -418,7 +418,7 @@ export function MobileDrawer({
                 <p className="text-xs font-bold text-neutral-900">
                   Value 3-Packs
                 </p>
-                <p className="text-[10px] text-neutral-500">From ₹750 Only</p>
+                <p className="text-[10px] text-neutral-500">From ₹799 Only</p>
               </div>
             </Link>
           </div>

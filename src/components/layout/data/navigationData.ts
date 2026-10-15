@@ -87,7 +87,7 @@ export const NAV_CATEGORY_LINKS: NavCategoryLink[] = [
         badge: "3-Pack",
       },
       {
-        label: "Bamboo Fabric Undie",
+        label: "Bamboo Fabric Undie (Pack of 2)",
         href: "/p/bamboo-fabric-undie",
         badge: "Bamboo",
       },
@@ -100,9 +100,9 @@ export const NAV_CATEGORY_LINKS: NavCategoryLink[] = [
     featured: {
       title: "Seamless Undie (Pack of 3)",
       description:
-        "Laser-cut raw edges eliminate panty lines under tight fits. Pack of 3 only @ ₹750.",
+        "Laser-cut raw edges eliminate panty lines under tight fits. Pack of 3 only @ ₹799.",
       href: "/p/seamless-undie-pack-of-3",
-      badge: "@ ₹750 Only",
+      badge: "@ ₹799 Only",
       imageUrl: "/images/products/bamboo-undie-black-1.png",
       ctaText: "Shop Pack of 3",
     },
@@ -152,7 +152,7 @@ export const NAV_CATEGORY_LINKS: NavCategoryLink[] = [
       description:
         "Buttery-soft ribbed modal that layers seamlessly under blazers or serves as cozy nightwear.",
       href: "/p/camisole",
-      badge: "From ₹300",
+      badge: "From ₹250",
       imageUrl: "/images/products/camisole-pink-1.png",
       ctaText: "Shop Camisoles",
     },
@@ -162,11 +162,11 @@ export const NAV_CATEGORY_LINKS: NavCategoryLink[] = [
 // ── Header Quick Offer Links ──────────────────────────────────────────
 export const COMBO_QUICK_LINKS = [
   {
-    label: "Seamless 3-Pack @₹750",
+    label: "Seamless 3-Pack @₹799",
     href: "/p/seamless-undie-pack-of-3",
   },
   {
-    label: "Floral 3-Pack @₹750",
+    label: "Floral 3-Pack @₹799",
     href: "/p/pack-of-3-floral-undie",
   },
   {
