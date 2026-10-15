@@ -27,6 +27,7 @@ export function FloralFabricGrid() {
                 src={card.image}
                 alt={card.name}
                 fill
+                sizes="(max-width: 640px) 112px, 144px"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
               />
             </div>

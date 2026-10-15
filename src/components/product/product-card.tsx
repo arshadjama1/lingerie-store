@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
@@ -134,16 +134,6 @@ export function ProductCard({
       (v.size || "").toLowerCase().includes("free")
     );
 
-  // Close size picker on Escape key
-  useEffect(() => {
-    if (!isSizePickerOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsSizePickerOpen(false);
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isSizePickerOpen]);
-
   // Handle Add to Cart
   const handleQuickAdd = async (variantId: string) => {
     if (addingVariantId) return;
@@ -187,7 +177,7 @@ export function ProductCard({
               src={product.primaryImage.url}
               alt={product.primaryImage.alt ?? product.name}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
               onLoad={() => setIsImageLoaded(true)}
               className={cn(
                 "object-cover transition-all duration-500 ease-out will-change-transform group-hover:scale-105",
@@ -352,6 +342,12 @@ export function ProductCard({
           {/* Floating Size Selection Panel */}
           <div
             className="animate-in fade-in-0 zoom-in-95 absolute inset-x-2 bottom-14 z-30 flex flex-col rounded-lg border border-stone-200 bg-white p-3.5 shadow-2xl duration-200"
+            // Handle Escape locally — avoids attaching a global window listener
+            // per card instance (costly on pages with many product cards).
+            tabIndex={-1}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setIsSizePickerOpen(false);
+            }}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
