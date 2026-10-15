@@ -2,7 +2,6 @@
 // is visible in the initial HTTP response without waiting for JS hydration.
 // The full interactive carousel (autoplay, arrows, dots) is lazily mounted
 // as a client island via next/dynamic after hydration.
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -10,16 +9,19 @@ import { Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { Slide } from "./HeroCarouselClient";
+import { HeroCarouselLoader } from "./HeroCarouselLoader";
 
-// Lazy-load the client carousel — only downloaded after the page hydrates.
-const HeroCarouselClient = dynamic(
-  () =>
-    import("./HeroCarouselClient").then((m) => ({
-      default: m.HeroCarouselClient,
-    })),
-  { ssr: false }
-);
+// Slide type is defined in HeroCarouselClient and shared via HeroCarouselLoader.
+interface Slide {
+  id: number;
+  badge: string;
+  title: string;
+  subtitle: string;
+  ctaText: string;
+  ctaLink: string;
+  image: string;
+  imagePosition?: string;
+}
 
 const SLIDES: Slide[] = [
   {
@@ -121,7 +123,7 @@ export function HeroCarousel() {
          * replacing the static content seamlessly without a visible flash.
          */}
         <div className="absolute inset-0">
-          <HeroCarouselClient slides={SLIDES} initialIndex={0} />
+          <HeroCarouselLoader slides={SLIDES} />
         </div>
       </div>
     </div>
