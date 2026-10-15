@@ -187,7 +187,7 @@ export function ProductCard({
               src={product.primaryImage.url}
               alt={product.primaryImage.alt ?? product.name}
               fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 33vw"
               onLoad={() => setIsImageLoaded(true)}
               className={cn(
                 "object-cover transition-all duration-500 ease-out will-change-transform group-hover:scale-105",
