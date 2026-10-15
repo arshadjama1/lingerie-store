@@ -41,11 +41,30 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Derive the Supabase project origin so we can preconnect to it.
+  // NEXT_PUBLIC_SUPABASE_URL is e.g. "https://abc123.supabase.co"
+  // All storage-bucket images are served from that same origin.
+  const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
   return (
     <html
       lang="en"
       className={`${fontSans.variable} ${fontSerif.variable} h-full antialiased`}
     >
+      <head>
+        {/*
+         * Pre-open a TCP+TLS connection to the Supabase project before any
+         * storage-bucket image requests are made. Saves 100–300 ms on first
+         * image load on slow connections.
+         */}
+        {supabaseOrigin && (
+          <link
+            rel="preconnect"
+            href={supabaseOrigin}
+            crossOrigin="anonymous"
+          />
+        )}
+      </head>
       <body className="flex min-h-full flex-col font-sans">
         <TopProgressBar />
         {children}

@@ -126,6 +126,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        // Public images in /public/images — cache for 1 day, serve stale
+        // for up to 7 days while revalidating in the background.
+        // Next.js does NOT apply strong caching to /public files because
+        // they can be replaced without a filename change.
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
     ];
   },
 
