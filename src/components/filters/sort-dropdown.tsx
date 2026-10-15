@@ -7,6 +7,8 @@ import { ArrowUpDown } from "lucide-react";
 
 import { buildQueryString } from "@/lib/utils";
 
+import { useCatalogFilter } from "./catalog-filter-context";
+
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
   { value: "popular", label: "Most Popular" },
@@ -28,6 +30,7 @@ export function SortDropdown({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { startFilterTransition } = useCatalogFilter();
 
   const currentSort = searchParams.get("sort") || defaultSort;
 
@@ -61,9 +64,13 @@ export function SortDropdown({
       }
       params.page = undefined;
 
-      router.push(`${pathname}${buildQueryString(params)}`, { scroll: false });
+      startFilterTransition(() => {
+        router.push(`${pathname}${buildQueryString(params)}`, {
+          scroll: false,
+        });
+      });
     },
-    [searchParams, pathname, router]
+    [searchParams, pathname, router, startFilterTransition]
   );
 
   return (

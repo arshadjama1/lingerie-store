@@ -3,10 +3,18 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Check, ChevronDown, ChevronUp, RotateCcw } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { buildQueryString, cn } from "@/lib/utils";
+
+import { useCatalogFilter } from "./catalog-filter-context";
 
 interface FilterSidebarProps {
   sizes: string[];
@@ -31,6 +39,7 @@ export function FilterSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { isPending, startFilterTransition } = useCatalogFilter();
 
   // Accordion state
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
@@ -58,13 +67,25 @@ export function FilterSidebar({
   const rawSizes = useMemo(() => parseList("size"), [parseList]);
   const rawColors = useMemo(() => parseList("color"), [parseList]);
 
+  // Optimistic UI state for instant click response
+  const [optimisticSizes, setOptimisticSizes] = useState<string[]>(rawSizes);
+  const [optimisticColors, setOptimisticColors] = useState<string[]>(rawColors);
+
+  useEffect(() => {
+    setOptimisticSizes(rawSizes);
+  }, [rawSizes]);
+
+  useEffect(() => {
+    setOptimisticColors(rawColors);
+  }, [rawColors]);
+
   const selectedSizesUpper = useMemo(
-    () => rawSizes.map((s) => s.toUpperCase()),
-    [rawSizes]
+    () => optimisticSizes.map((s) => s.toUpperCase()),
+    [optimisticSizes]
   );
   const selectedColorsLower = useMemo(
-    () => rawColors.map((c) => c.toLowerCase()),
-    [rawColors]
+    () => optimisticColors.map((c) => c.toLowerCase()),
+    [optimisticColors]
   );
 
   const currentPriceMin = searchParams.get("priceMin");
@@ -83,8 +104,8 @@ export function FilterSidebar({
   }, [currentPriceMax]);
 
   const hasActiveFilters =
-    rawSizes.length > 0 ||
-    rawColors.length > 0 ||
+    optimisticSizes.length > 0 ||
+    optimisticColors.length > 0 ||
     Boolean(currentPriceMin) ||
     Boolean(currentPriceMax);
 
@@ -123,26 +144,56 @@ export function FilterSidebar({
     ]
   );
 
-  // Toggle multi-select items (size, color)
+  // Toggle multi-select items (size, color) with optimistic state & transition
   const toggle = useCallback(
     (param: "size" | "color", value: string) => {
-      updateParams((p) => {
-        const current = parseList(param);
+      if (param === "size") {
         const lowerVal = value.toLowerCase();
-        const exists = current.some((item) => item.toLowerCase() === lowerVal);
-
+        const exists = optimisticSizes.some(
+          (item) => item.toLowerCase() === lowerVal
+        );
         const next = exists
-          ? current.filter((item) => item.toLowerCase() !== lowerVal)
-          : [...current, value];
+          ? optimisticSizes.filter((item) => item.toLowerCase() !== lowerVal)
+          : [...optimisticSizes, value];
+        setOptimisticSizes(next);
+      } else {
+        const lowerVal = value.toLowerCase();
+        const exists = optimisticColors.some(
+          (item) => item.toLowerCase() === lowerVal
+        );
+        const next = exists
+          ? optimisticColors.filter((item) => item.toLowerCase() !== lowerVal)
+          : [...optimisticColors, value];
+        setOptimisticColors(next);
+      }
 
-        if (next.length > 0) {
-          p[param] = Array.from(new Set(next));
-        } else {
-          delete p[param];
-        }
+      startFilterTransition(() => {
+        updateParams((p) => {
+          const current = parseList(param);
+          const lowerVal = value.toLowerCase();
+          const exists = current.some(
+            (item) => item.toLowerCase() === lowerVal
+          );
+
+          const next = exists
+            ? current.filter((item) => item.toLowerCase() !== lowerVal)
+            : [...current, value];
+
+          if (next.length > 0) {
+            p[param] = Array.from(new Set(next));
+          } else {
+            delete p[param];
+          }
+        });
       });
     },
-    [parseList, updateParams]
+    [
+      optimisticSizes,
+      optimisticColors,
+      parseList,
+      updateParams,
+      startFilterTransition,
+    ]
   );
 
   const applyPriceRange = useCallback(
@@ -155,29 +206,37 @@ export function FilterSidebar({
         return;
       }
 
-      updateParams((p) => {
-        if (!isNaN(minVal) && minVal >= 0) {
-          p.priceMin = String(minVal);
-        } else {
-          delete p.priceMin;
-        }
+      startFilterTransition(() => {
+        updateParams((p) => {
+          if (!isNaN(minVal) && minVal >= 0) {
+            p.priceMin = String(minVal);
+          } else {
+            delete p.priceMin;
+          }
 
-        if (!isNaN(maxVal) && maxVal > 0) {
-          p.priceMax = String(maxVal);
-        } else {
-          delete p.priceMax;
-        }
+          if (!isNaN(maxVal) && maxVal > 0) {
+            p.priceMax = String(maxVal);
+          } else {
+            delete p.priceMax;
+          }
+        });
       });
     },
-    [updateParams]
+    [updateParams, startFilterTransition]
   );
 
   const clearAll = useCallback(() => {
-    const p: Record<string, string | undefined> = {};
-    const sort = searchParams.get("sort");
-    if (sort) p.sort = sort;
-    router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
-  }, [pathname, router, searchParams]);
+    setOptimisticSizes([]);
+    setOptimisticColors([]);
+    setLocalMin("");
+    setLocalMax("");
+    startFilterTransition(() => {
+      const p: Record<string, string | undefined> = {};
+      const sort = searchParams.get("sort");
+      if (sort) p.sort = sort;
+      router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
+    });
+  }, [pathname, router, searchParams, startFilterTransition]);
 
   const isPresetActive = (min: number, max?: number) => {
     const minMatches =
@@ -198,9 +257,14 @@ export function FilterSidebar({
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-        <h2 className="font-serif text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
-          Refine Selection
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-serif text-xs font-black tracking-widest text-[var(--accent-plum)] uppercase">
+            Refine Selection
+          </h2>
+          {isPending && (
+            <Loader2 className="h-3 w-3 animate-spin text-[var(--accent)]" />
+          )}
+        </div>
         {hasActiveFilters && (
           <button
             type="button"
