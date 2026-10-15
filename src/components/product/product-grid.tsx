@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-import type { ProductListItem } from "@/modules/catalog";
+import type { ProductListItem } from "@/modules/catalog/types";
 
 import { ProductCard } from "./product-card";
 

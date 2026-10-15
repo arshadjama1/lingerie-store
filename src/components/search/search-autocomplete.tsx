@@ -19,7 +19,7 @@ import {
 
 import { cn, formatPrice } from "@/lib/utils";
 
-import type { SearchSuggestionsResult } from "@/modules/catalog";
+import type { SearchSuggestionsResult } from "@/modules/catalog/types";
 
 interface SearchAutocompleteProps {
   initialQuery?: string;
