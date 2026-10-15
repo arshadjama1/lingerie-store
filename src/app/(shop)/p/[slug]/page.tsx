@@ -10,7 +10,7 @@ import { ProductReviews } from "@/components/product/ProductReviews";
 import { ProductActions } from "@/components/product/product-actions";
 import { ProductGrid } from "@/components/product/product-grid";
 
-export const revalidate = 60;
+export const revalidate = 600;
 
 interface ProductPageProps {
   params: Promise<{
