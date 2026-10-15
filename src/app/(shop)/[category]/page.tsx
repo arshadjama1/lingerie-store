@@ -16,6 +16,8 @@ import { Breadcrumb } from "@/components/common/breadcrumb";
 import { EmptyState } from "@/components/common/empty-state";
 import { Pagination } from "@/components/common/pagination";
 import { ActiveFiltersBar } from "@/components/filters/active-filters-bar";
+import { CatalogFilterProvider } from "@/components/filters/catalog-filter-context";
+import { CatalogProductsContainer } from "@/components/filters/catalog-products-container";
 import { FilterSidebar } from "@/components/filters/filter-sidebar";
 import { MobileFilterDrawer } from "@/components/filters/mobile-filter-drawer";
 import { SortDropdown } from "@/components/filters/sort-dropdown";
@@ -189,83 +191,87 @@ export default async function CategoryPage({
       </div>
 
       <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-4">
-          {/* Desktop Filter Sidebar (Sticky, Hidden on mobile) */}
-          <div className="hidden lg:col-span-1 lg:block">
-            <Suspense
-              fallback={
-                <div className="h-96 w-full animate-pulse rounded-none border border-stone-200 bg-white" />
-              }
-            >
-              <FilterSidebar
-                sizes={filterData.sizes}
-                colors={filterData.colors}
-                priceRange={filterData.priceRange}
-              />
-            </Suspense>
-          </div>
-
-          {/* Catalog Products Area */}
-          <div className="lg:col-span-3">
-            {/* Top Controls Bar */}
-            <div className="mb-4 flex flex-col gap-3 rounded-none border-b border-stone-200/80 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
-              {/* Product Count & Title */}
-              <div className="flex items-center justify-between gap-3 sm:justify-start">
-                <span className="text-xs font-bold tracking-wider text-stone-700 uppercase">
-                  {productData.total}{" "}
-                  {productData.total === 1 ? "Product" : "Products"}
-                </span>
-
-                {/* Mobile Filter Drawer Trigger */}
-                <MobileFilterDrawer
+        <CatalogFilterProvider>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-8 lg:grid-cols-4">
+            {/* Desktop Filter Sidebar (Sticky, Hidden on mobile) */}
+            <div className="hidden lg:col-span-1 lg:block">
+              <Suspense
+                fallback={
+                  <div className="h-96 w-full animate-pulse rounded-none border border-stone-200 bg-white" />
+                }
+              >
+                <FilterSidebar
                   sizes={filterData.sizes}
                   colors={filterData.colors}
                   priceRange={filterData.priceRange}
-                  totalProducts={productData.total}
                 />
-              </div>
-
-              {/* Sort Dropdown */}
-              <div className="flex items-center justify-end">
-                <SortDropdown />
-              </div>
+              </Suspense>
             </div>
 
-            {/* Active Filters Pills Bar */}
-            <ActiveFiltersBar className="mb-4" />
+            {/* Catalog Products Area */}
+            <div className="lg:col-span-3">
+              {/* Top Controls Bar */}
+              <div className="mb-4 flex flex-col gap-3 rounded-none border-b border-stone-200/80 bg-white p-3.5 shadow-xs sm:flex-row sm:items-center sm:justify-between">
+                {/* Product Count & Title */}
+                <div className="flex items-center justify-between gap-3 sm:justify-start">
+                  <span className="text-xs font-bold tracking-wider text-stone-700 uppercase">
+                    {productData.total}{" "}
+                    {productData.total === 1 ? "Product" : "Products"}
+                  </span>
 
-            {/* Products Grid or Empty State */}
-            {productData.products.length === 0 ? (
-              <EmptyState
-                title="No products found"
-                description="Try clearing some filters or selecting a different category."
-                action={{ label: "Clear all filters", href: `/${slug}` }}
-              />
-            ) : (
-              <div className="space-y-10">
-                <Suspense
-                  fallback={
-                    <div className="h-96 w-full animate-pulse rounded-none bg-stone-100" />
-                  }
-                >
-                  <ProductGrid
-                    products={productData.products}
-                    priorityCount={4}
-                    className="grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3"
+                  {/* Mobile Filter Drawer Trigger */}
+                  <MobileFilterDrawer
+                    sizes={filterData.sizes}
+                    colors={filterData.colors}
+                    priceRange={filterData.priceRange}
+                    totalProducts={productData.total}
                   />
-                </Suspense>
+                </div>
 
-                {/* Pagination */}
-                <Pagination
-                  currentPage={page}
-                  totalPages={productData.totalPages}
-                  buildUrl={buildPageUrl}
-                  className="border-t border-stone-200/80 pt-8"
-                />
+                {/* Sort Dropdown */}
+                <div className="flex items-center justify-end">
+                  <SortDropdown />
+                </div>
               </div>
-            )}
+
+              {/* Active Filters Pills Bar */}
+              <ActiveFiltersBar className="mb-4" />
+
+              {/* Products Grid or Empty State */}
+              <CatalogProductsContainer>
+                {productData.products.length === 0 ? (
+                  <EmptyState
+                    title="No products found"
+                    description="Try clearing some filters or selecting a different category."
+                    action={{ label: "Clear all filters", href: `/${slug}` }}
+                  />
+                ) : (
+                  <div className="space-y-10">
+                    <Suspense
+                      fallback={
+                        <div className="h-96 w-full animate-pulse rounded-none bg-stone-100" />
+                      }
+                    >
+                      <ProductGrid
+                        products={productData.products}
+                        priorityCount={4}
+                        className="grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 md:grid-cols-3"
+                      />
+                    </Suspense>
+
+                    {/* Pagination */}
+                    <Pagination
+                      currentPage={page}
+                      totalPages={productData.totalPages}
+                      buildUrl={buildPageUrl}
+                      className="border-t border-stone-200/80 pt-8"
+                    />
+                  </div>
+                )}
+              </CatalogProductsContainer>
+            </div>
           </div>
-        </div>
+        </CatalogFilterProvider>
       </div>
     </div>
   );

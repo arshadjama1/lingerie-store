@@ -138,29 +138,37 @@ export default async function SalePage() {
 
               {/* Product Visual Pair */}
               <div className="my-6 grid grid-cols-2 gap-3 rounded-xl bg-[var(--surface)] p-3.5">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white p-2">
+                <Link
+                  href="/p/bamboo-fabric-bra"
+                  className="group/item relative aspect-square overflow-hidden rounded-lg bg-white p-2 transition hover:ring-2 hover:ring-[var(--accent)]"
+                  title="View Bamboo Fabric Bra"
+                >
                   <Image
                     src="/images/products/bamboo-bra-black.png"
                     alt="Bamboo Fabric Bra"
                     fill
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                    className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-105"
                   />
                   <span className="absolute bottom-2 left-2 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-bold text-white">
                     Bra · ₹499
                   </span>
-                </div>
+                </Link>
 
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white p-2">
+                <Link
+                  href="/p/bamboo-fabric-undie"
+                  className="group/item relative aspect-square overflow-hidden rounded-lg bg-white p-2 transition hover:ring-2 hover:ring-[var(--accent)]"
+                  title="View Bamboo Undie Pack"
+                >
                   <Image
                     src="/images/products/bamboo-undie-black.png"
                     alt="Bamboo Undie Pack"
                     fill
-                    className="object-contain p-2 transition-transform duration-500 group-hover:scale-105"
+                    className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-105"
                   />
                   <span className="absolute bottom-2 left-2 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-bold text-white">
                     Pack of 2 · ₹699
                   </span>
-                </div>
+                </Link>
               </div>
 
               {/* Price Calculation */}

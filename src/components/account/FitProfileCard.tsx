@@ -25,7 +25,7 @@ export function FitProfileCard() {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="font-serif text-lg font-bold text-neutral-900">
-                My Sizing & FitCode™
+                My Sizing & FitCode
               </h3>
               {hasCalculated && (
                 <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
@@ -121,7 +121,7 @@ export function FitProfileCard() {
           <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
             <div>
               <p className="text-xs font-bold text-neutral-800">
-                You haven't saved your FitCode™ yet
+                You haven't saved your FitCode yet
               </p>
               <p className="text-[11px] text-neutral-500">
                 Take our 60-second guided quiz to calculate your perfect band &

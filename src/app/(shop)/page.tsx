@@ -34,7 +34,7 @@ export default async function HomePage() {
       {/* 5. Curated Spotlight Banners */}
       <CuratedSpotlightBanners />
 
-      {/* 6. FitCode™ Bra Size Finder Banner */}
+      {/* 6. FitCode Bra Size Finder Banner */}
       <FitCodeCalculatorBanner />
 
       {/* 7. Brand Story & Stats */}

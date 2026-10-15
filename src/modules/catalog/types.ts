@@ -5,7 +5,7 @@ import type {
   productImages,
   productVariants,
   products,
-} from "@/db";
+} from "@/db/schema";
 import type { InferSelectModel } from "drizzle-orm";
 
 // ── Raw DB row types (internal to queries.ts) ─────────────────────────
@@ -135,3 +135,5 @@ export type SearchSuggestionsResult = {
   products: ProductListItem[];
   totalMatches: number;
 };
+
+export { SIZE_ORDER, sortSizesNaturally } from "./constants";

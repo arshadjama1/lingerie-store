@@ -7,6 +7,8 @@ import { RotateCcw, X } from "lucide-react";
 
 import { buildQueryString } from "@/lib/utils";
 
+import { useCatalogFilter } from "./catalog-filter-context";
+
 interface ActiveFiltersBarProps {
   className?: string;
 }
@@ -15,6 +17,7 @@ export function ActiveFiltersBar({ className }: ActiveFiltersBarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { startFilterTransition } = useCatalogFilter();
 
   const parseList = useCallback(
     (param: string): string[] => {
@@ -69,7 +72,9 @@ export function ActiveFiltersBar({ className }: ActiveFiltersBarProps) {
       }
 
       p.page = undefined;
-      router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
+      startFilterTransition(() => {
+        router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
+      });
     },
     [
       searchParams,
@@ -78,15 +83,18 @@ export function ActiveFiltersBar({ className }: ActiveFiltersBarProps) {
       parseList,
       currentPriceMin,
       currentPriceMax,
+      startFilterTransition,
     ]
   );
 
   const clearAll = useCallback(() => {
-    const p: Record<string, string | undefined> = {};
-    const sort = searchParams.get("sort");
-    if (sort) p.sort = sort;
-    router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
-  }, [pathname, router, searchParams]);
+    startFilterTransition(() => {
+      const p: Record<string, string | undefined> = {};
+      const sort = searchParams.get("sort");
+      if (sort) p.sort = sort;
+      router.push(`${pathname}${buildQueryString(p)}`, { scroll: false });
+    });
+  }, [pathname, router, searchParams, startFilterTransition]);
 
   if (!hasActiveFilters) return null;
 

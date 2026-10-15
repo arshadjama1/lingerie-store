@@ -184,7 +184,7 @@ export const FOOTER_LINK_GROUPS = {
     { label: "Loungewear & Camisoles", href: "/loungewear" },
   ],
   "Fit & Care": [
-    { label: "Bra Size Calculator & FitCode™", href: "/size-calculator" },
+    { label: "Bra Size Calculator & FitCode", href: "/size-calculator" },
     { label: "Size & Measurement Guide", href: "/size-calculator" },
     { label: "Fit Troubleshooter", href: "/size-calculator" },
     { label: "Find Your Style", href: "/size-calculator" },

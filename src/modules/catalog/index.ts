@@ -133,6 +133,7 @@ export async function getCatalogSearchSuggestions(
 }
 
 export { getProductIdByVariantId };
+export { SIZE_ORDER, sortSizesNaturally } from "./constants";
 
 // ── Re-exports all types so consumers only need one import ───────────
 export type {

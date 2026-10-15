@@ -5,7 +5,9 @@ import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
-  const isPrelaunch = process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
+  const isPrelaunch =
+    process.env.NODE_ENV !== "development" &&
+    process.env.NEXT_PUBLIC_PRELAUNCH_MODE === "true";
   const bypassSecret = process.env.PRELAUNCH_BYPASS_KEY || "linge2026";
 
   // 1. Team bypass handler: ?preview=exit to exit, ?preview=<secret> to unlock store
