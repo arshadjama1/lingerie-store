@@ -1,9 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
-import { CheckCircle2, Ruler, Sparkles, Table, X } from "lucide-react";
+import {
+  CheckCircle2,
+  ExternalLink,
+  Ruler,
+  Sparkles,
+  Table,
+  X,
+} from "lucide-react";
 
+import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 import { SizeCalculatorWizard } from "@/components/size-calculator/SizeCalculatorWizard";
@@ -127,18 +137,39 @@ export function SizeGuideModal({
     "calculator"
   );
   const [unit, setUnit] = useState<Unit>("in");
+  const [isMounted, setIsMounted] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-  return (
+  useEffect(() => {
+    if (!isOpen) return;
+    lockScroll();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      unlockScroll();
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !isMounted) return null;
+
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs"
+      aria-label="Size Finder & Measurement Guide"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs select-none"
       onClick={onClose}
     >
       <div
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-none border border-pink-100 bg-white p-6 shadow-2xl sm:p-8"
+        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-none border border-pink-100 bg-white p-6 shadow-2xl select-text sm:p-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -147,7 +178,7 @@ export function SizeGuideModal({
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 bg-pink-50 px-2.5 py-0.5 text-[10px] font-black tracking-widest text-[var(--accent)] uppercase">
                 <Sparkles className="h-3 w-3" />
-                FitCode™ Precision
+                FitCode Precision
               </span>
               <span className="text-xs font-medium text-gray-500">
                 {categoryName}
@@ -157,13 +188,25 @@ export function SizeGuideModal({
               Size Finder & Measurement Guide
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="cursor-pointer rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
-            aria-label="Close modal"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/size-calculator"
+              onClick={onClose}
+              className="flex items-center gap-1 rounded-none border border-pink-200 bg-pink-50/50 px-2.5 py-1.5 text-[11px] font-bold text-[var(--accent)] transition hover:bg-[var(--accent)] hover:text-white"
+              title="Open full page size calculator"
+            >
+              <ExternalLink className="h-3 w-3" />
+              <span className="hidden sm:inline">Full Calculator Page</span>
+            </Link>
+            <button
+              onClick={onClose}
+              className="cursor-pointer rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900"
+              aria-label="Close modal"
+              title="Close (Esc)"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tab switcher */}
@@ -355,6 +398,7 @@ export function SizeGuideModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
