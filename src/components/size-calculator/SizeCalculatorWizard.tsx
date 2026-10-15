@@ -259,7 +259,7 @@ export function SizeCalculatorWizard({
               </span>
               <div>
                 <span className="text-[10px] font-bold tracking-wider text-gray-500 uppercase">
-                  Estimated FitCode™
+                  Estimated FitCode
                 </span>
                 <div className="font-serif text-sm font-black text-gray-900">
                   {livePreview ? (

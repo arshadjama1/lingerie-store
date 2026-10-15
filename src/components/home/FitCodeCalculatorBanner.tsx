@@ -10,7 +10,7 @@ export function FitCodeCalculatorBanner() {
           <div className="max-w-2xl space-y-4 text-center lg:text-left">
             <div className="inline-flex items-center gap-2 rounded-none border border-pink-400/25 bg-pink-500/25 px-3 py-1 text-xs font-bold text-pink-200">
               <Sparkles className="h-3.5 w-3.5 text-pink-300" />
-              FitCode™ Bra Size Calculator
+              FitCode Bra Size Calculator
             </div>
             <h2 className="font-serif text-2xl leading-tight font-black tracking-tight text-white sm:text-4xl">
               80% of Women Wear

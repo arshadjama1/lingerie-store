@@ -390,7 +390,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
                 onClick={() => setSizeGuideOpen(true)}
                 className="flex cursor-pointer items-center gap-1 text-xs font-bold tracking-wider text-[var(--accent)] uppercase hover:underline"
               >
-                <Sparkles className="h-3.5 w-3.5" /> Size Guide & FitCode™
+                <Sparkles className="h-3.5 w-3.5" /> Size Guide & FitCode
               </button>
             </div>
 
@@ -399,7 +399,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
               <div className="flex items-center justify-between rounded-none border border-pink-200 bg-pink-50/60 px-3 py-1.5 text-xs">
                 <span className="flex items-center gap-1.5 font-bold text-gray-800">
                   <Sparkles className="h-3.5 w-3.5 text-[var(--accent)]" />
-                  Your FitCode™ size:{" "}
+                  Your FitCode size:{" "}
                   <strong className="text-[var(--accent)]">
                     {recommendedSize}
                   </strong>
@@ -593,7 +593,7 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
           <div className="flex items-center gap-2.5 font-medium">
             <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
             <span>
-              <strong>Hygiene Assured</strong> &amp; 48-hr damage replacement
+              <strong>Hygiene Assured </strong> &amp; 48-hr damage replacement
             </span>
           </div>
           <div className="flex items-center gap-2.5 font-medium">

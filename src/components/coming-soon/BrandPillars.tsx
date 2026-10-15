@@ -3,7 +3,7 @@ import { HeartHandshake, Package, Scissors, ShieldCheck } from "lucide-react";
 const PILLARS = [
   {
     icon: Scissors,
-    title: "FitCode™ Precision",
+    title: "FitCode Precision",
     description:
       "Every silhouette is engineered with our proprietary ergonomic sizing matrix, eliminating band dig and shoulder strain.",
   },

@@ -34,7 +34,7 @@ export function SizeResultCard({
         <div className="flex flex-col items-center text-center">
           <span className="inline-flex items-center gap-1.5 bg-[var(--accent)] px-3 py-1 text-[10px] font-black tracking-widest text-white uppercase">
             <Sparkles className="h-3 w-3" />
-            Your FitCode™ Precision Match
+            Your FitCode Precision Match
           </span>
 
           <div className="mt-4 flex flex-col items-center sm:flex-row sm:gap-6">

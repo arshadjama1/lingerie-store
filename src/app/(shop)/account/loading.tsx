@@ -6,7 +6,7 @@ export default function AccountLoading() {
   return (
     <AccountShell
       title="Account Dashboard"
-      subtitle="Track active shipments, manage personal details, and view your custom FitCode™ sizing."
+      subtitle="Track active shipments, manage personal details, and view your custom FitCode sizing."
     >
       <div className="space-y-6">
         {/* Member Overview Card Skeleton */}

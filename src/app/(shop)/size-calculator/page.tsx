@@ -9,9 +9,9 @@ import { HowToMeasureGuide } from "@/components/size-calculator/HowToMeasureGuid
 import { SizeCalculatorWizard } from "@/components/size-calculator/SizeCalculatorWizard";
 
 export const metadata: Metadata = {
-  title: "Bra Size Calculator & FitCode™ | Surekh Intimates",
+  title: "Bra Size Calculator & FitCode | Surekh Intimates",
   description:
-    "Find your precise bra size, sister sizes, and style recommendations in seconds with Surekh's FitCode™ Bra Size Calculator.",
+    "Find your precise bra size, sister sizes, and style recommendations in seconds with Surekh's FitCode Bra Size Calculator.",
 };
 
 export default function SizeCalculatorPage() {
@@ -22,7 +22,7 @@ export default function SizeCalculatorPage() {
         <div className="mx-auto max-w-4xl text-center">
           <div className="inline-flex items-center gap-1.5 rounded-none border border-pink-400/30 bg-pink-500/10 px-3 py-1 text-[10px] font-black tracking-widest text-pink-300 uppercase">
             <Sparkles className="h-3 w-3 text-pink-400" />
-            FitCode™ Precision Sizing
+            FitCode Precision Sizing
           </div>
 
           <h1 className="mt-4 font-serif text-3xl font-black tracking-tight text-white sm:text-5xl">

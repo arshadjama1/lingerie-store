@@ -21,7 +21,7 @@ export function FitTroubleshooter() {
       <div className="text-center sm:text-left">
         <div className="flex items-center gap-1.5 text-[11px] font-black tracking-widest text-[var(--accent)] uppercase">
           <Wrench className="h-3.5 w-3.5" />
-          FitCode™ Diagnostic
+          FitCode Diagnostic
         </div>
         <h3 className="mt-1 font-serif text-lg font-bold text-gray-900 sm:text-xl">
           Bra Fit Troubleshooter
