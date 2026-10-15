@@ -24,6 +24,12 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Static images cache
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
 # Rewrite /sitemap.xml to the API route handler (status 200 = rewrite, not redirect)
 [[redirects]]
   from = "/sitemap.xml"
