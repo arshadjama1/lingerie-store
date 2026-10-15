@@ -65,3 +65,86 @@ export function toNumber(value: string | number | null | undefined): number {
   if (value === null || value === undefined) return 0;
   return typeof value === "number" ? value : parseFloat(value);
 }
+
+export interface ImageLike {
+  url: string;
+  isPrimary?: boolean | null;
+  alt?: string | null;
+  variantId?: string | null;
+}
+
+export interface VariantLike {
+  id?: string;
+  color?: string | null;
+  images?: ImageLike[] | null;
+}
+
+export interface ProductLike {
+  images?: ImageLike[] | null;
+}
+
+/**
+ * Resolves the most accurate image URL for a given variant and product.
+ * Prioritizes:
+ * 1. Variant's direct images (primary first, then first image)
+ * 2. Product images tagged with this variantId (primary first, then first)
+ * 3. Product images matching the variant's color name in alt text or URL
+ * 4. Product-level primary image (not tied to a different variant)
+ * 5. First available product image
+ * 6. Fallback placeholder
+ */
+export function resolveVariantImageUrl(
+  variant?: VariantLike | null,
+  product?: ProductLike | null,
+  fallback = "/placeholder.jpg"
+): string {
+  if (!variant && !product) return fallback;
+
+  // 1. Variant's own images
+  if (variant?.images && variant.images.length > 0) {
+    const primary = variant.images.find((img) => img.isPrimary)?.url;
+    if (primary) return primary;
+    if (variant.images[0]?.url) return variant.images[0].url;
+  }
+
+  const productImages = product?.images ?? [];
+
+  // 2. Product images attached to this variant by variantId
+  if (variant?.id && productImages.length > 0) {
+    const variantMatches = productImages.filter(
+      (img) => img.variantId === variant.id
+    );
+    if (variantMatches.length > 0) {
+      const primary = variantMatches.find((img) => img.isPrimary)?.url;
+      if (primary) return primary;
+      if (variantMatches[0]?.url) return variantMatches[0].url;
+    }
+  }
+
+  // 3. Match by variant color in alt or url (case-insensitive)
+  if (variant?.color && productImages.length > 0) {
+    const colorLower = variant.color.toLowerCase().trim();
+    const colorMatches = productImages.filter((img) => {
+      const altLower = (img.alt || "").toLowerCase();
+      const urlLower = (img.url || "").toLowerCase();
+      return altLower.includes(colorLower) || urlLower.includes(colorLower);
+    });
+
+    if (colorMatches.length > 0) {
+      const primary = colorMatches.find((img) => img.isPrimary)?.url;
+      if (primary) return primary;
+      if (colorMatches[0]?.url) return colorMatches[0].url;
+    }
+  }
+
+  // 4. Product primary image (preferably not attached to a different variant)
+  if (productImages.length > 0) {
+    const productPrimary =
+      productImages.find((img) => img.isPrimary && !img.variantId)?.url ||
+      productImages.find((img) => img.isPrimary)?.url ||
+      productImages[0]?.url;
+    if (productPrimary) return productPrimary;
+  }
+
+  return fallback;
+}

@@ -28,6 +28,9 @@ async function fetchCartRecord(lookup: {
         with: {
           variant: {
             with: {
+              images: {
+                orderBy: (img, { asc }) => [asc(img.sortOrder)],
+              },
               product: {
                 with: {
                   images: {

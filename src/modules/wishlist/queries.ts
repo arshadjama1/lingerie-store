@@ -89,7 +89,10 @@ export async function getUserWishlist(
     const colorImage = colorLower
       ? prod.images?.find((img) => {
           if (img.variantId && img.variantId === item.variantId) return true;
-          return (img.alt || "").toLowerCase().includes(colorLower);
+          return (
+            (img.alt || "").toLowerCase().includes(colorLower) ||
+            (img.url || "").toLowerCase().includes(colorLower)
+          );
         })
       : null;
 

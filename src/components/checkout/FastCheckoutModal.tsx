@@ -29,7 +29,7 @@ import {
 import { toast } from "sonner";
 
 import { createClient } from "@/lib/supabase/client";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, resolveVariantImageUrl } from "@/lib/utils";
 
 import { SurekhLogo } from "@/components/common/SurekhLogo";
 
@@ -1486,9 +1486,16 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                             className="flex items-center gap-3 py-2.5"
                           >
                             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-neutral-100 bg-neutral-50">
-                              {item.variant.product.images?.[0]?.url ? (
+                              {resolveVariantImageUrl(
+                                item.variant,
+                                item.variant.product,
+                                ""
+                              ) ? (
                                 <Image
-                                  src={item.variant.product.images[0].url}
+                                  src={resolveVariantImageUrl(
+                                    item.variant,
+                                    item.variant.product
+                                  )}
                                   alt={item.variant.product.name}
                                   fill
                                   className="object-cover"
@@ -1504,6 +1511,8 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                                 {item.variant.product.name}
                               </h4>
                               <p className="text-[11px] text-neutral-500">
+                                {item.variant.color &&
+                                  `${item.variant.color} • `}
                                 Size: {item.variant.size || "Free"} • Qty:{" "}
                                 {item.quantity}
                               </p>

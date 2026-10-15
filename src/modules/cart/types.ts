@@ -8,6 +8,7 @@ import type {
 
 export interface CartItemWithVariant extends CartItem {
   variant: ProductVariant & {
+    images?: ProductImage[];
     product: Product & {
       images: ProductImage[];
     };

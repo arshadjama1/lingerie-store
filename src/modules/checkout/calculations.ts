@@ -1,3 +1,5 @@
+import { resolveVariantImageUrl } from "@/lib/utils";
+
 import type { CartItemWithVariant } from "@/modules/cart/types";
 
 import type { CheckoutLineItem, CheckoutTotals } from "./types";
@@ -13,8 +15,7 @@ export function calculateLineItem(item: CartItemWithVariant): CheckoutLineItem {
   const total = Number(lineSubtotal.toFixed(2));
 
   const product = item.variant?.product;
-  const primaryImg =
-    product?.images?.find((img) => img.isPrimary) || product?.images?.[0];
+  const imageUrl = resolveVariantImageUrl(item.variant, product, "");
 
   return {
     variantId: item.variantId,
@@ -27,7 +28,7 @@ export function calculateLineItem(item: CartItemWithVariant): CheckoutLineItem {
       sku: item.variant?.sku || "SKU",
       size: item.variant?.size || undefined,
       color: item.variant?.color || undefined,
-      imageUrl: primaryImg?.url || undefined,
+      imageUrl: imageUrl || undefined,
       hsnCode: product?.hsnCode || undefined,
     },
   };

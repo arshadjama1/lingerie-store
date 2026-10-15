@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCartStore } from "@/stores/useCartStore";
 import { Loader2, Minus, Plus, Trash2 } from "lucide-react";
 
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, resolveVariantImageUrl } from "@/lib/utils";
 
 import type { CartItemWithVariant } from "@/modules/cart/types";
 
@@ -22,10 +22,7 @@ export function CartItemCard({ item, onCloseDrawer }: CartItemCardProps) {
   const variant = item.variant;
   const product = variant?.product;
 
-  const primaryImage =
-    product?.images?.find((img) => img.isPrimary)?.url ||
-    product?.images?.[0]?.url ||
-    "/placeholder.jpg";
+  const primaryImage = resolveVariantImageUrl(variant, product);
 
   const itemPrice = Number(variant?.price ?? item.priceAtAddition ?? 0);
   const mrp = Number(variant?.mrp ?? itemPrice);
