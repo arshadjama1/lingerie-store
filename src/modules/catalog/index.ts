@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { z } from "zod";
 
 import {
@@ -68,13 +70,16 @@ const searchProductsSchema = z.object({
 });
 
 // ── Public Module API ────────────────────────────────────────────────
-export async function getCatalogCategories(): Promise<CategoryNode[]> {
+// React.cache memoises each unique argument set for the lifetime of one
+// server request. generateMetadata() and the page's default export both
+// call these functions — with cache() the DB query runs only once.
+export const getCatalogCategories = cache(async (): Promise<CategoryNode[]> => {
   return listCategories();
-}
+});
 
-export async function getCatalogCategoryBySlug(slug: string) {
+export const getCatalogCategoryBySlug = cache(async (slug: string) => {
   return getCategoryBySlug(slug);
-}
+});
 
 export async function getCatalogProducts(
   params: unknown
@@ -83,12 +88,12 @@ export async function getCatalogProducts(
   return listProducts(validated);
 }
 
-export async function getCatalogProduct(
-  slug: string
-): Promise<ProductDetail | null> {
-  const validatedSlug = z.string().trim().min(1).parse(slug);
-  return getProductBySlug(validatedSlug);
-}
+export const getCatalogProduct = cache(
+  async (slug: string): Promise<ProductDetail | null> => {
+    const validatedSlug = z.string().trim().min(1).parse(slug);
+    return getProductBySlug(validatedSlug);
+  }
+);
 
 export async function getCatalogFeatured(
   limit?: number
@@ -108,10 +113,10 @@ export async function getCatalogRelated(
   return getRelatedProducts(validatedId, validatedPath, validatedLimit);
 }
 
-export async function getCatalogFilters(categoryPath?: string) {
+export const getCatalogFilters = cache(async (categoryPath?: string) => {
   const validatedPath = z.string().optional().parse(categoryPath);
   return getAvailableFilters(validatedPath);
-}
+});
 
 export async function searchCatalog(
   params: unknown
