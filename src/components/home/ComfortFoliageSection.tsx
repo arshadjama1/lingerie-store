@@ -38,6 +38,7 @@ export function ComfortFoliageSection() {
                   src={card.image}
                   alt={card.title}
                   fill
+                  sizes="(max-width: 640px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <span className="absolute top-2 left-2 rounded-none bg-emerald-500 px-2 py-0.5 text-[10px] font-black text-white uppercase">

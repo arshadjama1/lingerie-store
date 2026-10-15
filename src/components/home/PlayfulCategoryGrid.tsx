@@ -38,6 +38,7 @@ export function PlayfulCategoryGrid() {
                 src={card.image}
                 alt={card.title}
                 fill
+                sizes="(max-width: 640px) 128px, 160px"
                 className="object-cover"
               />
             </div>

@@ -36,6 +36,7 @@ export function RibbonEditsGrid() {
               src={card.image}
               alt={card.ribbon}
               fill
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
