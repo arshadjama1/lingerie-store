@@ -44,6 +44,11 @@ export interface OrderStatusHistoryEntry {
   status: OrderStatus;
   note: string | null;
   createdAt: Date;
+  changedBy?: {
+    id: string;
+    email: string | null;
+    name?: string | null;
+  } | null;
 }
 
 export interface OrderPayment {

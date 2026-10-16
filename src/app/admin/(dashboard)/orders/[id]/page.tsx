@@ -10,6 +10,7 @@ import { getAdminOrderDetails } from "@/modules/admin/orders";
 import { AdminCollectCodButton } from "@/components/admin/AdminCollectCodButton";
 import { AdminShipForm } from "@/components/admin/AdminShipForm";
 import { AdminStatusForm } from "@/components/admin/AdminStatusForm";
+import { OrderStatusPipeline } from "@/components/admin/orders/OrderStatusPipeline";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { StatusTimeline } from "@/components/orders/StatusTimeline";
 
@@ -34,6 +35,14 @@ export default async function AdminOrderDetailPage({
 
   const order = await getAdminOrderDetails(id).catch(() => notFound());
 
+  const activeHistory = order.statusHistory.filter(
+    (h) => h.status !== order.status && h.status !== "refunded"
+  );
+  const previousStatus =
+    activeHistory.length > 0
+      ? activeHistory[activeHistory.length - 1].status
+      : undefined;
+
   const addr = order.shippingAddress;
 
   return (
@@ -54,6 +63,9 @@ export default async function AdminOrderDetailPage({
         <OrderStatusBadge status={order.status} />
       </div>
 
+      {/* Visual Fulfillment Pipeline */}
+      <OrderStatusPipeline order={order} />
+
       {/* Two-column layout */}
       <div className="grid gap-6 lg:grid-cols-5">
         {/* LEFT — 60% */}
@@ -61,9 +73,9 @@ export default async function AdminOrderDetailPage({
           {/* Status timeline */}
           <section className="rounded-none border border-gray-200 bg-white p-6">
             <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
-              Status Timeline
+              Status Timeline & Audit Log
             </h2>
-            <StatusTimeline entries={order.statusHistory} />
+            <StatusTimeline entries={order.statusHistory} showActor={true} />
           </section>
 
           {/* Items */}
@@ -186,12 +198,16 @@ export default async function AdminOrderDetailPage({
                   </dd>
                 </div>
               </dl>
-              {order.payment.method === "cod" &&
-                order.payment.status !== "captured" && (
-                  <div className="mt-4 border-t border-gray-100 pt-4">
-                    <AdminCollectCodButton orderId={order.id} />
-                  </div>
-                )}
+              {order.payment.method === "cod" && (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <AdminCollectCodButton
+                    orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    amount={formatPrice(order.payment.amount)}
+                    isCollected={order.payment.status === "captured"}
+                  />
+                </div>
+              )}
             </section>
           )}
 
@@ -240,7 +256,14 @@ export default async function AdminOrderDetailPage({
             <h2 className="mb-4 text-sm font-semibold tracking-wide text-gray-500 uppercase">
               Update Status
             </h2>
-            <AdminStatusForm orderId={order.id} currentStatus={order.status} />
+            <AdminStatusForm
+              orderId={order.id}
+              currentStatus={order.status}
+              orderNumber={order.orderNumber}
+              currentAwb={order.awbNumber}
+              totalAmount={formatPrice(order.total)}
+              previousStatus={previousStatus}
+            />
           </section>
 
           {/* DTDC Shipment */}
