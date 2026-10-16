@@ -54,7 +54,8 @@ export function calculateCheckoutTotals(
       (item) => item.snapshot?.sku?.startsWith("DEMO-") || item.unitPrice <= 1
     );
 
-  const shippingAmount = subtotal >= 1299 || isDemoOrder ? 0 : 99;
+  // Free shipping on orders ₹500 and above; ₹49 shipping fee below ₹500 (waived for demo orders)
+  const shippingAmount = subtotal >= 500 || isDemoOrder ? 0 : 49;
 
   const total = Number(
     Math.max(0, subtotal - discountAmount + shippingAmount + codFee).toFixed(2)

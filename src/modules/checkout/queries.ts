@@ -23,12 +23,8 @@ import type {
   HydratedCheckoutSession,
 } from "./types";
 
-/** ₹49 Cash-on-Delivery surcharge. */
-export const COD_FEE = 49;
-/** Minimum subtotal (after coupon) for COD to be available. */
-export const COD_MIN_SUBTOTAL = 499;
-/** Maximum subtotal (after coupon) for COD to be available. */
-export const COD_MAX_SUBTOTAL = 4999;
+/** ₹50 Cash-on-Delivery surcharge. */
+export const COD_FEE = 50;
 
 export async function createCheckoutSession(
   input: CreateCheckoutSessionInput
@@ -62,24 +58,9 @@ export async function createCheckoutSession(
     discountAmount = couponResult.discountAmount;
   }
 
-  // Determine COD fee: only for COD orders within the eligible range
-  const subtotalAfterDiscount =
-    lineItems.reduce((s, i) => s + i.unitPrice * i.quantity, 0) -
-    discountAmount;
-
+  // Determine COD fee: ₹50 for COD orders regardless of price
   let codFee = 0;
   if (paymentMethod === "cod") {
-    if (subtotalAfterDiscount < COD_MIN_SUBTOTAL) {
-      throw new ValidationError(
-        `Cash on Delivery is available for orders above ₹${COD_MIN_SUBTOTAL}`
-      );
-    }
-    if (subtotalAfterDiscount > COD_MAX_SUBTOTAL) {
-      throw new ValidationError(
-        `Cash on Delivery is available for orders up to ₹${COD_MAX_SUBTOTAL}`
-      );
-    }
-
     // Verify destination pincode is COD-serviceable via DTDC
     if (address.pincode && /^\d{6}$/.test(address.pincode)) {
       const serviceability = await checkDtdcPincodeServiceability(

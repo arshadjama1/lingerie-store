@@ -107,9 +107,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
 
   // COD eligibility constants (mirrors server-side values in checkout/queries.ts)
-  const COD_FEE = 49;
-  const COD_MIN_SUBTOTAL = 499;
-  const COD_MAX_SUBTOTAL = 4999;
+  const COD_FEE = 50;
 
   // Inline Auth (Phone OTP & Email Magic Link)
   const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
@@ -349,7 +347,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Net subtotal used for COD eligibility check
   const netSubtotal = Math.max(0, rawSubtotal - couponDiscount);
 
-  // Shipping (Free above ₹1,299, promo code, or ₹1 demo test items)
+  // Shipping (Free above ₹500, promo code, or ₹1 demo test items)
   const isDemoOrder =
     items.length > 0 &&
     items.every(
@@ -358,12 +356,11 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
         Number(item.variant?.price ?? 0) <= 1
     );
   const isFreeShipping =
-    rawSubtotal >= 1299 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
-  const shippingFee = isFreeShipping ? 0 : 99;
+    rawSubtotal >= 500 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
+  const shippingFee = isFreeShipping ? 0 : 49;
 
-  // COD eligibility: cart thresholds + DTDC pincode serviceability
-  const isCartValueCodEligible =
-    netSubtotal >= COD_MIN_SUBTOTAL && netSubtotal <= COD_MAX_SUBTOTAL;
+  // COD eligibility: cart has items + DTDC pincode serviceability (available regardless of price)
+  const isCartValueCodEligible = netSubtotal > 0;
   const isPincodeCodEligible = isPincodeCodSupported !== false;
   const isCodEligible = isCartValueCodEligible && isPincodeCodEligible;
   const codFeeAmount = paymentMethod === "cod" && isCodEligible ? COD_FEE : 0;
@@ -966,7 +963,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                             <span className="font-semibold">
                               {isFreeShipping
                                 ? "Free Shipping: FREE"
-                                : `Discreet Delivery: ₹${shippingFee}`}
+                                : `Shipping Fee: ₹${shippingFee}`}
                             </span>
                           </div>
                           <span className="text-[11px] text-neutral-400">
@@ -1403,18 +1400,11 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                         </p>
                       ) : isCodEligible ? (
                         <p className="text-[11px] text-neutral-500">
-                          Pay ₹{finalPayable.toLocaleString("en-IN")} when your
-                          order arrives
-                        </p>
-                      ) : netSubtotal < COD_MIN_SUBTOTAL ? (
-                        <p className="text-[11px] text-amber-700">
-                          Available for orders above ₹
-                          {COD_MIN_SUBTOTAL.toLocaleString("en-IN")}
+                          Pay when your order arrives
                         </p>
                       ) : (
                         <p className="text-[11px] text-amber-700">
-                          Available for orders up to ₹
-                          {COD_MAX_SUBTOTAL.toLocaleString("en-IN")}
+                          Cash on Delivery is currently unavailable
                         </p>
                       )}
                     </div>
@@ -1542,7 +1532,7 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
                           </div>
                         )}
                         <div className="flex justify-between">
-                          <span>Discreet Delivery</span>
+                          <span>Shipping Fee</span>
                           {isFreeShipping ? (
                             <span className="font-semibold text-emerald-600">
                               FREE
