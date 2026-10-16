@@ -93,7 +93,9 @@ export async function createDtdcShipment(
     is_risk_surcharge_applicable: false,
     cod_amount: isCod ? String(Math.round(Number(order.total))) : "",
     cod_collection_mode: isCod ? "CASH" : "",
-    cod_favor_of: isCod ? serverEnv.DTDC_WAREHOUSE_NAME || "" : "",
+    // DTDC requires "cod_favor_of" to be blank when COD collection mode is CASH.
+    // "In Favor Of" is only used when collecting payment via Cheque / Demand Draft.
+    cod_favor_of: "",
     origin_details: {
       name: serverEnv.DTDC_WAREHOUSE_NAME,
       phone: serverEnv.DTDC_WAREHOUSE_PHONE,
