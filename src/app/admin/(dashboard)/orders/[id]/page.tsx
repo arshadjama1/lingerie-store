@@ -202,6 +202,8 @@ export default async function AdminOrderDetailPage({
                 <div className="mt-4 border-t border-gray-100 pt-4">
                   <AdminCollectCodButton
                     orderId={order.id}
+                    orderNumber={order.orderNumber}
+                    amount={formatPrice(order.payment.amount)}
                     isCollected={order.payment.status === "captured"}
                   />
                 </div>
