@@ -29,7 +29,7 @@ export const MARQUEE_ANNOUNCEMENTS = [
   "Tamper-Proof Hygiene Seals",
   "100% Privacy & Discreet Packaging Guaranteed",
   "Cash on Delivery Available Across India",
-  "Free Shipping on Orders Above ₹1,299",
+  "Free Shipping on Orders Above ₹500",
   "Bamboo Fabric — Naturally Soft & Breathable",
   "Ultra-Soft Breathable Bamboo & Cotton Knit",
   "Hassle-Free 7-Day Returns & Exchanges",

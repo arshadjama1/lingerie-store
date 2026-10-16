@@ -136,7 +136,7 @@ export function OrderReviewStep({
         )}
 
         <div className="flex justify-between text-sm text-neutral-600">
-          <span>Delivery Fee</span>
+          <span>Shipping Fee</span>
           {totals.shippingAmount === 0 ? (
             <span className="font-medium text-emerald-600">FREE</span>
           ) : (

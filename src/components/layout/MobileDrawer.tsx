@@ -648,7 +648,7 @@ export function MobileDrawer({
                 <Truck className="h-3.5 w-3.5" />
               </div>
               <span className="font-medium">
-                Free Express Shipping on Orders Above ₹1,299
+                Free Express Shipping on Orders Above ₹500
               </span>
             </div>
           </div>

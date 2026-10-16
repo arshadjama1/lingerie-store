@@ -20,11 +20,11 @@ import { LegalShell } from "@/components/legal/LegalShell";
 export const metadata: Metadata = {
   title: "Shipping & Delivery Policy | Surekh",
   description:
-    "Review Surekh's official Shipping & Delivery Policy. Free express shipping on orders over ₹1,299, 100% plain discreet packaging, and DTDC live tracking.",
+    "Review Surekh's official Shipping & Delivery Policy. Free express shipping on orders over ₹500, 100% plain discreet packaging, and DTDC live tracking.",
   openGraph: {
     title: "Shipping & Delivery Policy | Surekh",
     description:
-      "Free express shipping on orders over ₹1,299 with 100% plain discreet packaging nationwide.",
+      "Free express shipping on orders over ₹500 with 100% plain discreet packaging nationwide.",
     type: "website",
   },
 };
@@ -65,7 +65,7 @@ export default function ShippingPolicyPage() {
           <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-5">
             <div className="flex items-center gap-2 text-emerald-950">
               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-              <h3 className="text-sm font-bold">Orders ₹1,299 and Above</h3>
+              <h3 className="text-sm font-bold">Orders ₹500 and Above</h3>
             </div>
             <p className="mt-2 font-serif text-2xl font-black text-emerald-700">
               FREE Express Shipping
@@ -79,10 +79,10 @@ export default function ShippingPolicyPage() {
           <div className="rounded-xl border border-neutral-200 bg-white p-5">
             <div className="flex items-center gap-2 text-gray-900">
               <Package className="h-5 w-5 text-gray-500" />
-              <h3 className="text-sm font-bold">Orders Under ₹1,299</h3>
+              <h3 className="text-sm font-bold">Orders Under ₹500</h3>
             </div>
             <p className="mt-2 font-serif text-2xl font-black text-gray-800">
-              ₹99 Flat Delivery Fee
+              ₹49 Flat Delivery Fee
             </p>
             <p className="mt-1 text-xs text-gray-600">
               Covers insured express surface courier dispatch and discreet
@@ -213,6 +213,16 @@ export default function ShippingPolicyPage() {
               <strong>Pincode Verification:</strong> You can check COD
               availability for your location using the pincode checker on any
               product page or at checkout.
+            </span>
+          </li>
+          <li className="flex items-start gap-2.5">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100 text-[11px] font-bold text-[var(--accent)]">
+              ✓
+            </span>
+            <span>
+              <strong>COD Handling Fee:</strong> A flat ₹50 COD handling fee is
+              applied to all Cash on Delivery orders regardless of the order
+              value.
             </span>
           </li>
           <li className="flex items-start gap-2.5">
