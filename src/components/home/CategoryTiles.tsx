@@ -15,25 +15,25 @@ interface CategoryTile {
 const CATEGORY_TILES: CategoryTile[] = [
   {
     name: "Bras",
-    offer: "From ₹400",
+    offer: "From ₹399",
     href: "/bras",
     image: "/images/products/bamboo-bra-black.png",
   },
   {
     name: "Panties",
-    offer: "Pack of 3 @ ₹750",
+    offer: "Pack of 3 @ ₹799",
     href: "/panties",
     image: "/images/products/bamboo-undie-black.png",
   },
   {
     name: "Sets",
-    offer: "From ₹650",
+    offer: "From ₹749",
     href: "/sets",
     image: "/images/products/lingerie-set-olive.png",
   },
   {
     name: "Loungewear",
-    offer: "Camisoles @ ₹300",
+    offer: "Camisoles @ ₹250",
     href: "/loungewear",
     image: "/images/products/camisole-pink.png",
   },

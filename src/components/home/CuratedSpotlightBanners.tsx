@@ -63,7 +63,7 @@ export function CuratedSpotlightBanners() {
             </h3>
             <p className="max-w-xs text-xs font-light text-gray-200">
               Zero panty lines. Invisible under any outfit. Pack of 3 at just
-              ₹750.
+              ₹799.
             </p>
             <span className="mt-1 inline-flex items-center gap-1.5 rounded-none bg-white px-5 py-2.5 text-xs font-black tracking-wider text-black uppercase transition-all hover:bg-[var(--accent)] hover:text-white">
               Shop Now <ArrowRight className="h-3.5 w-3.5" />

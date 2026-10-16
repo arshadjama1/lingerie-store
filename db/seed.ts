@@ -235,9 +235,9 @@ async function seed() {
         },
       ],
     },
-    // ── 1. Bamboo Fabric Undie ───────────────────────────────────────────────
+    // ── 1. Bamboo Fabric Undie (Pack of 2) ───────────────────────────────────
     {
-      name: "Bamboo Fabric Undie",
+      name: "Bamboo Fabric Undie (Pack of 2)",
       slug: "bamboo-fabric-undie",
       categorySlug: "panties",
       description: `# SUREK Bamboo Fabric Undie — Black
@@ -300,8 +300,8 @@ The classic **black finish** makes it an effortless everyday essential, while th
         {
           color: "Black",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 300,
-          mrp: 300,
+          price: 649,
+          mrp: 1199,
           images: [
             {
               url: `${IMG}/bamboo-undie-black-1.png`,
@@ -318,8 +318,8 @@ The classic **black finish** makes it an effortless everyday essential, while th
         {
           color: "Navy Blue",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 300,
-          mrp: 300,
+          price: 649,
+          mrp: 1199,
           images: [
             {
               url: `${IMG}/bamboo-undie-navy-1.png`,
@@ -401,8 +401,8 @@ The classic **black finish** makes it a versatile everyday essential, designed t
         {
           color: "Black",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 400,
-          mrp: 400,
+          price: 499,
+          mrp: 999,
           images: [
             {
               url: `${IMG}/bamboo-bra-black-1.png`,
@@ -429,8 +429,8 @@ The classic **black finish** makes it a versatile everyday essential, designed t
         {
           color: "Navy Blue",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 400,
-          mrp: 400,
+          price: 499,
+          mrp: 999,
           images: [
             {
               url: `${IMG}/bamboo-bra-navy-1.png`,
@@ -457,8 +457,8 @@ The classic **black finish** makes it a versatile everyday essential, designed t
         {
           color: "Cinder",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 400,
-          mrp: 400,
+          price: 499,
+          mrp: 999,
           images: [
             {
               url: `${IMG}/bamboo-bra-cinder-1.png`,
@@ -540,8 +540,8 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
         {
           color: "Maroon",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1599,
           images: [
             {
               url: `${IMG}/overlap-bralette-placeholder.png`,
@@ -618,8 +618,8 @@ The playful **pink finish** adds a fresh, cheerful touch, making it an effortles
         {
           color: "Pink",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 300,
-          mrp: 300,
+          price: 399,
+          mrp: 899,
           images: [
             {
               url: `${IMG}/mischief-lounge-bra-1.png`,
@@ -716,8 +716,8 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
         {
           color: "Navy Blue",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1799,
           images: [
             {
               url: `${IMG}/floral-undie-navy-1.png`,
@@ -744,8 +744,8 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
         {
           color: "Pink",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1799,
           images: [
             {
               url: `${IMG}/floral-undie-pink-1.png`,
@@ -772,8 +772,8 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
         {
           color: "Green",
           sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1799,
           images: [
             {
               url: `${IMG}/floral-undie-green-1.png`,
@@ -795,9 +795,9 @@ The **navy blue** color adds a timeless, versatile touch, while the floral desig
       ],
     },
 
-    // ── 6. Seamless Undie pack of 3 ──────────────────────────────────────────
+    // ── 6. Seamless Ultra Soft Undie pack of 3 ───────────────────────────────
     {
-      name: "Seamless Undie pack of 3",
+      name: "Seamless Ultra Soft Undie pack of 3",
       slug: "seamless-undie-pack-of-3",
       categorySlug: "panties",
       description: `# SUREK Seamless Undie Pack of 3 — Black
@@ -835,7 +835,7 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
 **Black**
 
 **SUREK — Everyday comfort, naturally.**`,
-      fabric: "Imported Seamless Fabric",
+      fabric: "Imported",
       tags: ["seamless", "undie", "pack", "no-show", "best-seller"],
       isFeatured: true,
       isBestSeller: true,
@@ -865,8 +865,8 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
         {
           color: "Black",
           sizes: ["M", "L", "XL", "XXL", "3XL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1499,
           images: [
             {
               url: `${IMG}/seamless-undie-black-1.png`,
@@ -893,8 +893,8 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
         {
           color: "Navy Blue",
           sizes: ["M", "L", "XL", "XXL", "3XL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1499,
           images: [
             {
               url: `${IMG}/seamless-undie-navy-1.png`,
@@ -921,8 +921,8 @@ Finished in classic **black**, this versatile 3-pack is an easy addition to your
         {
           color: "Maroon",
           sizes: ["M", "L", "XL", "XXL", "3XL"],
-          price: 750,
-          mrp: 750,
+          price: 799,
+          mrp: 1499,
           images: [
             {
               url: `${IMG}/seamless-undie-maroon-1.png`,
@@ -1014,8 +1014,8 @@ Designed with **padded support**, the set offers a comfortable fit while creatin
         {
           color: "Olive",
           sizes: ["32", "34", "36"],
-          price: 700,
-          mrp: 700,
+          price: 799,
+          mrp: 1499,
           images: [
             {
               url: `${IMG}/lingerie-set-olive-1.png`,
@@ -1042,8 +1042,8 @@ Designed with **padded support**, the set offers a comfortable fit while creatin
         {
           color: "Maroon",
           sizes: ["32", "34", "36"],
-          price: 700,
-          mrp: 700,
+          price: 749,
+          mrp: 1499,
           images: [
             {
               url: `${IMG}/lingerie-set-maroon-1.png`,
@@ -1131,8 +1131,8 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
         {
           color: "Black",
           sizes: ["L", "XL", "2XL"],
-          price: 300,
-          mrp: 300,
+          price: 250,
+          mrp: 499,
           images: [
             {
               url: `${IMG}/camisole-black-1.png`,
@@ -1159,8 +1159,8 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
         {
           color: "Pink",
           sizes: ["L", "XL", "2XL"],
-          price: 300,
-          mrp: 300,
+          price: 250,
+          mrp: 499,
           images: [
             {
               url: `${IMG}/camisole-pink-1.png`,
@@ -1187,8 +1187,8 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
         {
           color: "Skin",
           sizes: ["L", "XL", "2XL"],
-          price: 300,
-          mrp: 300,
+          price: 250,
+          mrp: 499,
           images: [
             {
               url: `${IMG}/camisole-skin-1.png`,
@@ -1215,8 +1215,8 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
         {
           color: "White",
           sizes: ["L", "XL", "2XL"],
-          price: 300,
-          mrp: 300,
+          price: 250,
+          mrp: 499,
           images: [
             {
               url: `${IMG}/camisole-white-1.png`,
@@ -1243,8 +1243,8 @@ Designed with a comfortable fit and an easy-to-wear silhouette, this camisole is
         {
           color: "Wine",
           sizes: ["L", "XL", "2XL"],
-          price: 300,
-          mrp: 300,
+          price: 250,
+          mrp: 499,
           images: [
             {
               url: `${IMG}/camisole-wine-1.png`,
@@ -1302,9 +1302,9 @@ Crafted from ultra-soft stretch fabric with flexible elasticity that hugs your c
 
 **SUREK — Everyday comfort, naturally.**`,
       fabric: "95% Micro Modal, 5% Elastane",
-      tags: ["boyleg", "undie", "panty", "coverage", "seamless", "best-seller"],
+      tags: ["boyleg", "undie", "panty", "coverage", "seamless"],
       isFeatured: true,
-      isBestSeller: true,
+      isBestSeller: false,
       productImages: [
         {
           url: `${IMG}/boyleg-black-1.png`,
@@ -1530,9 +1530,9 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
 
 **SUREK — Everyday comfort, naturally.**`,
       fabric: "85% Polyamide Lycra, 15% Elastane",
-      tags: ["bra", "padded", "lycra", "t-shirt-bra", "smooth", "best-seller"],
+      tags: ["bra", "padded", "lycra", "t-shirt-bra", "smooth"],
       isFeatured: true,
-      isBestSeller: true,
+      isBestSeller: false,
       productImages: [
         {
           url: `${IMG}/padded-bra-black-1.png`,

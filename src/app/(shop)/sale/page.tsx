@@ -130,9 +130,9 @@ export default async function SalePage() {
                   Bamboo Eco-Comfort Combo
                 </h3>
                 <p className="mt-1 text-xs text-gray-600 sm:text-sm">
-                  Buy Bamboo Fabric Bra (₹499) + Bamboo Undie Pack of 2 (₹699)
+                  Buy Bamboo Fabric Bra (₹499) + Bamboo Undie Pack of 2 (₹649)
                   together for just{" "}
-                  <strong className="text-gray-900">₹1,099</strong>.
+                  <strong className="text-gray-900">₹1,049</strong>.
                 </p>
               </div>
 
@@ -166,7 +166,7 @@ export default async function SalePage() {
                     className="object-contain p-2 transition-transform duration-500 group-hover/item:scale-105"
                   />
                   <span className="absolute bottom-2 left-2 rounded-md bg-black/75 px-2 py-0.5 text-[10px] font-bold text-white">
-                    Pack of 2 · ₹699
+                    Pack of 2 · ₹649
                   </span>
                 </Link>
               </div>
@@ -176,10 +176,10 @@ export default async function SalePage() {
                 <div>
                   <div className="flex items-baseline gap-2">
                     <span className="font-serif text-2xl font-black text-[var(--accent-plum)] sm:text-3xl">
-                      ₹1,099
+                      ₹1,049
                     </span>
                     <span className="text-sm font-medium text-gray-400 line-through">
-                      ₹1,198
+                      ₹1,148
                     </span>
                   </div>
                   <span className="text-[11px] font-semibold text-emerald-700">

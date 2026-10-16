@@ -29,7 +29,7 @@ const SLIDES: Slide[] = [
     badge: "BESTSELLER",
     title: "BAMBOO SOFT. ALL-DAY COMFORT.",
     subtitle:
-      "95% Bamboo — our softest fabric ever. Wire-free bras & undies from ₹300.",
+      "95% Bamboo — our softest fabric ever. Wire-free bras & undies from ₹499.",
     ctaText: "SHOP BAMBOO RANGE",
     ctaLink: "/bras",
     image: "/images/home/slider-3.png",
@@ -40,7 +40,7 @@ const SLIDES: Slide[] = [
     badge: "NO-SHOW PACK OF 3",
     title: "SEAMLESS. INVISIBLE. EFFORTLESS.",
     subtitle:
-      "Zero panty lines, zero compromise. Seamless Undie Pack of 3 at just ₹750.",
+      "Zero panty lines, zero compromise. Seamless Undie Pack of 3 at just ₹799.",
     ctaText: "SHOP SEAMLESS UNDIES",
     ctaLink: "/panties",
     image: "/images/home/slider-2.png",
@@ -51,7 +51,7 @@ const SLIDES: Slide[] = [
     badge: "EVERYDAY ESSENTIALS",
     title: "LIGHTWEIGHT & SOFT CAMISOLES",
     subtitle:
-      "Made for everyday lounging and effortless layering. 5 versatile colours at just ₹300.",
+      "Made for everyday lounging and effortless layering. 5 versatile colours at just ₹250.",
     ctaText: "EXPLORE CAMISOLES",
     ctaLink: "/loungewear",
     image: "/images/home/slider-1.png",
