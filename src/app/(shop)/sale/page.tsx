@@ -83,7 +83,7 @@ export default async function SalePage() {
             </span>
             <span className="flex items-center gap-1.5">
               <Truck className="h-4 w-4 text-sky-400" />
-              Free Shipping on Orders ₹1,299+
+              Free Shipping on Orders ₹500+
             </span>
             <span className="flex items-center gap-1.5">
               <ShieldCheck className="h-4 w-4 text-pink-400" />

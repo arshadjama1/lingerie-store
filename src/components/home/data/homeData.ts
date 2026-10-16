@@ -230,7 +230,7 @@ export const TESTIMONIALS_DATA = [
 export const TRUST_ITEMS_DATA = [
   {
     title: "Free Express Shipping",
-    desc: "On all orders above ₹1,299",
+    desc: "On all orders above ₹500",
     icon: Truck,
   },
   {

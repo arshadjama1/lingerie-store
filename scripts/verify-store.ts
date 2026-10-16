@@ -86,30 +86,30 @@ console.log("▶ [1/6] Testing Address Validation (Zod Schema)...");
 
 // ─── 2. CHECKOUT TOTALS & SHIPPING RULE TESTS ────────────────────
 console.log(
-  "\n▶ [2/6] Testing Checkout Totals & Shipping Rule (₹1,299 Free Shipping)..."
+  "\n▶ [2/6] Testing Checkout Totals & Shipping Rule (₹500 Free Shipping)..."
 );
 {
-  // Test Case A: Subtotal < 1299 should add ₹99 shipping
+  // Test Case A: Subtotal < 500 should add ₹49 shipping
   const cartItemUnder: CheckoutLineItem = {
     variantId: "v1",
     quantity: 1,
-    unitPrice: 799,
+    unitPrice: 399,
     taxAmount: 0,
-    total: 799,
-    snapshot: { productName: "Silk Bra", sku: "SB-01" },
+    total: 399,
+    snapshot: { productName: "Silk Panty", sku: "SP-01" },
   };
   const totalsUnder = calculateCheckoutTotals([cartItemUnder], 0);
-  assert(totalsUnder.subtotal === 799, "Subtotal is ₹799");
+  assert(totalsUnder.subtotal === 399, "Subtotal is ₹399");
   assert(
-    totalsUnder.shippingAmount === 99,
-    "Shipping is ₹99 for orders under ₹1,299"
+    totalsUnder.shippingAmount === 49,
+    "Shipping is ₹49 for orders under ₹500"
   );
   assert(
-    totalsUnder.total === 898,
-    "Grand total matches subtotal + shipping (₹898)"
+    totalsUnder.total === 448,
+    "Grand total matches subtotal + shipping (₹448)"
   );
 
-  // Test Case B: Subtotal >= 1299 qualifies for Free Shipping
+  // Test Case B: Subtotal >= 500 qualifies for Free Shipping
   const cartItemOver: CheckoutLineItem = {
     variantId: "v2",
     quantity: 1,
@@ -122,37 +122,45 @@ console.log(
   assert(totalsOver.subtotal === 1499, "Subtotal is ₹1499");
   assert(
     totalsOver.shippingAmount === 0,
-    "Free shipping applies for orders >= ₹1,299"
+    "Free shipping applies for orders >= ₹500"
   );
   assert(
     totalsOver.total === 1499,
     "Grand total equals subtotal when shipping is free"
   );
 
-  // Test Case C: Exactly ₹1,299 threshold qualifies for Free Shipping
+  // Test Case C: Exactly ₹500 threshold qualifies for Free Shipping
   const cartItemExact: CheckoutLineItem = {
     variantId: "v3",
     quantity: 1,
-    unitPrice: 1299,
+    unitPrice: 500,
     taxAmount: 0,
-    total: 1299,
-    snapshot: { productName: "Satin Robe", sku: "SR-01" },
+    total: 500,
+    snapshot: { productName: "Bralette", sku: "BR-01" },
   };
   const totalsExact = calculateCheckoutTotals([cartItemExact], 0);
   assert(
     totalsExact.shippingAmount === 0,
-    "Exact ₹1,299 qualifies for free shipping"
+    "Exact ₹500 qualifies for free shipping"
   );
-  assert(totalsExact.total === 1299, "Total matches ₹1,299");
+  assert(totalsExact.total === 500, "Total matches ₹500");
 
-  // Test Case D: Discount exceeding subtotal doesn't make total negative
+  // Test Case D: COD adds ₹50 fee regardless of price
+  const totalsCodUnder = calculateCheckoutTotals([cartItemUnder], 0, 50);
+  assert(totalsCodUnder.codFee === 50, "COD fee is ₹50");
+  assert(
+    totalsCodUnder.total === 498,
+    "COD order under ₹500 includes ₹49 shipping + ₹50 COD fee (₹399 + ₹49 + ₹50 = ₹498)"
+  );
+
+  // Test Case E: Discount exceeding subtotal doesn't make total negative
   const totalsDiscounted = calculateCheckoutTotals([cartItemUnder], 1000);
   assert(
     totalsDiscounted.total >= 0,
     "Discount cannot cause negative order total"
   );
 
-  // Test Case E: ₹1 Demo / Test item waives shipping for live production testing
+  // Test Case F: ₹1 Demo / Test item waives shipping for live production testing
   const demoItem: CheckoutLineItem = {
     variantId: "v-demo",
     quantity: 1,
@@ -168,7 +176,7 @@ console.log(
   assert(totalsDemo.subtotal === 1, "Demo subtotal is ₹1");
   assert(
     totalsDemo.shippingAmount === 0,
-    "Demo test item waives ₹99 shipping fee"
+    "Demo test item waives ₹49 shipping fee"
   );
   assert(totalsDemo.total === 1, "Demo total payable is exactly ₹1");
 }

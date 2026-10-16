@@ -77,7 +77,7 @@ export function SaleOffersClient() {
             </div>
 
             <h2 className="font-serif text-2xl font-black tracking-tight text-white sm:text-3xl">
-              Add items worth ₹1,299+ to get FREE Shipping + Extra 10% OFF
+              Add items worth ₹500+ to get FREE Shipping + Extra 10% OFF
             </h2>
 
             <p className="max-w-xl text-xs font-normal text-pink-100 sm:text-sm">

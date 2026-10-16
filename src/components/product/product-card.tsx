@@ -6,7 +6,7 @@ import React, { useMemo, useState } from "react";
 
 import { useCartStore } from "@/stores/useCartStore";
 import { useIsWishlisted, useWishlistStore } from "@/stores/useWishlistStore";
-import { Check, Heart, Loader2, Star, X } from "lucide-react";
+import { Check, Heart, Loader2, ShoppingBag, Star, X } from "lucide-react";
 
 import { calcDiscount, cn, formatPrice } from "@/lib/utils";
 
@@ -102,7 +102,7 @@ export function ProductCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden border border-stone-200/80 bg-white transition-all duration-300 hover:border-stone-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]",
+        "group relative flex flex-col overflow-hidden rounded-none border border-stone-200/70 bg-white transition-all duration-300 hover:border-stone-300 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]",
         className
       )}
     >
@@ -133,6 +133,20 @@ export function ProductCard({
             </div>
           )}
         </Link>
+
+        {/* Badges — Top Left (Discount & Sold out) */}
+        <div className="pointer-events-none absolute top-2.5 left-2.5 z-10 flex flex-col gap-1">
+          {hasDiscount && (
+            <span className="rounded-none bg-white/95 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-[var(--accent-dark)] shadow-xs ring-1 ring-rose-200/60 backdrop-blur-xs">
+              {calcDiscount(product.minPrice, product.minMrp)}% OFF
+            </span>
+          )}
+          {!product.isInStock && (
+            <span className="rounded-none bg-stone-900/85 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-white uppercase shadow-xs backdrop-blur-xs">
+              Sold Out
+            </span>
+          )}
+        </div>
 
         {/* Luxury Floating Wishlist Button */}
         <button
@@ -166,6 +180,51 @@ export function ProductCard({
             )}
           />
         </button>
+
+        {/* Desktop Quick Add Bar — slides up on hover */}
+        {product.isInStock && (
+          <div className="absolute inset-x-3 bottom-3 z-10 hidden translate-y-2 opacity-0 transition-all duration-200 ease-out group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 md:block">
+            <button
+              type="button"
+              disabled={addingVariantId !== null}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (hasMultipleSizes) {
+                  setIsSizePickerOpen((prev) => !prev);
+                } else if (availableVariants.length > 0) {
+                  const firstAvailable =
+                    availableVariants.find((v) => v.isAvailable) ||
+                    availableVariants[0];
+                  if (firstAvailable) {
+                    handleQuickAdd(firstAvailable.id);
+                  }
+                }
+              }}
+              className={cn(
+                "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-none px-3 py-2.5 text-xs font-bold tracking-wide shadow-md backdrop-blur-md transition-all active:scale-[0.98]",
+                justAddedId
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white/95 text-stone-900 hover:bg-[var(--accent)] hover:text-white"
+              )}
+              aria-label={`Add ${product.name} to cart`}
+            >
+              {addingVariantId ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : justAddedId ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-white" />
+                  <span className="text-white">Added to Bag</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>{hasMultipleSizes ? "Select Size" : "Quick Add"}</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Product Details Section */}
@@ -176,60 +235,57 @@ export function ProductCard({
           className="group/link flex flex-col gap-0.5 focus-visible:outline-none"
         >
           {product.brandName && (
-            <p className="text-[10px] font-bold tracking-[0.16em] text-[var(--accent-dark)] uppercase">
+            <p className="text-[10px] font-semibold tracking-[0.16em] text-stone-400 uppercase">
               {product.brandName}
             </p>
           )}
 
-          <div className="flex flex-wrap items-baseline gap-x-1.5">
-            <h3 className="line-clamp-2 text-xs leading-snug font-semibold text-stone-900 transition-colors group-hover/link:text-[var(--accent)] sm:text-sm">
+          <div>
+            <h3 className="line-clamp-1 text-xs font-semibold text-stone-900 transition-colors group-hover/link:text-[var(--accent)] sm:text-sm">
               {product.name}
             </h3>
             {product.selectedColor && (
-              <span className="text-[11px] font-normal whitespace-nowrap text-stone-500">
-                ({product.selectedColor})
-              </span>
+              <p className="mt-0.5 text-[11px] font-normal text-stone-500 capitalize">
+                {product.selectedColor}
+              </p>
             )}
           </div>
         </Link>
 
-        {/* Bottom Row: Price & Rating on Left, ADD TO CART Button on Right */}
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
-          {/* Price & Rating */}
-          <div className="flex min-w-0 flex-col">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm font-extrabold text-stone-900 sm:text-base">
-                {formatPrice(product.minPrice)}
+        {/* Price & Rating Row */}
+        <div className="mt-auto flex items-baseline justify-between gap-2 pt-2.5">
+          <div className="flex flex-wrap items-baseline gap-1.5">
+            <span className="text-sm font-bold text-stone-900 sm:text-base">
+              {formatPrice(product.minPrice)}
+            </span>
+            {hasDiscount && (
+              <span className="text-xs font-normal text-stone-400 line-through">
+                {formatPrice(product.minMrp)}
               </span>
-              {hasDiscount && (
-                <span className="text-[11px] font-normal text-stone-400 line-through">
-                  {formatPrice(product.minMrp)}
-                </span>
-              )}
-            </div>
-
-            {/* Rating Stars & Count */}
-            {Number(product.ratingCount) > 0 &&
-              parseFloat(product.ratingAvg || "0") > 0 && (
-                <div className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-stone-800">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  <span>{parseFloat(product.ratingAvg).toFixed(1)}</span>
-                  <span className="text-[10px] font-normal text-stone-400">
-                    ({product.ratingCount})
-                  </span>
-                </div>
-              )}
+            )}
+            {hasDiscount && (
+              <span className="text-[11px] font-bold text-[var(--accent)]">
+                {calcDiscount(product.minPrice, product.minMrp)}% off
+              </span>
+            )}
           </div>
 
-          {/* ADD TO CART Button (Pink Luxury Pill as in Reference Image) */}
+          {/* Rating Stars & Count */}
+          {Number(product.ratingCount) > 0 &&
+            parseFloat(product.ratingAvg || "0") > 0 && (
+              <div className="flex shrink-0 items-center gap-1 text-[11px] font-semibold text-stone-700">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                <span>{parseFloat(product.ratingAvg).toFixed(1)}</span>
+              </div>
+            )}
+        </div>
+
+        {/* Mobile-only Clean Quick Add Button */}
+        <div className="mt-2.5 md:hidden">
           {!product.isInStock ? (
-            <button
-              type="button"
-              disabled
-              className="cursor-not-allowed rounded-xs border border-stone-200 bg-stone-100 px-3 py-2 text-[10px] font-bold tracking-wider text-stone-400 uppercase select-none"
-            >
+            <div className="w-full rounded-none bg-stone-100 py-2 text-center text-[10px] font-bold text-stone-400 uppercase select-none">
               Sold Out
-            </button>
+            </div>
           ) : (
             <button
               type="button"
@@ -249,19 +305,27 @@ export function ProductCard({
                 }
               }}
               className={cn(
-                "shrink-0 cursor-pointer rounded-xs px-3.5 py-2 text-[11px] font-extrabold tracking-wider text-white uppercase shadow-xs transition-all active:scale-95",
+                "flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-none px-3 py-2 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98]",
                 justAddedId
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-[var(--accent)] hover:opacity-95"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-stone-900 text-white hover:bg-neutral-800"
               )}
               aria-label={`Add ${product.name} to cart`}
             >
               {addingVariantId ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : justAddedId ? (
-                <Check className="h-3.5 w-3.5" />
+                <>
+                  <Check className="h-3.5 w-3.5 text-white" />
+                  <span>Added</span>
+                </>
               ) : (
-                "ADD TO CART"
+                <>
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  <span>
+                    {hasMultipleSizes ? "Select Size" : "Add to Cart"}
+                  </span>
+                </>
               )}
             </button>
           )}
@@ -283,7 +347,7 @@ export function ProductCard({
 
           {/* Floating Size Selection Panel */}
           <div
-            className="animate-in fade-in-0 zoom-in-95 absolute inset-x-2 bottom-14 z-30 flex flex-col rounded-lg border border-stone-200 bg-white p-3.5 shadow-2xl duration-200"
+            className="animate-in fade-in-0 zoom-in-95 absolute inset-x-2 bottom-3 z-30 flex flex-col rounded-none border border-stone-200 bg-white p-3.5 shadow-2xl duration-200"
             // Handle Escape locally — avoids attaching a global window listener
             // per card instance (costly on pages with many product cards).
             tabIndex={-1}
