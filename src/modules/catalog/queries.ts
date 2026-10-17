@@ -214,36 +214,10 @@ export async function listProducts(
         ratingCount: products.ratingCount,
         soldCount: products.soldCount,
         brandName: brands.name,
-        primaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products}.id
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order
-          LIMIT  1
-        )`,
-        primaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products}.id
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order
-          LIMIT  1
-        )`,
-        secondaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products}.id
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order
-          LIMIT  1
-        )`,
-        secondaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products}.id
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order
-          LIMIT  1
-        )`,
+        primaryImageUrl: sql<string | null>`primary_img.url`,
+        primaryImageAlt: sql<string | null>`primary_img.alt`,
+        secondaryImageUrl: sql<string | null>`secondary_img.url`,
+        secondaryImageAlt: sql<string | null>`secondary_img.alt`,
         colors: sql<
           Array<{
             color: string;
@@ -332,6 +306,37 @@ export async function listProducts(
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, true),
+              isNull(productImages.variantId)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("primary_img"),
+        sql`true`
+      )
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, false)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("secondary_img"),
+        sql`true`
+      )
       .where(whereClause)
       .orderBy(...orderBy)
       .limit(Math.max(100, page * limit * 4)),
@@ -589,32 +594,10 @@ export async function searchProducts(
         ratingAvg: products.ratingAvg,
         ratingCount: products.ratingCount,
         soldCount: products.soldCount,
-        primaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        primaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        secondaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        secondaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
+        primaryImageUrl: sql<string | null>`primary_img.url`,
+        primaryImageAlt: sql<string | null>`primary_img.alt`,
+        secondaryImageUrl: sql<string | null>`secondary_img.url`,
+        secondaryImageAlt: sql<string | null>`secondary_img.alt`,
         colors: sql<
           Array<{ color: string; hex: string | null; imageUrl?: string | null }>
         >`(
@@ -688,6 +671,37 @@ export async function searchProducts(
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, true),
+              isNull(productImages.variantId)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("primary_img"),
+        sql`true`
+      )
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, false)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("secondary_img"),
+        sql`true`
+      )
       .where(and(...ftsConditions))
       .orderBy(...ftsOrderClauses)
       .limit(limit)
@@ -766,32 +780,10 @@ export async function searchProducts(
         ratingAvg: products.ratingAvg,
         ratingCount: products.ratingCount,
         soldCount: products.soldCount,
-        primaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        primaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = true
-            AND  pi.variant_id IS NULL
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        secondaryImageUrl: sql<string | null>`(
-          SELECT pi.url FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
-        secondaryImageAlt: sql<string | null>`(
-          SELECT pi.alt FROM ${productImages} pi
-          WHERE  pi.product_id = ${products.id}
-            AND  pi.is_primary = false
-          ORDER  BY pi.sort_order LIMIT 1
-        )`,
+        primaryImageUrl: sql<string | null>`primary_img.url`,
+        primaryImageAlt: sql<string | null>`primary_img.alt`,
+        secondaryImageUrl: sql<string | null>`secondary_img.url`,
+        secondaryImageAlt: sql<string | null>`secondary_img.alt`,
         colors: sql<
           Array<{ color: string; hex: string | null; imageUrl?: string | null }>
         >`(
@@ -862,6 +854,37 @@ export async function searchProducts(
       })
       .from(products)
       .leftJoin(brands, eq(products.brandId, brands.id))
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, true),
+              isNull(productImages.variantId)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("primary_img"),
+        sql`true`
+      )
+      .leftJoinLateral(
+        db
+          .select({ url: productImages.url, alt: productImages.alt })
+          .from(productImages)
+          .where(
+            and(
+              eq(productImages.productId, products.id),
+              eq(productImages.isPrimary, false)
+            )
+          )
+          .orderBy(asc(productImages.sortOrder))
+          .limit(1)
+          .as("secondary_img"),
+        sql`true`
+      )
       .where(and(...fuzzyConditions))
       .orderBy(...fuzzyOrderClauses)
       .limit(limit)
@@ -1210,32 +1233,10 @@ export async function getRelatedProducts(
       ratingAvg: products.ratingAvg,
       ratingCount: products.ratingCount,
       soldCount: products.soldCount,
-      primaryImageUrl: sql<string | null>`(
-        SELECT pi.url FROM ${productImages} pi
-        WHERE  pi.product_id = ${products.id}
-          AND  pi.is_primary = true
-          AND  pi.variant_id IS NULL
-        ORDER  BY pi.sort_order LIMIT 1
-      )`,
-      primaryImageAlt: sql<string | null>`(
-        SELECT pi.alt FROM ${productImages} pi
-        WHERE  pi.product_id = ${products.id}
-          AND  pi.is_primary = true
-          AND  pi.variant_id IS NULL
-        ORDER  BY pi.sort_order LIMIT 1
-      )`,
-      secondaryImageUrl: sql<string | null>`(
-        SELECT pi.url FROM ${productImages} pi
-        WHERE  pi.product_id = ${products.id}
-          AND  pi.is_primary = false
-        ORDER  BY pi.sort_order LIMIT 1
-      )`,
-      secondaryImageAlt: sql<string | null>`(
-        SELECT pi.alt FROM ${productImages} pi
-        WHERE  pi.product_id = ${products.id}
-          AND  pi.is_primary = false
-        ORDER  BY pi.sort_order LIMIT 1
-      )`,
+      primaryImageUrl: sql<string | null>`primary_img.url`,
+      primaryImageAlt: sql<string | null>`primary_img.alt`,
+      secondaryImageUrl: sql<string | null>`secondary_img.url`,
+      secondaryImageAlt: sql<string | null>`secondary_img.alt`,
       colors: sql<
         Array<{ color: string; hex: string | null; imageUrl?: string | null }>
       >`(
@@ -1311,6 +1312,37 @@ export async function getRelatedProducts(
     })
     .from(products)
     .leftJoin(brands, eq(products.brandId, brands.id))
+    .leftJoinLateral(
+      db
+        .select({ url: productImages.url, alt: productImages.alt })
+        .from(productImages)
+        .where(
+          and(
+            eq(productImages.productId, products.id),
+            eq(productImages.isPrimary, true),
+            isNull(productImages.variantId)
+          )
+        )
+        .orderBy(asc(productImages.sortOrder))
+        .limit(1)
+        .as("primary_img"),
+      sql`true`
+    )
+    .leftJoinLateral(
+      db
+        .select({ url: productImages.url, alt: productImages.alt })
+        .from(productImages)
+        .where(
+          and(
+            eq(productImages.productId, products.id),
+            eq(productImages.isPrimary, false)
+          )
+        )
+        .orderBy(asc(productImages.sortOrder))
+        .limit(1)
+        .as("secondary_img"),
+      sql`true`
+    )
     .where(and(...conditions))
     .orderBy(desc(products.soldCount), desc(products.ratingCount))
     .limit(limit * 2);
