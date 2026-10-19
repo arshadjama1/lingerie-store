@@ -12,6 +12,7 @@ export default tseslint.config(
       "db/migrations/**",
       "*.config.{js,mjs,ts}",
       "scratch/**",
+      "supabase/functions/**",
     ],
   },
   js.configs.recommended,
