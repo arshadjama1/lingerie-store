@@ -1,4 +1,4 @@
-import { Webhook } from "https://esm.sh/standard-webhooks@1.0.0";
+import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 /**
  * Supabase "Send SMS" Hook — MSG91 Flow API delivery.
