@@ -1,71 +1,140 @@
 import "server-only";
 
-/**
- * Order confirmation SMS via MSG91.
- *
- * NO-OP: DLT templates not yet approved by TRAI.
- * Wire up the body below when MSG91_ORDER_FLOW_ID is set in env.server.ts.
- *
- * To activate:
- *  1. Add MSG91_ORDER_FLOW_ID to serverEnv in src/config/env.server.ts (required string)
- *  2. Replace this stub with a POST to https://api.msg91.com/api/v5/flow/
- *     using authkey=serverEnv.MSG91_AUTH_KEY, template_id, mobiles, and variables
- */
+import { serverEnv } from "@/config/env.server";
+
+import { formatPrice } from "@/lib/utils";
+
+const MSG91_FLOW_URL = "https://control.msg91.com/api/v5/flow/";
+
+// ─────────────────────────────────────────────────────────────────────
+// Internal helper — MSG91 Flow API v5 delivery with recipients array
+// ─────────────────────────────────────────────────────────────────────
+
+function normaliseToIndianE164Digits(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.startsWith("91") && digits.length === 12) return digits;
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}
+
+async function sendMsg91Flow(
+  templateId: string,
+  mobile: string,
+  variables: Record<string, string>
+): Promise<void> {
+  const normalised = normaliseToIndianE164Digits(mobile);
+
+  // Standard MSG91 Flow API v5 payload structure
+  const payload = {
+    template_id: templateId,
+    short_url: "0",
+    recipients: [
+      {
+        mobiles: normalised,
+        ...variables,
+      },
+    ],
+  };
+
+  const res = await fetch(MSG91_FLOW_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      authkey: serverEnv.MSG91_AUTH_KEY,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "(no body)");
+    throw new Error(`MSG91 API HTTP ${res.status}: ${text}`);
+  }
+
+  const data = (await res.json().catch(() => ({}))) as {
+    type?: string;
+    message?: string;
+  };
+  if (data.type === "error") {
+    throw new Error(
+      `MSG91 rejected flow ${templateId}: ${data.message ?? JSON.stringify(data)}`
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// sendOrderConfirmationSMS
+// DLT template variables: {orderNumber}, {total}
+// ─────────────────────────────────────────────────────────────────────
+
 export async function sendOrderConfirmationSMS(
   phone: string,
   orderNumber: string,
-  _total: number
+  total: number
 ): Promise<void> {
-  if (!process.env.MSG91_ORDER_FLOW_ID) {
+  const templateId = serverEnv.MSG91_ORDER_FLOW_ID;
+  if (!templateId) {
     console.warn(
       `[SMS] sendOrderConfirmationSMS: MSG91_ORDER_FLOW_ID not set — skipping SMS for ${orderNumber} to ${phone || "(no phone)"}`
     );
     return;
   }
-  // TODO: implement when DLT approved
-  // await fetch("https://api.msg91.com/api/v5/flow/", {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json", authkey: serverEnv.MSG91_AUTH_KEY },
-  //   body: JSON.stringify({
-  //     template_id: process.env.MSG91_ORDER_FLOW_ID,
-  //     mobiles: `91${phone}`,
-  //     orderNumber,
-  //     total: formatPrice(_total),
-  //   }),
-  // });
+  if (!phone) {
+    console.warn(
+      `[SMS] sendOrderConfirmationSMS: no phone number for order ${orderNumber} — skipping`
+    );
+    return;
+  }
+
+  const formattedTotal = formatPrice(total);
+
+  try {
+    await sendMsg91Flow(templateId, phone, {
+      orderNumber,
+      ORDERNUMBER: orderNumber,
+      total: formattedTotal,
+      TOTAL: formattedTotal,
+    });
+  } catch (err) {
+    // Non-fatal: email remains primary confirmation channel
+    console.error("[SMS] sendOrderConfirmationSMS failed:", err);
+  }
 }
 
-/**
- * Shipped SMS via MSG91.
- *
- * NO-OP: DLT templates not yet approved by TRAI.
- * Wire up the body below when MSG91_SHIPPED_FLOW_ID is set in env.server.ts.
- *
- * To activate:
- *  1. Add MSG91_SHIPPED_FLOW_ID to serverEnv in src/config/env.server.ts (required string)
- *  2. Replace this stub with the real MSG91 flow API call (see above for reference shape)
- */
+// ─────────────────────────────────────────────────────────────────────
+// sendOrderShippedSMS
+// DLT template variables: {orderNumber}, {awbNumber}
+// ─────────────────────────────────────────────────────────────────────
+
 export async function sendOrderShippedSMS(
   phone: string,
   orderNumber: string,
   awbNumber: string | null
 ): Promise<void> {
-  if (!process.env.MSG91_SHIPPED_FLOW_ID) {
+  const templateId = serverEnv.MSG91_SHIPPED_FLOW_ID;
+  if (!templateId) {
     console.warn(
       `[SMS] sendOrderShippedSMS: MSG91_SHIPPED_FLOW_ID not set — skipping SMS for ${orderNumber} to ${phone || "(no phone)"}`
     );
     return;
   }
-  // TODO: implement when DLT approved
-  // await fetch("https://api.msg91.com/api/v5/flow/", {
-  //   method: "POST",
-  //   headers: { "Content-Type": "application/json", authkey: serverEnv.MSG91_AUTH_KEY },
-  //   body: JSON.stringify({
-  //     template_id: process.env.MSG91_SHIPPED_FLOW_ID,
-  //     mobiles: `91${phone}`,
-  //     orderNumber,
-  //     awbNumber: awbNumber ?? "Updating soon",
-  //   }),
-  // });
-  void awbNumber; // suppress unused warning until implemented
+  if (!phone) {
+    console.warn(
+      `[SMS] sendOrderShippedSMS: no phone number for order ${orderNumber} — skipping`
+    );
+    return;
+  }
+
+  const awb = awbNumber ?? "Updating soon";
+
+  try {
+    await sendMsg91Flow(templateId, phone, {
+      orderNumber,
+      ORDERNUMBER: orderNumber,
+      awbNumber: awb,
+      AWBNUMBER: awb,
+    });
+  } catch (err) {
+    // Non-fatal: email remains primary shipped notification channel
+    console.error("[SMS] sendOrderShippedSMS failed:", err);
+  }
 }

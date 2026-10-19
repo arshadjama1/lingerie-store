@@ -9,7 +9,7 @@ import * as schema from "./schema";
 // ── Application client (pooled) ───────────────────────────────────────
 const pooledSql = postgres(serverEnv.DATABASE_URL, {
   prepare: false, // required for Supabase PgBouncer transaction mode
-  max: 1, // correct for Vercel serverless (single-request invocations)
+  max: 3, // correct for Netlify (persistent Node.js server; 3 keeps us within Supabase PgBouncer limits)
 });
 
 export const db = drizzle(pooledSql, { schema });
