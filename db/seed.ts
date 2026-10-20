@@ -42,15 +42,37 @@ const db = drizzle(client, { schema });
 const IMG = "/images/products";
 const BRA_SIZE_CHART = `${IMG}/surekh_lounge_size_chart_450x600.png`;
 const UNDIES_SIZE_CHART = `${IMG}/surekh_size_chart_450x600_proportional.png`;
+const SET_SIZE_CHART = `${IMG}/surekh_set_size_chart_450x600_fixed_text.png`;
 
 function getSizeChartForProduct(product: {
   categorySlug: string;
   name: string;
+  slug?: string;
   tags?: string[];
 }) {
   const catSlug = product.categorySlug.toLowerCase();
   const prodName = product.name.toLowerCase();
+  const prodSlug = product.slug?.toLowerCase() || "";
   const tags = (product.tags || []).map((t) => t.toLowerCase());
+
+  const isSet =
+    catSlug === "sets" ||
+    catSlug.includes("set") ||
+    tags.includes("set") ||
+    tags.includes("sets") ||
+    tags.includes("lingerie-set") ||
+    prodSlug === "luxuria-pad-lingerie-set" ||
+    prodSlug === "overlap-bralette-hipster-set" ||
+    prodSlug.includes("set") ||
+    prodName.includes("set");
+
+  if (isSet) {
+    return {
+      url: SET_SIZE_CHART,
+      alt: `${product.name} Set Size Chart`,
+      isPrimary: false,
+    };
+  }
 
   const isUndie =
     catSlug === "panties" ||

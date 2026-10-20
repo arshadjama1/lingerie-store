@@ -21,6 +21,7 @@ import { cn, formatPrice } from "@/lib/utils";
 
 import {
   BRA_SIZE_CHART_URL,
+  SET_SIZE_CHART_URL,
   UNDIES_SIZE_CHART_URL,
   getProductSizeChart,
 } from "@/modules/catalog/constants";
@@ -181,7 +182,10 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
     // Filter out existing size chart instances to prevent duplicates
     const filteredImages = baseImages.filter(
       (img) =>
-        img.url !== BRA_SIZE_CHART_URL && img.url !== UNDIES_SIZE_CHART_URL
+        !img.url.includes("size_chart") &&
+        img.url !== BRA_SIZE_CHART_URL &&
+        img.url !== UNDIES_SIZE_CHART_URL &&
+        img.url !== SET_SIZE_CHART_URL
     );
 
     // Append size chart image as the last (5th) image
