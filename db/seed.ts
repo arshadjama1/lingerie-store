@@ -568,9 +568,24 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/overlap-bralette-placeholder.png`,
-          alt: "Overlap Bralette with Hipster Set – Imagery Coming Soon",
+          url: `${IMG}/overlap-bralette-maroon-1.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Model Front",
           isPrimary: true,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-2.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Studio Flat Lay",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-3.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Model Back",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-4.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Styled Flat Lay",
+          isPrimary: false,
         },
       ],
       variants: [
@@ -581,9 +596,24 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
           mrp: 1599,
           images: [
             {
-              url: `${IMG}/overlap-bralette-placeholder.png`,
-              alt: "Overlap Bralette Hipster Set Maroon – Imagery Coming Soon",
+              url: `${IMG}/overlap-bralette-maroon-1.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Model Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-2.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Studio Flat Lay",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-3.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Model Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-4.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Styled Flat Lay",
+              isPrimary: false,
             },
           ],
         },
