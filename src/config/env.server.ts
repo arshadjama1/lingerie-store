@@ -1,9 +1,68 @@
 import "server-only";
 import { z } from "zod";
 
+function cleanConnectionString(
+  raw: unknown,
+  fallback: unknown,
+  varName: string
+): unknown {
+  if (typeof raw === "string") {
+    let clean = raw.trim();
+    if (
+      (clean.startsWith('"') && clean.endsWith('"')) ||
+      (clean.startsWith("'") && clean.endsWith("'"))
+    ) {
+      clean = clean.slice(1, -1).trim();
+    }
+    if (clean.startsWith(varName + "=")) {
+      clean = clean.replace(new RegExp("^" + varName + "="), "").trim();
+    }
+    // If the variable was set to just a port number (e.g. '6543')
+    if (/^\d+$/.test(clean) && typeof fallback === "string") {
+      const fbClean = cleanConnectionString(fallback, undefined, "FALLBACK");
+      if (
+        typeof fbClean === "string" &&
+        (fbClean.startsWith("postgres://") ||
+          fbClean.startsWith("postgresql://"))
+      ) {
+        return fbClean.replace(/:\d+([/?#]|$)/, `:${clean}$1`);
+      }
+    }
+    if (clean.length > 0) {
+      return clean;
+    }
+  }
+  if (typeof fallback === "string") {
+    return cleanConnectionString(fallback, undefined, "FALLBACK");
+  }
+  return raw;
+}
+
+const dbUrlSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (val) => val.startsWith("postgres://") || val.startsWith("postgresql://"),
+    "Database connection string must start with postgres:// or postgresql://"
+  );
+
+const rawEnv = {
+  ...process.env,
+  DATABASE_URL: cleanConnectionString(
+    process.env.DATABASE_URL,
+    process.env.DATABASE_DIRECT_URL,
+    "DATABASE_URL"
+  ),
+  DATABASE_DIRECT_URL: cleanConnectionString(
+    process.env.DATABASE_DIRECT_URL,
+    process.env.DATABASE_URL,
+    "DATABASE_DIRECT_URL"
+  ),
+};
+
 const schema = z.object({
-  DATABASE_URL: z.string().url(),
-  DATABASE_DIRECT_URL: z.string().url(),
+  DATABASE_URL: dbUrlSchema,
+  DATABASE_DIRECT_URL: dbUrlSchema,
   SUPABASE_SECRET_KEY: z.string().min(1),
   RAZORPAY_KEY_ID: z.string().min(1),
   RAZORPAY_KEY_SECRET: z.string().min(1),
@@ -57,7 +116,7 @@ const schema = z.object({
   DTDC_WAREHOUSE_STATE: z.string().min(1, "DTDC_WAREHOUSE_STATE is required"),
 });
 
-const parsed = schema.safeParse(process.env);
+const parsed = schema.safeParse(rawEnv);
 
 if (!parsed.success) {
   const errors = parsed.error.flatten().fieldErrors;
