@@ -72,3 +72,70 @@ export function sortSizesNaturally(sizes: string[]): string[] {
     return a.localeCompare(b);
   });
 }
+
+/**
+ * Size chart image paths served from public/images/products/
+ */
+export const BRA_SIZE_CHART_URL =
+  "/images/products/surekh_lounge_size_chart_450x600.png";
+export const UNDIES_SIZE_CHART_URL =
+  "/images/products/surekh_size_chart_450x600_proportional.png";
+
+export interface ProductSizeChart {
+  type: "bra" | "undie";
+  url: string;
+  alt: string;
+}
+
+/**
+ * Returns the appropriate size chart for a given product.
+ * Undies/panties map to the proportional undies size chart.
+ * Bras, bralettes, sets and loungewear/camisoles map to the lounge bra size chart.
+ */
+export function getProductSizeChart(product: {
+  category?: {
+    slug?: string | null;
+    name?: string | null;
+    path?: string | null;
+  } | null;
+  name?: string | null;
+  slug?: string | null;
+  tags?: string[] | null;
+}): ProductSizeChart {
+  const catSlug = product.category?.slug?.toLowerCase() || "";
+  const catName = product.category?.name?.toLowerCase() || "";
+  const prodName = product.name?.toLowerCase() || "";
+  const prodSlug = product.slug?.toLowerCase() || "";
+  const tags = (product.tags || []).map((t) => t.toLowerCase());
+
+  const isUndie =
+    catSlug === "panties" ||
+    catName.includes("panty") ||
+    catName.includes("panties") ||
+    catName.includes("undie") ||
+    tags.includes("undie") ||
+    tags.includes("panty") ||
+    tags.includes("panties") ||
+    tags.includes("boyleg") ||
+    prodName.includes("undie") ||
+    prodName.includes("panty") ||
+    prodName.includes("panties") ||
+    prodName.includes("boyleg") ||
+    prodSlug.includes("undie") ||
+    prodSlug.includes("panty") ||
+    prodSlug.includes("boyleg");
+
+  if (isUndie && catSlug !== "bras" && !prodName.includes(" bra")) {
+    return {
+      type: "undie",
+      url: UNDIES_SIZE_CHART_URL,
+      alt: `${product.name || "Product"} Undies Size Chart`,
+    };
+  }
+
+  return {
+    type: "bra",
+    url: BRA_SIZE_CHART_URL,
+    alt: `${product.name || "Product"} Bra & Lounge Size Chart`,
+  };
+}

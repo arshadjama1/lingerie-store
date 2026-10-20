@@ -19,6 +19,11 @@ import {
 
 import { cn, formatPrice } from "@/lib/utils";
 
+import {
+  BRA_SIZE_CHART_URL,
+  UNDIES_SIZE_CHART_URL,
+  getProductSizeChart,
+} from "@/modules/catalog/constants";
 import type { ProductDetail } from "@/modules/catalog/types";
 
 import { OffersCard } from "./OffersCard";
@@ -113,8 +118,32 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
     selectedVariant?.id
   );
 
-  // Get gallery images deduplicated
+  // Determine size chart for this product
+  const sizeChart = useMemo(() => {
+    return getProductSizeChart(product);
+  }, [product]);
+
+  const sizeChartImage = useMemo(
+    () => ({
+      id: `${product.id}-size-chart`,
+      url: sizeChart.url,
+      alt: sizeChart.alt,
+      isPrimary: false,
+      sortOrder: 999,
+      variantId: null,
+    }),
+    [product.id, sizeChart]
+  );
+
+  // Get gallery images deduplicated, always with size chart as the last 5th image
   const galleryImages = useMemo(() => {
+    let baseImages: Array<{
+      id: string;
+      url: string;
+      alt: string | null;
+      isPrimary?: boolean;
+    }> = [];
+
     if (selectedColor) {
       const seenUrls = new Set<string>();
       const activeColorImages = colorVariants
@@ -125,28 +154,45 @@ export function ProductActions({ product, initialColor }: ProductActionsProps) {
           return true;
         });
       if (activeColorImages.length > 0) {
-        return activeColorImages;
+        baseImages = activeColorImages;
       }
     }
-    const seenUrls = new Set<string>();
-    const uniqueProductImages = product.images.filter((img) => {
-      if (!img?.url || seenUrls.has(img.url)) return false;
-      seenUrls.add(img.url);
-      return true;
-    });
-    return uniqueProductImages.length > 0
-      ? uniqueProductImages
-      : [
-          {
-            id: "placeholder",
-            url: "/placeholder-img.jpg",
-            alt: product.name,
-            isPrimary: true,
-            sortOrder: 0,
-            variantId: null,
-          },
-        ];
-  }, [product.images, colorVariants, selectedColor, product.name]);
+
+    if (baseImages.length === 0) {
+      const seenUrls = new Set<string>();
+      baseImages = product.images.filter((img) => {
+        if (!img?.url || seenUrls.has(img.url)) return false;
+        seenUrls.add(img.url);
+        return true;
+      });
+    }
+
+    if (baseImages.length === 0) {
+      baseImages = [
+        {
+          id: "placeholder",
+          url: "/placeholder-img.jpg",
+          alt: product.name,
+          isPrimary: true,
+        },
+      ];
+    }
+
+    // Filter out existing size chart instances to prevent duplicates
+    const filteredImages = baseImages.filter(
+      (img) =>
+        img.url !== BRA_SIZE_CHART_URL && img.url !== UNDIES_SIZE_CHART_URL
+    );
+
+    // Append size chart image as the last (5th) image
+    return [...filteredImages, sizeChartImage];
+  }, [
+    product.images,
+    colorVariants,
+    selectedColor,
+    product.name,
+    sizeChartImage,
+  ]);
 
   // Color click helper
   const handleColorSelect = (color: string) => {

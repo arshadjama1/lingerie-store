@@ -278,6 +278,11 @@ export function ProductGallery({
                   sizes="80px"
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
                 />
+                {img.url.includes("size_chart") && (
+                  <span className="absolute inset-x-0 bottom-0 bg-stone-900/85 py-0.5 text-center text-[7.5px] font-bold tracking-wider text-white uppercase backdrop-blur-xs">
+                    Size Chart
+                  </span>
+                )}
               </button>
             );
           })}
@@ -409,7 +414,9 @@ export function ProductGallery({
               {/* Product Title / Counter */}
               <div className="flex items-center gap-3">
                 <span className="max-w-[200px] truncate text-xs font-bold text-white sm:max-w-md sm:text-sm">
-                  {productName}
+                  {currentImage.url.includes("size_chart")
+                    ? `${productName} — Size Chart`
+                    : productName}
                 </span>
                 {safeImages.length > 1 && (
                   <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-white/90">

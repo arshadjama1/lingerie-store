@@ -133,7 +133,14 @@ export async function getCatalogSearchSuggestions(
 }
 
 export { getProductIdByVariantId };
-export { SIZE_ORDER, sortSizesNaturally } from "./constants";
+export {
+  BRA_SIZE_CHART_URL,
+  UNDIES_SIZE_CHART_URL,
+  getProductSizeChart,
+  SIZE_ORDER,
+  sortSizesNaturally,
+  type ProductSizeChart,
+} from "./constants";
 
 // ── Re-exports all types so consumers only need one import ───────────
 export type {
