@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import React, { useState, useTransition } from "react";
 
 import {
@@ -17,7 +16,6 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 
 export function AdminResetPasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -53,7 +51,7 @@ export function AdminResetPasswordForm() {
         setIsSuccess(true);
         toast.success("Password updated successfully!");
         setTimeout(() => {
-          router.push("/admin/dashboard");
+          window.location.href = "/admin/dashboard";
         }, 2000);
       } catch (err) {
         const msg =

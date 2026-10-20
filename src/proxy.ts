@@ -76,7 +76,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/admin");
 
   if (!needsAuth) {
-    const publicResponse = NextResponse.next({ request });
+    const publicResponse = NextResponse.next();
     // Re-stamp the preview bypass cookie so it isn't silently dropped for
     // team members browsing public pages in prelaunch mode.
     if (hasBypass) {
@@ -172,8 +172,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      const url = new URL("/admin/login", request.url);
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
@@ -208,8 +207,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!role || !["admin", "staff"].includes(role)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      const url = new URL("/admin/login", request.url);
       url.searchParams.set("error", "forbidden");
       return NextResponse.redirect(url);
     }
