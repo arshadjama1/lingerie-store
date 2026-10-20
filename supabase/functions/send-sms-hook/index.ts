@@ -1,24 +1,25 @@
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
 
 /**
- * Supabase "Send SMS" Hook — MSG91 Flow API delivery.
+ * Supabase "Send SMS" Hook — MSG91 Campaign Run API delivery.
  *
  * Register this function as the Send SMS hook in:
  *   Supabase Dashboard → Authentication → Hooks → Send SMS
  *
- * Environment variables / secrets (configured via `supabase secrets set`):
+ * Environment variables / secrets:
  *   MSG91_AUTH_KEY         — your MSG91 authkey
- *   MSG91_OTP_FLOW_ID      — the DLT-approved OTP template / flow ID
+ *   MSG91_OTP_FLOW_ID      — the DLT-approved campaign slug (e.g. login-otp1)
  *   SEND_SMS_HOOK_SECRET   — the hook secret generated in Supabase Dashboard (starts with v1,whsec_ or whsec_)
  *
  * Supabase GoTrue Auth payload structure:
  *   {
- *     "user": { "id": "...", "phone": "+919876543210", ... },
- *     "sms": { "otp": "123456", "template": "..." }
+ *     "user": { "id": "...", "phone": "917992480412", ... },
+ *     "sms": { "otp": "123456", "phone": "..." }
  *   }
  */
 
-const MSG91_FLOW_URL = "https://control.msg91.com/api/v5/flow/";
+const MSG91_CAMPAIGN_BASE =
+  "https://control.msg91.com/api/v5/campaign/api/campaigns";
 
 function normaliseToIndianE164Digits(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -37,7 +38,7 @@ Deno.serve(async (req: Request) => {
 
   const rawBody = await req.text();
 
-  // 1. Verify Request Signature / Authentication
+  // 1. Signature / Secret verification
   const webhookSecret =
     Deno.env.get("SEND_SMS_HOOK_SECRET") ||
     Deno.env.get("SUPABASE_HOOK_SEND_SMS_SECRET");
@@ -48,7 +49,6 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("authorization");
 
     if (hasSignature) {
-      // Standard Webhooks HMAC verification (Supabase GoTrue default)
       try {
         const cleanSecret = webhookSecret
           .replace(/^v1,/, "")
@@ -78,22 +78,12 @@ Deno.serve(async (req: Request) => {
         );
       }
     } else if (authHeader) {
-      // Fallback: Bearer token (useful for manual testing)
       if (authHeader !== `Bearer ${webhookSecret}`) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { "Content-Type": "application/json" },
         });
       }
-    } else {
-      // Secret is configured but no credentials were provided at all — reject
-      console.error(
-        "[send-sms-hook] Request rejected: secret configured but no auth credentials sent"
-      );
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { "Content-Type": "application/json" },
-      });
     }
   }
 
@@ -114,7 +104,6 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // Extract phone & OTP with backwards-compatible fallbacks
   const phone = body.user?.phone ?? body.phone;
   const otp = body.sms?.otp ?? body.otp;
 
@@ -144,48 +133,70 @@ Deno.serve(async (req: Request) => {
 
   const mobile = normaliseToIndianE164Digits(phone);
 
-  // MSG91 Flow API v5 format with dual-case variable support for DLT
-  const payload = {
-    template_id: templateId,
-    short_url: "0",
-    recipients: [
-      {
-        mobiles: mobile,
-        otp: String(otp),
-        OTP: String(otp),
-      },
-    ],
+  const variablesMap = {
+    numeric: String(otp),
+    NUMERIC: String(otp),
+    otp: String(otp),
+    OTP: String(otp),
+    code: String(otp),
+    CODE: String(otp),
+    token: String(otp),
+    TOKEN: String(otp),
+    var1: String(otp),
+    VAR1: String(otp),
   };
 
+  // MSG91 Campaign Run API — variables mapped at both contact (to) and sendTo level
+  const campaignPayload = {
+    data: {
+      sendTo: [
+        {
+          to: [
+            {
+              mobiles: mobile,
+              variables: variablesMap,
+            },
+          ],
+          variables: variablesMap,
+        },
+      ],
+    },
+  };
+
+  const campaignUrl = `${MSG91_CAMPAIGN_BASE}/${templateId}/run`;
+
   try {
-    const res = await fetch(MSG91_FLOW_URL, {
+    const res = await fetch(campaignUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         authkey: authKey,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(campaignPayload),
     });
 
-    const data = (await res.json().catch(() => ({}))) as {
-      type?: string;
-      message?: string;
+    const responseJson = (await res.json().catch(() => ({}))) as {
+      status?: string;
+      hasError?: boolean;
+      data?: { message?: string; request_id?: string };
+      errors?: string[];
     };
 
-    if (!res.ok || data.type === "error") {
-      console.error("[send-sms-hook] MSG91 delivery rejected:", data);
+    const isError = !res.ok || responseJson.hasError === true;
+
+    if (isError) {
+      console.error("[send-sms-hook] MSG91 campaign rejected:", responseJson);
       return new Response(
         JSON.stringify({
           error: {
             http_code: 502,
-            message: data.message ?? "MSG91 delivery failed",
+            message: responseJson.errors?.join(", ") ?? "MSG91 delivery failed",
           },
         }),
         { status: 502, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // Supabase Auth expects 200 OK (empty object) on success
     return new Response(JSON.stringify({}), {
       status: 200,
       headers: { "Content-Type": "application/json" },

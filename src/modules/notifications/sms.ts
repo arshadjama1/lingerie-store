@@ -4,10 +4,11 @@ import { serverEnv } from "@/config/env.server";
 
 import { formatPrice } from "@/lib/utils";
 
-const MSG91_FLOW_URL = "https://control.msg91.com/api/v5/flow/";
+const MSG91_CAMPAIGN_BASE =
+  "https://control.msg91.com/api/v5/campaign/api/campaigns";
 
 // ─────────────────────────────────────────────────────────────────────
-// Internal helper — MSG91 Flow API v5 delivery with recipients array
+// Internal helper — MSG91 Campaign Run API delivery
 // ─────────────────────────────────────────────────────────────────────
 
 function normaliseToIndianE164Digits(phone: string): string {
@@ -17,26 +18,31 @@ function normaliseToIndianE164Digits(phone: string): string {
   return digits;
 }
 
-async function sendMsg91Flow(
-  templateId: string,
+async function sendMsg91Campaign(
+  campaignSlug: string,
   mobile: string,
   variables: Record<string, string>
 ): Promise<void> {
   const normalised = normaliseToIndianE164Digits(mobile);
 
-  // Standard MSG91 Flow API v5 payload structure
+  // Standard MSG91 Campaign Run API payload structure
   const payload = {
-    template_id: templateId,
-    short_url: "0",
-    recipients: [
-      {
-        mobiles: normalised,
-        ...variables,
-      },
-    ],
+    data: {
+      sendTo: [
+        {
+          to: [
+            {
+              mobiles: normalised,
+              variables,
+            },
+          ],
+          variables,
+        },
+      ],
+    },
   };
 
-  const res = await fetch(MSG91_FLOW_URL, {
+  const res = await fetch(`${MSG91_CAMPAIGN_BASE}/${campaignSlug}/run`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -51,12 +57,13 @@ async function sendMsg91Flow(
   }
 
   const data = (await res.json().catch(() => ({}))) as {
-    type?: string;
-    message?: string;
+    status?: string;
+    hasError?: boolean;
+    errors?: string[];
   };
-  if (data.type === "error") {
+  if (data.hasError) {
     throw new Error(
-      `MSG91 rejected flow ${templateId}: ${data.message ?? JSON.stringify(data)}`
+      `MSG91 rejected campaign ${campaignSlug}: ${data.errors?.join(", ") ?? JSON.stringify(data)}`
     );
   }
 }
@@ -88,7 +95,7 @@ export async function sendOrderConfirmationSMS(
   const formattedTotal = formatPrice(total);
 
   try {
-    await sendMsg91Flow(templateId, phone, {
+    await sendMsg91Campaign(templateId, phone, {
       orderNumber,
       ORDERNUMBER: orderNumber,
       total: formattedTotal,
@@ -127,7 +134,7 @@ export async function sendOrderShippedSMS(
   const awb = awbNumber ?? "Updating soon";
 
   try {
-    await sendMsg91Flow(templateId, phone, {
+    await sendMsg91Campaign(templateId, phone, {
       orderNumber,
       ORDERNUMBER: orderNumber,
       awbNumber: awb,
