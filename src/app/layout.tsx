@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 
-import { TeamPreviewIndicator } from "@/components/common/TeamPreviewIndicator";
 import { TopProgressBar } from "@/components/common/TopProgressBar";
 
 import "./globals.css";
@@ -68,7 +67,6 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col font-sans">
         <TopProgressBar />
         {children}
-        <TeamPreviewIndicator />
       </body>
     </html>
   );
