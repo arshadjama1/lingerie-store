@@ -19,7 +19,7 @@ export async function proxy(request: NextRequest) {
     return redirectRes;
   }
 
-  if (searchParams.get("preview") === bypassSecret) {
+  if (isPrelaunch && searchParams.get("preview") === bypassSecret) {
     const url = request.nextUrl.clone();
     url.searchParams.delete("preview");
     const redirectRes = NextResponse.redirect(url);
@@ -76,17 +76,21 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/admin");
 
   if (!needsAuth) {
-    const publicResponse = NextResponse.next({ request });
+    const publicResponse = NextResponse.next();
     // Re-stamp the preview bypass cookie so it isn't silently dropped for
     // team members browsing public pages in prelaunch mode.
     if (hasBypass) {
-      publicResponse.cookies.set("linge_preview_access", "true", {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        httpOnly: false,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
+      if (isPrelaunch) {
+        publicResponse.cookies.set("linge_preview_access", "true", {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 30, // 30 days
+          httpOnly: false,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        });
+      } else {
+        publicResponse.cookies.delete("linge_preview_access");
+      }
     }
     return publicResponse;
   }
@@ -168,8 +172,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      const url = new URL("/admin/login", request.url);
       url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
@@ -204,8 +207,7 @@ export async function proxy(request: NextRequest) {
     }
 
     if (!role || !["admin", "staff"].includes(role)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/admin/login";
+      const url = new URL("/admin/login", request.url);
       url.searchParams.set("error", "forbidden");
       return NextResponse.redirect(url);
     }
@@ -214,13 +216,17 @@ export async function proxy(request: NextRequest) {
   // Re-stamp bypass cookie so Supabase's setAll (which replaces the response
   // object entirely) can never silently drop it from the Set-Cookie headers.
   if (hasBypass) {
-    response.cookies.set("linge_preview_access", "true", {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 30 days
-      httpOnly: false,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
+    if (isPrelaunch) {
+      response.cookies.set("linge_preview_access", "true", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30, // 30 days
+        httpOnly: false,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+    } else {
+      response.cookies.delete("linge_preview_access");
+    }
   }
 
   return response;

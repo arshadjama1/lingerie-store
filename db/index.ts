@@ -25,10 +25,11 @@ function getPoolerUrl(url: string): string {
 
 // ── Serverless-optimized connection pool ─────────────────────────────
 // Netlify Functions & AWS Lambda scale horizontally and freeze between invocations.
-// 1. max: 1 prevents connection exhaustion across concurrent serverless lambdas.
+// 1. max: 5 allows concurrent queries (e.g. Promise.all in dashboard/catalog) to execute
+//    without deadlocking on a single socket, while staying well within Supabase pooler limits.
 // 2. idle_timeout: 20 closes idle connections cleanly so thawed lambdas never attempt
 //    to reuse sockets that were terminated remotely by Supavisor / NAT.
-// 3. connect_timeout: 10 prevents hanging on stalled networks.
+// 3. connect_timeout: 15 prevents premature aborts on initial cross-region TLS/pooler handshakes.
 // 4. globalThis caching reuses connections across warm invocations.
 declare global {
   var __db: ReturnType<typeof drizzle<typeof schema>> | undefined;
@@ -41,9 +42,9 @@ const pooledSql =
   globalThis.__pooledSql ??
   postgres(poolUrl, {
     prepare: false, // Required for Supabase PgBouncer / Supavisor transaction mode
-    max: 1, // 1 connection per serverless instance to prevent socket exhaustion
+    max: 5, // 5 connections per serverless instance to support Promise.all without starvation
     idle_timeout: 20, // Drop idle connections after 20s so dead sockets aren't reused after lambda thaw
-    connect_timeout: 10, // 10s connection timeout
+    connect_timeout: 15, // 15s connection timeout for cold pooler handshakes
     max_lifetime: 60 * 30, // Recycle connection after 30 minutes
   });
 

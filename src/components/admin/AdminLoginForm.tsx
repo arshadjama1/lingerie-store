@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import React, { useState, useTransition } from "react";
 
 import {
@@ -18,7 +18,6 @@ import {
 import { toast } from "sonner";
 
 export function AdminLoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/admin/dashboard";
   const errorParam = searchParams.get("error");
@@ -83,8 +82,8 @@ export function AdminLoginForm() {
 
         toast.success("Identity verified. Redirecting to operations...");
         const targetUrl = data.redirect || "/admin/dashboard";
-        router.push(targetUrl);
-        router.refresh();
+        // Perform a hard navigation to guarantee fresh document cookies and avoid concurrent RSC stream aborts
+        window.location.href = targetUrl;
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Failed to sign in.";
         setError(msg);
