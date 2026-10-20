@@ -28,7 +28,14 @@ function cleanConnectionString(
         return fbClean.replace(/:\d+([/?#]|$)/, `:${clean}$1`);
       }
     }
-    if (clean.length > 0) {
+    // Only return if the value looks like a valid postgres connection string.
+    // If it is non-empty but missing the protocol prefix (e.g. an old/corrupted
+    // value still stored in the dashboard), fall through to try the fallback
+    // rather than returning garbage that will fail validation downstream.
+    if (
+      clean.length > 0 &&
+      (clean.startsWith("postgres://") || clean.startsWith("postgresql://"))
+    ) {
       return clean;
     }
   }
