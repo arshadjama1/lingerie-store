@@ -160,25 +160,28 @@ console.log(
     "Discount cannot cause negative order total"
   );
 
-  // Test Case F: ₹1 Demo / Test item waives shipping for live production testing
-  const demoItem: CheckoutLineItem = {
-    variantId: "v-demo",
+  // Test Case F: Small subtotal below ₹500 applies standard ₹49 shipping
+  const smallItem: CheckoutLineItem = {
+    variantId: "v-small",
     quantity: 1,
-    unitPrice: 1,
+    unitPrice: 199,
     taxAmount: 0,
-    total: 1,
+    total: 199,
     snapshot: {
-      productName: "Surekh Live Demo Test Item (₹1)",
-      sku: "DEMO-TEST-01",
+      productName: "Cotton Panty",
+      sku: "CP-01",
     },
   };
-  const totalsDemo = calculateCheckoutTotals([demoItem], 0);
-  assert(totalsDemo.subtotal === 1, "Demo subtotal is ₹1");
+  const totalsSmall = calculateCheckoutTotals([smallItem], 0);
+  assert(totalsSmall.subtotal === 199, "Subtotal is ₹199");
   assert(
-    totalsDemo.shippingAmount === 0,
-    "Demo test item waives ₹49 shipping fee"
+    totalsSmall.shippingAmount === 49,
+    "Standard shipping applies for orders under ₹500"
   );
-  assert(totalsDemo.total === 1, "Demo total payable is exactly ₹1");
+  assert(
+    totalsSmall.total === 248,
+    "Total payable is ₹248 (₹199 + ₹49 shipping)"
+  );
 }
 
 // ─── 3. ORDER STATE MACHINE INTEGRITY ─────────────────────────────

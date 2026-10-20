@@ -347,16 +347,9 @@ export function FastCheckoutModal({ isOpen, onClose }: FastCheckoutModalProps) {
   // Net subtotal used for COD eligibility check
   const netSubtotal = Math.max(0, rawSubtotal - couponDiscount);
 
-  // Shipping (Free above ₹500, promo code, or ₹1 demo test items)
-  const isDemoOrder =
-    items.length > 0 &&
-    items.every(
-      (item) =>
-        item.variant?.sku?.startsWith("DEMO-") ||
-        Number(item.variant?.price ?? 0) <= 1
-    );
+  // Shipping (Free above ₹500 or promo code)
   const isFreeShipping =
-    rawSubtotal >= 500 || appliedCoupon?.code === "FREESHIP" || isDemoOrder;
+    rawSubtotal >= 500 || appliedCoupon?.code === "FREESHIP";
   const shippingFee = isFreeShipping ? 0 : 49;
 
   // COD eligibility: cart has items + DTDC pincode serviceability (available regardless of price)
