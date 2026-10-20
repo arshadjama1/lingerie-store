@@ -176,6 +176,7 @@ export { getProductIdByVariantId };
 export {
   BRA_SIZE_CHART_URL,
   UNDIES_SIZE_CHART_URL,
+  SET_SIZE_CHART_URL,
   getProductSizeChart,
   SIZE_ORDER,
   sortSizesNaturally,
