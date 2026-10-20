@@ -5,11 +5,11 @@ import React, { Suspense } from "react";
 import { buildQueryString } from "@/lib/utils";
 
 import {
-  type SortOption,
   getCatalogCategories,
   getCatalogCategoryBySlug,
   getCatalogFilters,
   getCatalogProducts,
+  sortOptionSchema,
 } from "@/modules/catalog";
 
 import { Breadcrumb } from "@/components/common/breadcrumb";
@@ -120,7 +120,11 @@ export default async function CategoryPage({
       ? Math.max(0, Number(resolvedSearchParams.priceMax))
       : undefined;
 
-  const sort = (resolvedSearchParams.sort || "newest") as SortOption;
+  const rawSort = Array.isArray(resolvedSearchParams.sort)
+    ? resolvedSearchParams.sort[0]
+    : resolvedSearchParams.sort;
+  const parsedSort = sortOptionSchema.safeParse(rawSort);
+  const sort = parsedSort.success ? parsedSort.data : "newest";
   const page =
     resolvedSearchParams.page && !isNaN(Number(resolvedSearchParams.page))
       ? Math.max(1, Number(resolvedSearchParams.page))
@@ -157,7 +161,7 @@ export default async function CategoryPage({
   // Dynamic URL builder for pagination preserving filters
   const buildPageUrl = (targetPage: number) => {
     const q: Record<string, string | string[] | number | undefined> = {};
-    if (resolvedSearchParams.sort) q.sort = resolvedSearchParams.sort;
+    if (sort && sort !== "newest") q.sort = sort;
     if (resolvedSearchParams.priceMin !== undefined)
       q.priceMin = resolvedSearchParams.priceMin;
     if (resolvedSearchParams.priceMax !== undefined)

@@ -40,6 +40,43 @@ const db = drizzle(client, { schema });
 
 // ─── Image base path (served from Next.js public/) ───────────────────────────
 const IMG = "/images/products";
+const BRA_SIZE_CHART = `${IMG}/surekh_lounge_size_chart_450x600.png`;
+const UNDIES_SIZE_CHART = `${IMG}/surekh_size_chart_450x600_proportional.png`;
+
+function getSizeChartForProduct(product: {
+  categorySlug: string;
+  name: string;
+  tags?: string[];
+}) {
+  const catSlug = product.categorySlug.toLowerCase();
+  const prodName = product.name.toLowerCase();
+  const tags = (product.tags || []).map((t) => t.toLowerCase());
+
+  const isUndie =
+    catSlug === "panties" ||
+    tags.includes("undie") ||
+    tags.includes("panty") ||
+    tags.includes("panties") ||
+    tags.includes("boyleg") ||
+    prodName.includes("undie") ||
+    prodName.includes("panty") ||
+    prodName.includes("panties") ||
+    prodName.includes("boyleg");
+
+  if (isUndie && catSlug !== "bras" && !prodName.includes(" bra")) {
+    return {
+      url: UNDIES_SIZE_CHART,
+      alt: `${product.name} Undies Size Chart`,
+      isPrimary: false,
+    };
+  }
+
+  return {
+    url: BRA_SIZE_CHART,
+    alt: `${product.name} Bra & Lounge Size Chart`,
+    isPrimary: false,
+  };
+}
 
 // ─── Colour hex lookup ────────────────────────────────────────────────────────
 const COLOR_HEX: Record<string, string> = {
@@ -531,9 +568,24 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
       isBestSeller: false,
       productImages: [
         {
-          url: `${IMG}/overlap-bralette-placeholder.png`,
-          alt: "Overlap Bralette with Hipster Set – Imagery Coming Soon",
+          url: `${IMG}/overlap-bralette-maroon-1.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Model Front",
           isPrimary: true,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-2.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Studio Flat Lay",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-3.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Model Back",
+          isPrimary: false,
+        },
+        {
+          url: `${IMG}/overlap-bralette-maroon-4.png`,
+          alt: "Overlap Bralette with Hipster Set – Maroon Styled Flat Lay",
+          isPrimary: false,
         },
       ],
       variants: [
@@ -544,9 +596,24 @@ The elegant **maroon finish** adds a refined touch to this versatile set, while 
           mrp: 1599,
           images: [
             {
-              url: `${IMG}/overlap-bralette-placeholder.png`,
-              alt: "Overlap Bralette Hipster Set Maroon – Imagery Coming Soon",
+              url: `${IMG}/overlap-bralette-maroon-1.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Model Front",
               isPrimary: true,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-2.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Studio Flat Lay",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-3.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Model Back",
+              isPrimary: false,
+            },
+            {
+              url: `${IMG}/overlap-bralette-maroon-4.png`,
+              alt: "Overlap Bralette with Hipster Set Maroon Styled Flat Lay",
+              isPrimary: false,
             },
           ],
         },
@@ -1775,18 +1842,31 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
       metaDesc: `Buy ${p.name} online at Surekh.${p.fabric ? ` Made from ${p.fabric}.` : ""} Shop premium innerwear with fast delivery.`,
     });
 
+    const sizeChart = getSizeChartForProduct(p);
+
     let imgSortOrder = 1;
     for (const img of p.productImages) {
-      allProductImagesToInsert.push({
-        id: createId(),
-        productId,
-        variantId: null,
-        url: img.url,
-        alt: img.alt,
-        isPrimary: img.isPrimary,
-        sortOrder: imgSortOrder++,
-      });
+      if (img.url !== sizeChart.url) {
+        allProductImagesToInsert.push({
+          id: createId(),
+          productId,
+          variantId: null,
+          url: img.url,
+          alt: img.alt,
+          isPrimary: img.isPrimary,
+          sortOrder: imgSortOrder++,
+        });
+      }
     }
+    allProductImagesToInsert.push({
+      id: createId(),
+      productId,
+      variantId: null,
+      url: sizeChart.url,
+      alt: sizeChart.alt,
+      isPrimary: false,
+      sortOrder: Math.max(5, imgSortOrder),
+    });
 
     let variantSortOrder = 0;
     for (const v of p.variants) {
@@ -1822,16 +1902,27 @@ The smooth outer finish creates an invisible profile under tight tees and silky 
 
         let vImgSort = 1;
         for (const img of v.images) {
-          allProductImagesToInsert.push({
-            id: createId(),
-            productId,
-            variantId,
-            url: img.url,
-            alt: img.alt,
-            isPrimary: img.isPrimary,
-            sortOrder: vImgSort++,
-          });
+          if (img.url !== sizeChart.url) {
+            allProductImagesToInsert.push({
+              id: createId(),
+              productId,
+              variantId,
+              url: img.url,
+              alt: img.alt,
+              isPrimary: img.isPrimary,
+              sortOrder: vImgSort++,
+            });
+          }
         }
+        allProductImagesToInsert.push({
+          id: createId(),
+          productId,
+          variantId,
+          url: sizeChart.url,
+          alt: sizeChart.alt,
+          isPrimary: false,
+          sortOrder: Math.max(5, vImgSort),
+        });
       }
     }
   }

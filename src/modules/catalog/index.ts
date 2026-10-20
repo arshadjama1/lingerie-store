@@ -29,12 +29,52 @@ import type {
 } from "./types";
 
 // ── Zod validation schemas ──────────────────────────────────────────
-const sortOptionSchema = z.enum([
+export const VALID_SORT_OPTIONS = [
   "newest",
   "price_asc",
   "price_desc",
   "popular",
-]);
+] as const;
+
+export const sortOptionSchema = z
+  .preprocess((val) => {
+    if (!val) return "newest";
+    const str = Array.isArray(val) ? String(val[0]) : String(val);
+    const normalized = str.trim().toLowerCase().replace(/-/g, "_");
+    if (
+      normalized === "price_asc" ||
+      normalized === "price_low_to_high" ||
+      normalized === "price_low"
+    ) {
+      return "price_asc";
+    }
+    if (
+      normalized === "price_desc" ||
+      normalized === "price_high_to_low" ||
+      normalized === "price_high"
+    ) {
+      return "price_desc";
+    }
+    if (
+      normalized === "popular" ||
+      normalized === "popularity" ||
+      normalized === "rating" ||
+      normalized === "bestseller"
+    ) {
+      return "popular";
+    }
+    if (
+      normalized === "newest" ||
+      normalized === "relevance" ||
+      normalized === "created_at"
+    ) {
+      return "newest";
+    }
+    return (VALID_SORT_OPTIONS as readonly string[]).includes(normalized)
+      ? (normalized as SortOption)
+      : "newest";
+  }, z.enum(VALID_SORT_OPTIONS))
+  .default("newest");
 
 const listProductsSchema = z.object({
   categoryPath: z.string().optional(),
@@ -133,7 +173,14 @@ export async function getCatalogSearchSuggestions(
 }
 
 export { getProductIdByVariantId };
-export { SIZE_ORDER, sortSizesNaturally } from "./constants";
+export {
+  BRA_SIZE_CHART_URL,
+  UNDIES_SIZE_CHART_URL,
+  getProductSizeChart,
+  SIZE_ORDER,
+  sortSizesNaturally,
+  type ProductSizeChart,
+} from "./constants";
 
 // ── Re-exports all types so consumers only need one import ───────────
 export type {

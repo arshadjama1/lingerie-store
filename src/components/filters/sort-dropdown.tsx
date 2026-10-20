@@ -32,7 +32,9 @@ export function SortDropdown({
   const searchParams = useSearchParams();
   const { startFilterTransition } = useCatalogFilter();
 
-  const currentSort = searchParams.get("sort") || defaultSort;
+  const rawSort = searchParams.get("sort");
+  const isOptionValid = options.some((opt) => opt.value === rawSort);
+  const currentSort = isOptionValid ? rawSort! : defaultSort;
 
   const setSort = useCallback(
     (value: string) => {
