@@ -2,8 +2,6 @@ import "server-only";
 
 import { serverEnv } from "@/config/env.server";
 
-import { formatPrice } from "@/lib/utils";
-
 const MSG91_CAMPAIGN_BASE =
   "https://control.msg91.com/api/v5/campaign/api/campaigns";
 
@@ -92,14 +90,15 @@ export async function sendOrderConfirmationSMS(
     return;
   }
 
-  const formattedTotal = formatPrice(total);
+  // DLT template has "of Rs. ##total##" — pass clean numeric string without currency symbol
+  const cleanTotal = Math.round(total).toString();
 
   try {
     await sendMsg91Campaign(templateId, phone, {
       orderNumber,
       ORDERNUMBER: orderNumber,
-      total: formattedTotal,
-      TOTAL: formattedTotal,
+      total: cleanTotal,
+      TOTAL: cleanTotal,
     });
   } catch (err) {
     // Non-fatal: email remains primary confirmation channel
