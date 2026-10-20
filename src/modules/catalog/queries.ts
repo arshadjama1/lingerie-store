@@ -186,29 +186,32 @@ export async function listProducts(
 
   const whereClause = and(...conditions);
 
-  const orderBy = {
+  const orderMap = {
     newest: [desc(products.createdAt)],
     price_asc: [
       asc(sql`(
         SELECT MIN(pv.price) FROM ${productVariants} pv
-        WHERE pv.product_id = ${products}.id AND pv.is_active = true
+        WHERE pv.product_id = ${products.id} AND pv.is_active = true
       )`),
     ],
     price_desc: [
       desc(sql`(
         SELECT MIN(pv.price) FROM ${productVariants} pv
-        WHERE pv.product_id = ${products}.id AND pv.is_active = true
+        WHERE pv.product_id = ${products.id} AND pv.is_active = true
       )`),
     ],
     popular: [desc(products.soldCount), desc(products.ratingCount)],
-  }[sort];
+  };
+
+  const sortKey = sort && sort in orderMap ? (sort as SortOption) : "newest";
+  const orderBy = orderMap[sortKey] ?? orderMap.newest;
 
   // Fetch rows with a bounded cap. Color expansion happens in JS, so we
   // need enough raw products to fill all pages. Cap at 500 raw products
   // (covers ~2000 expanded color-cards) to avoid unbounded over-fetches.
   const MAX_RAW_FETCH = 500;
 
-  const [rows, countRows] = await Promise.all([
+  const [rows, _countRows] = await Promise.all([
     db
       .select({
         id: products.id,
@@ -363,16 +366,19 @@ export async function listProducts(
   );
 
   const total = expandedList.length;
-  const paginated = expandedList.slice(offset, offset + limit);
-  // Use raw DB count for totalPages so it reflects the full catalog size
-  // even when expandedList is capped at MAX_RAW_FETCH raw products.
-  const rawTotal = countRows[0]?.count ?? total;
+  // If requested page is beyond available items and we have items, fall back to page 1 to prevent empty results
+  const effectivePage = offset >= total && total > 0 ? 1 : page;
+  const effectiveOffset = (effectivePage - 1) * limit;
+  const paginated = expandedList.slice(
+    effectiveOffset,
+    effectiveOffset + limit
+  );
 
   return {
     products: paginated,
-    total: rawTotal,
-    page,
-    totalPages: Math.max(1, Math.ceil(rawTotal / limit)),
+    total,
+    page: effectivePage,
+    totalPages: Math.max(1, Math.ceil(total / limit)),
   };
 }
 
@@ -1660,16 +1666,23 @@ export function expandProductItemsByColor(
     }
   }
 
+  const getPrice = (item: ProductListItem) => {
+    const p = parseFloat(item.minPrice);
+    return isNaN(p) ? 0 : p;
+  };
+
   // Sort expanded list according to sort option
   if (sort === "price_asc") {
-    expanded.sort((a, b) => parseFloat(a.minPrice) - parseFloat(b.minPrice));
+    expanded.sort((a, b) => getPrice(a) - getPrice(b));
   } else if (sort === "price_desc") {
-    expanded.sort((a, b) => parseFloat(b.minPrice) - parseFloat(a.minPrice));
+    expanded.sort((a, b) => getPrice(b) - getPrice(a));
   } else if (sort === "popular") {
     expanded.sort(
       (a, b) =>
         (b.soldCount ?? 0) - (a.soldCount ?? 0) ||
-        (b.ratingCount ?? 0) - (a.ratingCount ?? 0)
+        (b.ratingCount ?? 0) - (a.ratingCount ?? 0) ||
+        (parseFloat(b.ratingAvg || "0") || 0) -
+          (parseFloat(a.ratingAvg || "0") || 0)
     );
   }
 
