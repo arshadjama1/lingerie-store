@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
+import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
 import {
   ShieldCheck,
@@ -13,8 +14,7 @@ import {
   X,
 } from "lucide-react";
 
-import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
-import { createClient } from "@/lib/supabase/client";
+import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn, formatPrice } from "@/lib/utils";
 
 import { CartItemCard } from "./cart-item-card";
@@ -40,38 +40,19 @@ export function CartDrawer() {
     closeFastCheckout,
   } = useCartStore();
 
-  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const authUser = useAuthStore((state) => state.user);
+  const authProfile = useAuthStore((state) => state.profile);
+  const userFirstName =
+    authProfile?.firstName ||
+    (authUser?.user_metadata?.full_name as string | undefined) ||
+    authUser?.email?.split("@")[0] ||
+    null;
 
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
-
-  // Auth User Fetch
-  useEffect(() => {
-    if (!isOpen) return;
-
-    async function getUserProfile() {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          const emailPrefix = user.email?.split("@")[0];
-          setUserFirstName(
-            user.user_metadata?.full_name || emailPrefix || "Shopper"
-          );
-        } else {
-          setUserFirstName(null);
-        }
-      } catch (err) {
-        console.error("[CartDrawer] User data fetch error:", err);
-      }
+    if (isOpen) {
+      fetchCart();
     }
-
-    getUserProfile();
-  }, [isOpen]);
+  }, [isOpen, fetchCart]);
 
   const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
@@ -115,7 +96,7 @@ export function CartDrawer() {
   useEffect(() => {
     return () => {
       if (isLockedRef.current) {
-        unlockScroll();
+        forceUnlockScroll();
         isLockedRef.current = false;
       }
     };

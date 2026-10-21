@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 
-import { lockScroll, unlockScroll } from "@/lib/scroll-lock";
+import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scroll-lock";
 import { cn } from "@/lib/utils";
 
 import { LogoutButton } from "@/components/account/LogoutButton";
@@ -111,7 +111,9 @@ export function MobileDrawer({
   useEffect(() => {
     if (prevPathnameRef.current !== pathname) {
       prevPathnameRef.current = pathname;
-      if (isOpen) {
+      if (isOpen || isLockedRef.current) {
+        isLockedRef.current = false;
+        forceUnlockScroll();
         onClose();
       }
     }
@@ -148,7 +150,7 @@ export function MobileDrawer({
   useEffect(() => {
     return () => {
       if (isLockedRef.current) {
-        unlockScroll();
+        forceUnlockScroll();
         isLockedRef.current = false;
       }
     };

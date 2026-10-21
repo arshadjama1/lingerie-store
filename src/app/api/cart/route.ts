@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { withErrorHandling } from "@/lib/errors";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/supabase/server";
 
 import { getCart } from "@/modules/cart";
 
@@ -10,10 +10,7 @@ export const GET = withErrorHandling(async () => {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("cart_session")?.value;
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   const userId = user?.id ?? null;
   const sessionId = sessionCookie ?? null;

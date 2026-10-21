@@ -3,6 +3,8 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 
+import { forceUnlockScroll } from "@/lib/scroll-lock";
+
 function ProgressBarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -35,10 +37,10 @@ function ProgressBarInner() {
       });
     }, 120);
 
-    // Fail-safe cleanup after 8 seconds in case navigation is cancelled
+    // Fail-safe cleanup after 3 seconds in case navigation is cancelled or fast
     failSafeRef.current = setTimeout(() => {
       completeProgress();
-    }, 8000);
+    }, 3000);
   };
 
   const completeProgress = () => {
@@ -58,8 +60,10 @@ function ProgressBarInner() {
     }, 220);
   };
 
-  // Complete progress whenever route path or search params change
+  // Complete progress whenever route path or search params change,
+  // and guarantee that any orphaned scroll lock is immediately unlocked.
   useEffect(() => {
+    forceUnlockScroll();
     if (activeNavRef.current) {
       completeProgress();
     }
@@ -68,8 +72,15 @@ function ProgressBarInner() {
   // Intercept internal link clicks and popstate events
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
-      // Ignore modified clicks (new tab, new window)
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+      // Ignore prevented or modified clicks (new tab, new window)
+      if (
+        e.defaultPrevented ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey ||
+        e.button !== 0
+      ) {
         return;
       }
 
@@ -81,7 +92,7 @@ function ProgressBarInner() {
       const href = anchor.getAttribute("href");
       if (!href) return;
 
-      // Ignore external links, downloads, hash links, mailto, tel
+      // Ignore external links, downloads, hash links, mailto, tel, javascript
       if (
         anchor.target === "_blank" ||
         anchor.hasAttribute("download") ||
@@ -115,13 +126,11 @@ function ProgressBarInner() {
       startProgress();
     };
 
-    document.addEventListener("click", handleAnchorClick, { capture: true });
+    document.addEventListener("click", handleAnchorClick);
     window.addEventListener("popstate", handlePopState);
 
     return () => {
-      document.removeEventListener("click", handleAnchorClick, {
-        capture: true,
-      });
+      document.removeEventListener("click", handleAnchorClick);
       window.removeEventListener("popstate", handlePopState);
       if (timerRef.current) clearInterval(timerRef.current);
       if (failSafeRef.current) clearTimeout(failSafeRef.current);
