@@ -63,10 +63,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     const [
       ordersSummaryResult,
       statusCountsResult,
-      lowStockResult,
-      pendingReviewsResult,
-      pendingReturnsResult,
-      customersResult,
+      operationalCountsResult,
       recentOrdersRows,
     ] = await Promise.all([
       // 1. Consolidated revenue and order volume in a single query
@@ -88,31 +85,21 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
         .from(orders)
         .groupBy(orders.status),
 
-      // 3. Low stock count (quantity <= lowStockAlert)
-      db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(inventory)
-        .where(sql`${inventory.quantity} <= ${inventory.lowStockAlert}`),
+      // 3. Operational counts consolidated into a single query to eliminate socket starvation
+      db.execute<{
+        lowStockCount: number;
+        pendingReviewsCount: number;
+        pendingReturnsCount: number;
+        totalCustomers: number;
+      }>(sql`
+        SELECT
+          (SELECT COUNT(*)::int FROM ${inventory} WHERE ${inventory.quantity} <= ${inventory.lowStockAlert}) AS "lowStockCount",
+          (SELECT COUNT(*)::int FROM ${reviews} WHERE ${reviews.isApproved} = false) AS "pendingReviewsCount",
+          (SELECT COUNT(*)::int FROM ${returnRequests} WHERE ${returnRequests.status} = 'requested') AS "pendingReturnsCount",
+          (SELECT COUNT(*)::int FROM ${profiles} WHERE ${profiles.role} = 'customer') AS "totalCustomers"
+      `),
 
-      // 4. Pending reviews moderation count
-      db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(reviews)
-        .where(eq(reviews.isApproved, false)),
-
-      // 5. Pending returns count
-      db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(returnRequests)
-        .where(eq(returnRequests.status, "requested")),
-
-      // 6. Total registered customers
-      db
-        .select({ count: sql<number>`COUNT(*)::int` })
-        .from(profiles)
-        .where(eq(profiles.role, "customer")),
-
-      // 7. Recent 8 orders
+      // 4. Recent 8 orders
       db
         .select({
           id: orders.id,
@@ -143,16 +130,23 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
       }
     });
 
+    const counts = operationalCountsResult[0] ?? {
+      lowStockCount: 0,
+      pendingReviewsCount: 0,
+      pendingReturnsCount: 0,
+      totalCustomers: 0,
+    };
+
     return {
       totalRevenue,
       todayRevenue,
       totalOrders,
       todayOrders,
       averageOrderValue,
-      lowStockCount: lowStockResult[0]?.count ?? 0,
-      pendingReviewsCount: pendingReviewsResult[0]?.count ?? 0,
-      pendingReturnsCount: pendingReturnsResult[0]?.count ?? 0,
-      totalCustomers: customersResult[0]?.count ?? 0,
+      lowStockCount: counts.lowStockCount ?? 0,
+      pendingReviewsCount: counts.pendingReviewsCount ?? 0,
+      pendingReturnsCount: counts.pendingReturnsCount ?? 0,
+      totalCustomers: counts.totalCustomers ?? 0,
       ordersByStatus,
       recentOrders: recentOrdersRows.map((r) => ({
         id: r.id,
