@@ -117,11 +117,13 @@ export function ProductGallery({
   }, []);
 
   const handlePrev = useCallback(() => {
+    setIsZooming(false);
     setIsLightboxZoomed(false);
     setActiveIndex((prev) => (prev === 0 ? safeImages.length - 1 : prev - 1));
   }, [safeImages.length]);
 
   const handleNext = useCallback(() => {
+    setIsZooming(false);
     setIsLightboxZoomed(false);
     setActiveIndex((prev) => (prev === safeImages.length - 1 ? 0 : prev + 1));
   }, [safeImages.length]);
@@ -292,7 +294,10 @@ export function ProductGallery({
                   thumbnailRefs.current[idx] = el;
                 }}
                 type="button"
-                onClick={() => setActiveIndex(idx)}
+                onClick={() => {
+                  setIsZooming(false);
+                  setActiveIndex(idx);
+                }}
                 className={cn(
                   "group relative aspect-[3/4] w-16 shrink-0 cursor-pointer overflow-hidden rounded-none border transition-all lg:w-20",
                   isActive
@@ -329,44 +334,44 @@ export function ProductGallery({
           onMouseMove={handleMouseMove}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
-          className="group relative aspect-[3/4] w-full cursor-zoom-in overflow-hidden rounded-none border border-gray-100 bg-[var(--surface)] shadow-sm"
+          className="group relative aspect-[3/4] w-full cursor-zoom-in touch-pan-y overflow-hidden rounded-none border border-gray-100 bg-[var(--surface)] shadow-sm"
           title="Click to view full screen"
         >
-          {/* Main Image Stack with Smooth Cross-Fade Transition */}
-          {safeImages.map((img, idx) => {
-            const isActive = activeIndex === idx;
-            return (
-              <div
-                key={img.id}
-                aria-hidden={!isActive}
-                className={cn(
-                  "will-change-opacity absolute inset-0 transition-opacity duration-300 ease-out",
-                  isActive
-                    ? "pointer-events-auto z-10 opacity-100"
-                    : "pointer-events-none z-0 opacity-0"
-                )}
-              >
-                <Image
-                  src={img.url}
-                  alt={img.alt || `${productName} - View ${idx + 1}`}
-                  fill
-                  priority={idx === 0 || isActive}
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className={cn(
-                    "object-cover transition-transform duration-200 ease-out",
-                    isZooming && isActive ? "scale-150" : "scale-100"
-                  )}
-                  style={
-                    isZooming && isActive
-                      ? {
-                          transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
-                        }
-                      : undefined
-                  }
-                />
-              </div>
-            );
-          })}
+          {/* Main Slider Track with Smooth Slide-In Transition */}
+          <div
+            className="flex h-full w-full transition-transform duration-300 ease-out will-change-transform"
+            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+          >
+            {safeImages.map((img, idx) => {
+              const isActive = activeIndex === idx;
+              return (
+                <div
+                  key={img.id}
+                  aria-hidden={!isActive}
+                  className="relative h-full w-full shrink-0"
+                >
+                  <Image
+                    src={img.url}
+                    alt={img.alt || `${productName} - View ${idx + 1}`}
+                    fill
+                    priority={idx === 0 || isActive}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className={cn(
+                      "object-cover transition-transform duration-200 ease-out",
+                      isZooming && isActive ? "scale-150" : "scale-100"
+                    )}
+                    style={
+                      isZooming && isActive
+                        ? {
+                            transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
+              );
+            })}
+          </div>
 
           {/* Badges Overlay */}
           <div className="pointer-events-none absolute top-4 left-4 z-10 flex flex-col items-start gap-1.5">
@@ -565,53 +570,53 @@ export function ProductGallery({
                 </button>
               )}
 
-              {/* Main Image Container with Smooth Cross-Fade Transition */}
+              {/* Main Image Container with Smooth Slide-In Transition */}
               <div
                 className={cn(
-                  "relative max-h-full max-w-full transition-all duration-200",
+                  "relative max-h-full max-w-full touch-pan-y overflow-hidden transition-all duration-200",
                   isLightboxZoomed
-                    ? "h-full w-full cursor-zoom-out overflow-hidden"
+                    ? "h-full w-full cursor-zoom-out"
                     : "aspect-[3/4] h-[75vh] max-h-[85vh] cursor-zoom-in sm:h-[80vh]"
                 )}
                 onClick={toggleLightboxZoom}
                 onMouseMove={handleLightboxMouseMove}
               >
-                {safeImages.map((img, idx) => {
-                  const isActive = activeIndex === idx;
-                  return (
-                    <div
-                      key={img.id}
-                      aria-hidden={!isActive}
-                      className={cn(
-                        "will-change-opacity absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-out",
-                        isActive
-                          ? "pointer-events-auto z-10 opacity-100"
-                          : "pointer-events-none z-0 opacity-0"
-                      )}
-                    >
-                      <Image
-                        src={img.url}
-                        alt={img.alt || `${productName} - View ${idx + 1}`}
-                        fill
-                        priority={idx === 0 || isActive}
-                        className={cn(
-                          "object-contain transition-transform duration-200 ease-out select-none",
-                          isLightboxZoomed && isActive
-                            ? "scale-[2.2]"
-                            : "scale-100"
-                        )}
-                        style={
-                          isLightboxZoomed && isActive
-                            ? {
-                                transformOrigin: `${lightboxZoomCoords.x}% ${lightboxZoomCoords.y}%`,
-                              }
-                            : undefined
-                        }
-                        sizes="100vw"
-                      />
-                    </div>
-                  );
-                })}
+                <div
+                  className="flex h-full w-full transition-transform duration-300 ease-out will-change-transform"
+                  style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                >
+                  {safeImages.map((img, idx) => {
+                    const isActive = activeIndex === idx;
+                    return (
+                      <div
+                        key={img.id}
+                        aria-hidden={!isActive}
+                        className="relative flex h-full w-full shrink-0 items-center justify-center"
+                      >
+                        <Image
+                          src={img.url}
+                          alt={img.alt || `${productName} - View ${idx + 1}`}
+                          fill
+                          priority={idx === 0 || isActive}
+                          className={cn(
+                            "object-contain transition-transform duration-200 ease-out select-none",
+                            isLightboxZoomed && isActive
+                              ? "scale-[2.2]"
+                              : "scale-100"
+                          )}
+                          style={
+                            isLightboxZoomed && isActive
+                              ? {
+                                  transformOrigin: `${lightboxZoomCoords.x}% ${lightboxZoomCoords.y}%`,
+                                }
+                              : undefined
+                          }
+                          sizes="100vw"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Next Arrow */}
