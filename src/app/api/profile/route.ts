@@ -5,7 +5,7 @@ import {
   ValidationError,
   withErrorHandling,
 } from "@/lib/errors";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getSessionUser } from "@/lib/supabase/server";
 
 import {
   UpdateProfileSchema,
@@ -15,10 +15,7 @@ import {
 } from "@/modules/auth";
 
 export const GET = withErrorHandling(async () => {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getSessionUser();
 
   if (!user) {
     throw new UnauthorizedError();

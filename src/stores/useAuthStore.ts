@@ -118,31 +118,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
-      // 2. Fallback to client Supabase SDK
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (user) {
-          set({
-            user: {
-              id: user.id,
-              email: user.email,
-              phone: user.phone,
-              user_metadata: user.user_metadata,
-            },
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          useWishlistStore.setState({ isAuthenticated: true });
-          return;
-        }
-      } catch {
-        // Guest user or no session
-      }
-
+      // Guest user or unauthenticated — do not hammer Supabase Auth from the browser
       set({
         user: null,
         profile: null,
