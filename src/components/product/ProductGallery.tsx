@@ -56,6 +56,8 @@ export function ProductGallery({
   const isSwiping = useRef(false);
   const lightboxTouchStartX = useRef<number | null>(null);
   const lightboxTouchStartY = useRef<number | null>(null);
+  const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const lightboxThumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const safeImages =
     images.length > 0
@@ -77,6 +79,31 @@ export function ProductGallery({
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  // Smoothly scroll active thumbnail into view
+  useEffect(() => {
+    const activeThumb = thumbnailRefs.current[activeIndex];
+    if (activeThumb) {
+      activeThumb.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [activeIndex]);
+
+  useEffect(() => {
+    if (lightboxOpen) {
+      const activeLightboxThumb = lightboxThumbnailRefs.current[activeIndex];
+      if (activeLightboxThumb) {
+        activeLightboxThumb.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "center",
+        });
+      }
+    }
+  }, [activeIndex, lightboxOpen]);
 
   const currentImage = safeImages[activeIndex] || safeImages[0];
 
@@ -261,6 +288,9 @@ export function ProductGallery({
             return (
               <button
                 key={img.id}
+                ref={(el) => {
+                  thumbnailRefs.current[idx] = el;
+                }}
                 type="button"
                 onClick={() => setActiveIndex(idx)}
                 className={cn(
@@ -302,25 +332,41 @@ export function ProductGallery({
           className="group relative aspect-[3/4] w-full cursor-zoom-in overflow-hidden rounded-none border border-gray-100 bg-[var(--surface)] shadow-sm"
           title="Click to view full screen"
         >
-          {/* Main Image */}
-          <Image
-            src={currentImage.url}
-            alt={currentImage.alt || productName}
-            fill
-            priority
-            sizes="(max-width: 1024px) 100vw, 50vw"
-            className={cn(
-              "object-cover transition-all duration-200 ease-out",
-              isZooming ? "origin-center scale-150" : "scale-100"
-            )}
-            style={
-              isZooming
-                ? {
-                    transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+          {/* Main Image Stack with Smooth Cross-Fade Transition */}
+          {safeImages.map((img, idx) => {
+            const isActive = activeIndex === idx;
+            return (
+              <div
+                key={img.id}
+                aria-hidden={!isActive}
+                className={cn(
+                  "will-change-opacity absolute inset-0 transition-opacity duration-300 ease-out",
+                  isActive
+                    ? "pointer-events-auto z-10 opacity-100"
+                    : "pointer-events-none z-0 opacity-0"
+                )}
+              >
+                <Image
+                  src={img.url}
+                  alt={img.alt || `${productName} - View ${idx + 1}`}
+                  fill
+                  priority={idx === 0 || isActive}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className={cn(
+                    "object-cover transition-transform duration-200 ease-out",
+                    isZooming && isActive ? "scale-150" : "scale-100"
+                  )}
+                  style={
+                    isZooming && isActive
+                      ? {
+                          transformOrigin: `${zoomCoords.x}% ${zoomCoords.y}%`,
+                        }
+                      : undefined
                   }
-                : undefined
-            }
-          />
+                />
+              </div>
+            );
+          })}
 
           {/* Badges Overlay */}
           <div className="pointer-events-none absolute top-4 left-4 z-10 flex flex-col items-start gap-1.5">
@@ -341,6 +387,23 @@ export function ProductGallery({
           {safeImages.length > 1 && (
             <div className="pointer-events-none absolute right-4 bottom-4 z-10 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm backdrop-blur-xs">
               {activeIndex + 1} / {safeImages.length}
+            </div>
+          )}
+
+          {/* Mobile Indicator Dots */}
+          {safeImages.length > 1 && (
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 sm:hidden">
+              {safeImages.map((img, idx) => (
+                <span
+                  key={img.id}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    activeIndex === idx
+                      ? "w-4 bg-[var(--accent)]"
+                      : "w-1.5 bg-white/70 shadow-xs"
+                  )}
+                />
+              ))}
             </div>
           )}
 
@@ -502,7 +565,7 @@ export function ProductGallery({
                 </button>
               )}
 
-              {/* Main Image Container */}
+              {/* Main Image Container with Smooth Cross-Fade Transition */}
               <div
                 className={cn(
                   "relative max-h-full max-w-full transition-all duration-200",
@@ -513,24 +576,42 @@ export function ProductGallery({
                 onClick={toggleLightboxZoom}
                 onMouseMove={handleLightboxMouseMove}
               >
-                <Image
-                  src={currentImage.url}
-                  alt={currentImage.alt || productName}
-                  fill
-                  priority
-                  className={cn(
-                    "object-contain transition-transform duration-200 ease-out select-none",
-                    isLightboxZoomed ? "scale-[2.2]" : "scale-100"
-                  )}
-                  style={
-                    isLightboxZoomed
-                      ? {
-                          transformOrigin: `${lightboxZoomCoords.x}% ${lightboxZoomCoords.y}%`,
+                {safeImages.map((img, idx) => {
+                  const isActive = activeIndex === idx;
+                  return (
+                    <div
+                      key={img.id}
+                      aria-hidden={!isActive}
+                      className={cn(
+                        "will-change-opacity absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-out",
+                        isActive
+                          ? "pointer-events-auto z-10 opacity-100"
+                          : "pointer-events-none z-0 opacity-0"
+                      )}
+                    >
+                      <Image
+                        src={img.url}
+                        alt={img.alt || `${productName} - View ${idx + 1}`}
+                        fill
+                        priority={idx === 0 || isActive}
+                        className={cn(
+                          "object-contain transition-transform duration-200 ease-out select-none",
+                          isLightboxZoomed && isActive
+                            ? "scale-[2.2]"
+                            : "scale-100"
+                        )}
+                        style={
+                          isLightboxZoomed && isActive
+                            ? {
+                                transformOrigin: `${lightboxZoomCoords.x}% ${lightboxZoomCoords.y}%`,
+                              }
+                            : undefined
                         }
-                      : undefined
-                  }
-                  sizes="100vw"
-                />
+                        sizes="100vw"
+                      />
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Next Arrow */}
@@ -562,6 +643,9 @@ export function ProductGallery({
                     return (
                       <button
                         key={img.id}
+                        ref={(el) => {
+                          lightboxThumbnailRefs.current[idx] = el;
+                        }}
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
