@@ -211,6 +211,26 @@ export async function proxy(request: NextRequest) {
       url.searchParams.set("error", "forbidden");
       return NextResponse.redirect(url);
     }
+
+    // Forward verified admin identity in request headers to downstream Server Components
+    // to eliminate redundant remote Supabase Auth network round-trips in AdminLayout.
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-admin-user-id", user.id);
+    if (user.email) {
+      requestHeaders.set("x-admin-user-email", user.email);
+    }
+    requestHeaders.set("x-admin-user-role", role);
+
+    const newResponse = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+
+    response.cookies.getAll().forEach((cookie) => {
+      newResponse.cookies.set(cookie);
+    });
+    response = newResponse;
   }
 
   // Re-stamp bypass cookie so Supabase's setAll (which replaces the response
