@@ -209,31 +209,33 @@ export async function listProducts(
   // Fetch rows with a bounded cap. Color expansion happens in JS, so we
   // need enough raw products to fill all pages. Cap at 500 raw products
   // (covers ~2000 expanded color-cards) to avoid unbounded over-fetches.
-  const MAX_RAW_FETCH = 500;
+  const targetCards = page * limit;
+  const rawFetchLimit = featuredOnly
+    ? Math.min(24, Math.max(12, limit * 2))
+    : Math.min(250, Math.max(36, targetCards * 2));
 
-  const [rows, _countRows] = await Promise.all([
-    db
-      .select({
-        id: products.id,
-        slug: products.slug,
-        name: products.name,
-        isFeatured: products.isFeatured,
-        ratingAvg: products.ratingAvg,
-        ratingCount: products.ratingCount,
-        soldCount: products.soldCount,
-        brandName: brands.name,
-        primaryImageUrl: sql<string | null>`primary_img.url`,
-        primaryImageAlt: sql<string | null>`primary_img.alt`,
-        secondaryImageUrl: sql<string | null>`secondary_img.url`,
-        secondaryImageAlt: sql<string | null>`secondary_img.alt`,
-        colors: sql<
-          Array<{
-            color: string;
-            hex: string | null;
-            imageUrl?: string | null;
-            secondaryImageUrl?: string | null;
-          }>
-        >`(
+  const rows = await db
+    .select({
+      id: products.id,
+      slug: products.slug,
+      name: products.name,
+      isFeatured: products.isFeatured,
+      ratingAvg: products.ratingAvg,
+      ratingCount: products.ratingCount,
+      soldCount: products.soldCount,
+      brandName: brands.name,
+      primaryImageUrl: sql<string | null>`primary_img.url`,
+      primaryImageAlt: sql<string | null>`primary_img.alt`,
+      secondaryImageUrl: sql<string | null>`secondary_img.url`,
+      secondaryImageAlt: sql<string | null>`secondary_img.alt`,
+      colors: sql<
+        Array<{
+          color: string;
+          hex: string | null;
+          imageUrl?: string | null;
+          secondaryImageUrl?: string | null;
+        }>
+      >`(
           SELECT COALESCE(
             json_agg(
               json_build_object(
@@ -267,15 +269,15 @@ export async function listProducts(
             ) c_inner
           ) c
         )`,
-        variants: sql<
-          Array<{
-            id: string;
-            size: string;
-            color: string;
-            price: string;
-            isAvailable: boolean;
-          }>
-        >`(
+      variants: sql<
+        Array<{
+          id: string;
+          size: string;
+          color: string;
+          price: string;
+          isAvailable: boolean;
+        }>
+      >`(
           SELECT COALESCE(
             json_agg(
               json_build_object(
@@ -294,66 +296,60 @@ export async function listProducts(
           WHERE pv.product_id = ${products}.id
             AND pv.is_active = true
         )`,
-        minPrice: sql<string>`(
+      minPrice: sql<string>`(
           SELECT MIN(pv.price)::text FROM ${productVariants} pv
           WHERE  pv.product_id = ${products}.id
             AND  pv.is_active  = true
         )`,
-        minMrp: sql<string>`(
+      minMrp: sql<string>`(
           SELECT MIN(pv.mrp)::text FROM ${productVariants} pv
           WHERE  pv.product_id = ${products}.id
             AND  pv.is_active  = true
         )`,
-        isInStock: sql<boolean>`EXISTS (
+      isInStock: sql<boolean>`EXISTS (
           SELECT 1 FROM ${productVariants} pv
           JOIN   ${inventory} inv ON inv.variant_id = pv.id
           WHERE  pv.product_id = ${products}.id
             AND  pv.is_active  = true
             AND  (inv.quantity - inv.reserved_quantity) > 0
         )`,
-      })
-      .from(products)
-      .leftJoin(brands, eq(products.brandId, brands.id))
-      .leftJoinLateral(
-        db
-          .select({ url: productImages.url, alt: productImages.alt })
-          .from(productImages)
-          .where(
-            and(
-              eq(productImages.productId, products.id),
-              eq(productImages.isPrimary, true),
-              isNull(productImages.variantId)
-            )
+    })
+    .from(products)
+    .leftJoin(brands, eq(products.brandId, brands.id))
+    .leftJoinLateral(
+      db
+        .select({ url: productImages.url, alt: productImages.alt })
+        .from(productImages)
+        .where(
+          and(
+            eq(productImages.productId, products.id),
+            eq(productImages.isPrimary, true),
+            isNull(productImages.variantId)
           )
-          .orderBy(asc(productImages.sortOrder))
-          .limit(1)
-          .as("primary_img"),
-        sql`true`
-      )
-      .leftJoinLateral(
-        db
-          .select({ url: productImages.url, alt: productImages.alt })
-          .from(productImages)
-          .where(
-            and(
-              eq(productImages.productId, products.id),
-              eq(productImages.isPrimary, false)
-            )
+        )
+        .orderBy(asc(productImages.sortOrder))
+        .limit(1)
+        .as("primary_img"),
+      sql`true`
+    )
+    .leftJoinLateral(
+      db
+        .select({ url: productImages.url, alt: productImages.alt })
+        .from(productImages)
+        .where(
+          and(
+            eq(productImages.productId, products.id),
+            eq(productImages.isPrimary, false)
           )
-          .orderBy(asc(productImages.sortOrder))
-          .limit(1)
-          .as("secondary_img"),
-        sql`true`
-      )
-      .where(whereClause)
-      .orderBy(...orderBy)
-      .limit(MAX_RAW_FETCH),
-
-    db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(products)
-      .where(whereClause),
-  ]);
+        )
+        .orderBy(asc(productImages.sortOrder))
+        .limit(1)
+        .as("secondary_img"),
+      sql`true`
+    )
+    .where(whereClause)
+    .orderBy(...orderBy)
+    .limit(rawFetchLimit);
 
   const rawListItems: ProductListItem[] = rows.map(toProductListItem);
   const expandedList = expandProductItemsByColor(
