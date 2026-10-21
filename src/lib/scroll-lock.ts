@@ -30,6 +30,23 @@ export function getScrollbarWidth(): number {
 }
 
 /**
+ * Unconditionally clears all body and html scroll locks and resets the lock counter.
+ * Crucial for route changes and error recovery so the user is never left stuck.
+ */
+export function forceUnlockScroll(): void {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return;
+  }
+  lockCount = 0;
+  prevOverflow = "";
+  prevPaddingRight = "";
+
+  document.body.style.removeProperty("overflow");
+  document.body.style.removeProperty("padding-right");
+  document.documentElement.style.removeProperty("overflow");
+}
+
+/**
  * Locks page scroll, compensating for the removed scrollbar width on desktop.
  */
 export function lockScroll(): void {
@@ -40,7 +57,9 @@ export function lockScroll(): void {
   if (lockCount === 0) {
     const scrollbarWidth = getScrollbarWidth();
 
-    prevOverflow = document.body.style.overflow;
+    // Never capture "hidden" as the fallback overflow; always fallback to unset ("")
+    const currentOverflow = document.body.style.overflow;
+    prevOverflow = currentOverflow === "hidden" ? "" : currentOverflow;
     prevPaddingRight = document.body.style.paddingRight;
 
     if (scrollbarWidth > 0) {
@@ -71,7 +90,20 @@ export function unlockScroll(): void {
   }
 
   if (lockCount === 0) {
-    document.body.style.overflow = prevOverflow;
-    document.body.style.paddingRight = prevPaddingRight;
+    if (prevOverflow && prevOverflow !== "hidden") {
+      document.body.style.overflow = prevOverflow;
+    } else {
+      document.body.style.removeProperty("overflow");
+    }
+
+    if (prevPaddingRight) {
+      document.body.style.paddingRight = prevPaddingRight;
+    } else {
+      document.body.style.removeProperty("padding-right");
+    }
+
+    document.documentElement.style.removeProperty("overflow");
+    prevOverflow = "";
+    prevPaddingRight = "";
   }
 }
