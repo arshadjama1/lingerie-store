@@ -74,11 +74,14 @@ export function Header() {
             document.documentElement.scrollHeight - window.innerHeight;
 
           // Determine if scrolled from very top for visual elevation
-          setIsScrolled(currentScrollY > 20);
+          setIsScrolled((prev) => {
+            const next = currentScrollY > 20;
+            return prev !== next ? next : prev;
+          });
 
           // Always show header near the top of the page (within 80px)
           if (currentScrollY <= 80) {
-            setIsVisible(true);
+            setIsVisible((prev) => (prev ? prev : true));
             lastScrollYRef.current = currentScrollY;
             ticking = false;
             return;
@@ -95,7 +98,7 @@ export function Header() {
           // Threshold of 10px to ignore micro-jitters
           if (diff > 10) {
             // Scrolling down -> smoothly hide header
-            setIsVisible(false);
+            setIsVisible((prev) => (!prev ? prev : false));
             setActiveFlyout(null);
             lastScrollYRef.current = currentScrollY;
           } else if (diff < -10) {
@@ -163,9 +166,10 @@ export function Header() {
     }
   }, [mobileSearchOpen]);
 
-  // Close mobile drawer on route change
+  // Close mobile drawer and search on route change
   useEffect(() => {
     setMobileOpen(false);
+    setMobileSearchOpen(false);
   }, [pathname]);
 
   // Escape key to close mobile drawer
@@ -178,14 +182,15 @@ export function Header() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileOpen]);
 
-  const { cart, openCart } = useCartStore();
-  const itemCount = cart?.itemCount || 0;
+  const itemCount = useCartStore((state) => state.cart?.itemCount || 0);
+  const openCart = useCartStore((state) => state.openCart);
 
-  const wishlistItems = useWishlistStore((state) => state.items);
+  const wishlistCount = useWishlistStore((state) => state.items.length);
   const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
-  const wishlistCount = wishlistItems.length;
 
-  const { isAuthenticated, profile, init } = useAuthStore();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const profile = useAuthStore((state) => state.profile);
+  const init = useAuthStore((state) => state.init);
 
   useEffect(() => {
     const unsub = init();
@@ -193,8 +198,10 @@ export function Header() {
   }, [init]);
 
   useEffect(() => {
-    fetchWishlist();
-  }, [fetchWishlist]);
+    if (isAuthenticated) {
+      fetchWishlist();
+    }
+  }, [isAuthenticated, fetchWishlist]);
 
   return (
     <>
