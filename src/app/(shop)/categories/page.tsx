@@ -25,8 +25,8 @@ export default async function CategoriesPage() {
     panties: "Pack of 3 @ ₹750",
     sets: "From ₹650",
     loungewear: "Camisoles @ ₹300",
-    nightwear: "Coming Soon",
-    shapewear: "Coming Soon",
+    nightwear: "New Arrivals",
+    shapewear: "New Arrivals",
   };
 
   return (
