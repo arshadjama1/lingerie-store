@@ -8,7 +8,7 @@ import {
   products,
 } from "@/db/schema";
 import { createId } from "@paralleldrive/cuid2";
-import { and, asc, desc, eq, ilike, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, notInArray, or, sql } from "drizzle-orm";
 import "server-only";
 
 import type {
@@ -325,11 +325,13 @@ export async function updateAdminProduct(
   input: AdminProductInput
 ): Promise<void> {
   await db.transaction(async (tx) => {
+    // 1. Resolve category (needed for categoryPath) — must be sequential.
     const category = await tx.query.categories.findFirst({
       where: eq(categories.id, input.categoryId),
     });
     if (!category) throw new Error("Category not found");
 
+    // 2. Update the product row.
     await tx
       .update(products)
       .set({
@@ -350,12 +352,63 @@ export async function updateAdminProduct(
       })
       .where(eq(products.id, id));
 
-    if (input.variants) {
-      for (const v of input.variants) {
-        if (v.id) {
-          await tx
-            .update(productVariants)
-            .set({
+    // 3. Variants — delete orphans, then upsert all in parallel.
+    if (input.variants && input.variants.length > 0) {
+      const incomingVariantIds = input.variants
+        .map((v) => v.id)
+        .filter((vid): vid is string => !!vid);
+
+      // Delete variants that were removed in the form (cascade deletes inventory rows too).
+      if (incomingVariantIds.length > 0) {
+        await tx
+          .delete(productVariants)
+          .where(
+            and(
+              eq(productVariants.productId, id),
+              notInArray(productVariants.id, incomingVariantIds)
+            )
+          );
+      } else {
+        // All variants are new — delete every existing variant for this product.
+        await tx
+          .delete(productVariants)
+          .where(eq(productVariants.productId, id));
+      }
+
+      // Upsert each variant + its inventory row in parallel.
+      await Promise.all(
+        input.variants.map(async (v) => {
+          if (v.id) {
+            // Existing variant: update variant and inventory concurrently.
+            await Promise.all([
+              tx
+                .update(productVariants)
+                .set({
+                  sku: v.sku,
+                  size: v.size,
+                  color: v.color,
+                  colorHex: v.colorHex,
+                  price: v.price,
+                  mrp: v.mrp,
+                  weightGrams: v.weightGrams,
+                  isActive: v.isActive,
+                  sortOrder: v.sortOrder,
+                })
+                .where(eq(productVariants.id, v.id)),
+              tx
+                .update(inventory)
+                .set({
+                  quantity: v.stock,
+                  lowStockAlert: v.lowStockAlert,
+                })
+                .where(eq(inventory.variantId, v.id)),
+            ]);
+          } else {
+            // New variant: insert variant then inventory (inventory needs variantId).
+            const variantId = createId();
+            await tx.insert(productVariants).values({
+              id: variantId,
+              productId: id,
               sku: v.sku,
               size: v.size,
               color: v.color,
@@ -365,70 +418,67 @@ export async function updateAdminProduct(
               weightGrams: v.weightGrams,
               isActive: v.isActive,
               sortOrder: v.sortOrder,
-            })
-            .where(eq(productVariants.id, v.id));
-
-          await tx
-            .update(inventory)
-            .set({
+            });
+            await tx.insert(inventory).values({
+              id: createId(),
+              variantId,
               quantity: v.stock,
+              reservedQuantity: 0,
               lowStockAlert: v.lowStockAlert,
-            })
-            .where(eq(inventory.variantId, v.id));
-        } else {
-          const variantId = createId();
-          await tx.insert(productVariants).values({
-            id: variantId,
-            productId: id,
-            sku: v.sku,
-            size: v.size,
-            color: v.color,
-            colorHex: v.colorHex,
-            price: v.price,
-            mrp: v.mrp,
-            weightGrams: v.weightGrams,
-            isActive: v.isActive,
-            sortOrder: v.sortOrder,
-          });
-
-          await tx.insert(inventory).values({
-            id: createId(),
-            variantId,
-            quantity: v.stock,
-            reservedQuantity: 0,
-            lowStockAlert: v.lowStockAlert,
-          });
-        }
-      }
+            });
+          }
+        })
+      );
     }
 
+    // 4. Images — delete orphans, then upsert all in parallel.
     if (input.images) {
-      for (const img of input.images) {
-        if (img.id) {
-          await tx
-            .update(productImages)
-            .set({
+      const incomingImageIds = input.images
+        .map((img) => img.id)
+        .filter((imgId): imgId is string => !!imgId);
+
+      if (incomingImageIds.length > 0) {
+        await tx
+          .delete(productImages)
+          .where(
+            and(
+              eq(productImages.productId, id),
+              notInArray(productImages.id, incomingImageIds)
+            )
+          );
+      } else {
+        // All images are new — remove every existing image for this product.
+        await tx.delete(productImages).where(eq(productImages.productId, id));
+      }
+
+      await Promise.all(
+        input.images.map((img) => {
+          if (img.id) {
+            return tx
+              .update(productImages)
+              .set({
+                url: img.url,
+                storagePath: img.storagePath,
+                alt: img.alt,
+                isPrimary: img.isPrimary,
+                sortOrder: img.sortOrder,
+                variantId: img.variantId,
+              })
+              .where(eq(productImages.id, img.id));
+          } else {
+            return tx.insert(productImages).values({
+              id: createId(),
+              productId: id,
               url: img.url,
               storagePath: img.storagePath,
               alt: img.alt,
               isPrimary: img.isPrimary,
               sortOrder: img.sortOrder,
               variantId: img.variantId,
-            })
-            .where(eq(productImages.id, img.id));
-        } else {
-          await tx.insert(productImages).values({
-            id: createId(),
-            productId: id,
-            url: img.url,
-            storagePath: img.storagePath,
-            alt: img.alt,
-            isPrimary: img.isPrimary,
-            sortOrder: img.sortOrder,
-            variantId: img.variantId,
-          });
-        }
-      }
+            });
+          }
+        })
+      );
     }
   });
 }

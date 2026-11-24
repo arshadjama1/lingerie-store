@@ -39,13 +39,13 @@ const CATEGORY_TILES: CategoryTile[] = [
   },
   {
     name: "Nightwear",
-    offer: "Coming Soon",
+    offer: "New Arrivals",
     href: "/nightwear",
     image: "/images/home/cat_nightwear.jpg",
   },
   {
     name: "Shapewear",
-    offer: "Coming Soon",
+    offer: "New Arrivals",
     href: "/shapewear",
     image: "/images/home/cat_shapewear.jpg",
   },

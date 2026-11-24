@@ -72,6 +72,16 @@ const CATEGORY_META: Record<
     image: "/images/home/cat_nightwear.jpg",
     subtitle: "Modal Camisoles & Sleepwear",
   },
+  Nightwear: {
+    image: "/images/home/cat_nightwear.jpg",
+    subtitle: "Soft Sleepwear & Night Comfort",
+    badge: "New",
+  },
+  Shapewear: {
+    image: "/images/home/cat_shapewear.jpg",
+    subtitle: "Contour & Smooth Essentials",
+    badge: "New",
+  },
 };
 
 export function MobileDrawer({
@@ -96,6 +106,8 @@ export function MobileDrawer({
       Panties: false,
       Sets: false,
       Loungewear: false,
+      Nightwear: false,
+      Shapewear: false,
     }
   );
 

@@ -157,6 +157,34 @@ export const NAV_CATEGORY_LINKS: NavCategoryLink[] = [
       ctaText: "Shop Camisoles",
     },
   },
+  {
+    label: "Nightwear",
+    href: "/nightwear",
+    styles: [{ label: "Shop All Nightwear", href: "/nightwear", badge: "New" }],
+    featured: {
+      title: "Nightwear Collection",
+      description:
+        "Buttery-soft sleepwear crafted for restful nights and effortless morning comfort.",
+      href: "/nightwear",
+      badge: "New Arrivals",
+      imageUrl: "/images/home/cat_nightwear.jpg",
+      ctaText: "Shop Nightwear",
+    },
+  },
+  {
+    label: "Shapewear",
+    href: "/shapewear",
+    styles: [{ label: "Shop All Shapewear", href: "/shapewear", badge: "New" }],
+    featured: {
+      title: "Shapewear Collection",
+      description:
+        "Seamless targeted compression that contours and supports without compromising comfort.",
+      href: "/shapewear",
+      badge: "New Arrivals",
+      imageUrl: "/images/home/cat_shapewear.jpg",
+      ctaText: "Shop Shapewear",
+    },
+  },
 ];
 
 // ── Header Quick Offer Links ──────────────────────────────────────────
@@ -181,7 +209,9 @@ export const FOOTER_LINK_GROUPS = {
     { label: "Bras", href: "/bras" },
     { label: "Panties & Undies", href: "/panties" },
     { label: "Lingerie Sets", href: "/sets" },
-    { label: "Loungewear & Camisoles", href: "/loungewear" },
+
+    { label: "Nightwear", href: "/nightwear" },
+    { label: "Shapewear", href: "/shapewear" },
   ],
   "Fit & Care": [
     { label: "Bra Size Calculator & FitCode", href: "/size-calculator" },
