@@ -16,6 +16,11 @@ import {
   updateAdminProduct,
 } from "@/modules/admin/catalog";
 
+// Allow up to 60 s for the product update transaction on slow connections.
+// The default serverless limit (10 s) is too short for products with many
+// variants/images accumulated over repeated saves.
+export const maxDuration = 60;
+
 const priceField = z.coerce
   .string()
   .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid price (e.g. 499 or 499.99)");
