@@ -325,7 +325,7 @@ export async function updateAdminProduct(
   input: AdminProductInput
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    // 1. Resolve category (needed for categoryPath) — must be sequential.
+    // 1. Resolve category (needed for categoryPath) - must be sequential.
     const category = await tx.query.categories.findFirst({
       where: eq(categories.id, input.categoryId),
     });
@@ -352,13 +352,15 @@ export async function updateAdminProduct(
       })
       .where(eq(products.id, id));
 
-    // 3. Variants — delete orphans, then upsert all in parallel.
+    // 3. Variants - delete orphans, then bulk-upsert in TWO queries total
+    //    (one for product_variants, one for inventory) regardless of row count.
     if (input.variants && input.variants.length > 0) {
       const incomingVariantIds = input.variants
         .map((v) => v.id)
         .filter((vid): vid is string => !!vid);
 
-      // Delete variants that were removed in the form (cascade deletes inventory rows too).
+      // Delete variants removed in the form. The cascade on product_variants ->
+      // inventory means their inventory rows are deleted automatically.
       if (incomingVariantIds.length > 0) {
         await tx
           .delete(productVariants)
@@ -369,70 +371,74 @@ export async function updateAdminProduct(
             )
           );
       } else {
-        // All variants are new — delete every existing variant for this product.
         await tx
           .delete(productVariants)
           .where(eq(productVariants.productId, id));
       }
 
-      // Upsert each variant + its inventory row in parallel.
-      await Promise.all(
-        input.variants.map(async (v) => {
-          if (v.id) {
-            // Existing variant: update variant and inventory concurrently.
-            await Promise.all([
-              tx
-                .update(productVariants)
-                .set({
-                  sku: v.sku,
-                  size: v.size,
-                  color: v.color,
-                  colorHex: v.colorHex,
-                  price: v.price,
-                  mrp: v.mrp,
-                  weightGrams: v.weightGrams,
-                  isActive: v.isActive,
-                  sortOrder: v.sortOrder,
-                })
-                .where(eq(productVariants.id, v.id)),
-              tx
-                .update(inventory)
-                .set({
-                  quantity: v.stock,
-                  lowStockAlert: v.lowStockAlert,
-                })
-                .where(eq(inventory.variantId, v.id)),
-            ]);
-          } else {
-            // New variant: insert variant then inventory (inventory needs variantId).
-            const variantId = createId();
-            await tx.insert(productVariants).values({
-              id: variantId,
-              productId: id,
-              sku: v.sku,
-              size: v.size,
-              color: v.color,
-              colorHex: v.colorHex,
-              price: v.price,
-              mrp: v.mrp,
-              weightGrams: v.weightGrams,
-              isActive: v.isActive,
-              sortOrder: v.sortOrder,
-            });
-            await tx.insert(inventory).values({
-              id: createId(),
-              variantId,
-              quantity: v.stock,
-              reservedQuantity: 0,
-              lowStockAlert: v.lowStockAlert,
-            });
-          }
-        })
-      );
+      // Assign stable IDs to new variants so inventory can reference them.
+      const variantsWithIds = input.variants.map((v) => ({
+        ...v,
+        resolvedId: v.id ?? createId(),
+      }));
+
+      // Bulk upsert all variants - single INSERT ... ON CONFLICT DO UPDATE.
+      await tx
+        .insert(productVariants)
+        .values(
+          variantsWithIds.map((v) => ({
+            id: v.resolvedId,
+            productId: id,
+            sku: v.sku,
+            size: v.size,
+            color: v.color,
+            colorHex: v.colorHex,
+            price: v.price,
+            mrp: v.mrp,
+            weightGrams: v.weightGrams,
+            isActive: v.isActive,
+            sortOrder: v.sortOrder,
+          }))
+        )
+        .onConflictDoUpdate({
+          target: productVariants.id,
+          set: {
+            sku: sql`excluded.sku`,
+            size: sql`excluded.size`,
+            color: sql`excluded.color`,
+            colorHex: sql`excluded.color_hex`,
+            price: sql`excluded.price`,
+            mrp: sql`excluded.mrp`,
+            weightGrams: sql`excluded.weight_grams`,
+            isActive: sql`excluded.is_active`,
+            sortOrder: sql`excluded.sort_order`,
+          },
+        });
+
+      // Bulk upsert inventory - single INSERT ... ON CONFLICT DO UPDATE.
+      // id is a dummy new CUID for new rows; existing rows match on variantId.
+      await tx
+        .insert(inventory)
+        .values(
+          variantsWithIds.map((v) => ({
+            id: createId(),
+            variantId: v.resolvedId,
+            quantity: v.stock,
+            reservedQuantity: 0,
+            lowStockAlert: v.lowStockAlert,
+          }))
+        )
+        .onConflictDoUpdate({
+          target: inventory.variantId,
+          set: {
+            quantity: sql`excluded.quantity`,
+            lowStockAlert: sql`excluded.low_stock_alert`,
+          },
+        });
     }
 
-    // 4. Images — delete orphans, then upsert all in parallel.
-    if (input.images) {
+    // 4. Images - delete orphans, then bulk-upsert in ONE query.
+    if (input.images && input.images.length > 0) {
       const incomingImageIds = input.images
         .map((img) => img.id)
         .filter((imgId): imgId is string => !!imgId);
@@ -447,42 +453,41 @@ export async function updateAdminProduct(
             )
           );
       } else {
-        // All images are new — remove every existing image for this product.
         await tx.delete(productImages).where(eq(productImages.productId, id));
       }
 
-      await Promise.all(
-        input.images.map((img) => {
-          if (img.id) {
-            return tx
-              .update(productImages)
-              .set({
-                url: img.url,
-                storagePath: img.storagePath,
-                alt: img.alt,
-                isPrimary: img.isPrimary,
-                sortOrder: img.sortOrder,
-                variantId: img.variantId,
-              })
-              .where(eq(productImages.id, img.id));
-          } else {
-            return tx.insert(productImages).values({
-              id: createId(),
-              productId: id,
-              url: img.url,
-              storagePath: img.storagePath,
-              alt: img.alt,
-              isPrimary: img.isPrimary,
-              sortOrder: img.sortOrder,
-              variantId: img.variantId,
-            });
-          }
-        })
-      );
+      // Bulk upsert all images - single INSERT ... ON CONFLICT DO UPDATE.
+      await tx
+        .insert(productImages)
+        .values(
+          input.images.map((img) => ({
+            id: img.id ?? createId(),
+            productId: id,
+            url: img.url,
+            storagePath: img.storagePath,
+            alt: img.alt,
+            isPrimary: img.isPrimary,
+            sortOrder: img.sortOrder,
+            variantId: img.variantId,
+          }))
+        )
+        .onConflictDoUpdate({
+          target: productImages.id,
+          set: {
+            url: sql`excluded.url`,
+            storagePath: sql`excluded.storage_path`,
+            alt: sql`excluded.alt`,
+            isPrimary: sql`excluded.is_primary`,
+            sortOrder: sql`excluded.sort_order`,
+            variantId: sql`excluded.variant_id`,
+          },
+        });
+    } else if (input.images && input.images.length === 0) {
+      // Explicitly cleared all images.
+      await tx.delete(productImages).where(eq(productImages.productId, id));
     }
   });
 }
-
 export async function toggleAdminProductStatus(
   id: string,
   field: "isActive" | "isFeatured",
