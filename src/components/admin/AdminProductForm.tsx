@@ -58,6 +58,7 @@ const imageSchema = z.object({
   altText: z.string().optional(),
   isPrimary: z.boolean(),
   sortOrder: z.number().int(),
+  variantId: z.string().nullable().optional(),
 });
 
 const productSchema = z.object({
@@ -405,6 +406,7 @@ export function AdminProductForm({
           id: img.id || undefined,
           alt: img.altText || null,
           sortOrder: idx,
+          variantId: img.variantId ?? null,
         })),
       };
 
@@ -663,67 +665,104 @@ export function AdminProductForm({
               </label>
             ) : (
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {imageFields.map((field, index) => {
-                  const isPrimary = watch(`images.${index}.isPrimary`);
-                  const imageUrl = watch(`images.${index}.url`);
+                {(() => {
+                  // Build unique color→variantId map from current variants for the color picker
+                  const colorOptions: { label: string; variantId: string }[] =
+                    [];
+                  const seenColors = new Set<string>();
+                  for (const v of watchVariants ?? []) {
+                    if (v.colorName && v.id && !seenColors.has(v.colorName)) {
+                      seenColors.add(v.colorName);
+                      colorOptions.push({
+                        label: v.colorName,
+                        variantId: v.id,
+                      });
+                    }
+                  }
+                  return imageFields.map((field, index) => {
+                    const isPrimary = watch(`images.${index}.isPrimary`);
+                    const imageUrl = watch(`images.${index}.url`);
+                    const currentVariantId = watch(`images.${index}.variantId`);
 
-                  return (
-                    <div
-                      key={field.id}
-                      className={`relative flex flex-col border p-2 transition-all ${
-                        isPrimary
-                          ? "border-[#3d0a20] bg-gray-50/60 ring-1 ring-[#3d0a20]"
-                          : "border-gray-200 bg-white"
-                      }`}
-                    >
-                      <div className="relative mb-2 aspect-square w-full overflow-hidden bg-gray-100">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={imageUrl}
-                          alt="Product preview"
-                          className="h-full w-full object-cover"
-                        />
-                        {isPrimary && (
-                          <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-[#3d0a20] px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-xs">
-                            <Star className="h-3 w-3 fill-white" />
-                            Cover
-                          </span>
-                        )}
-                      </div>
+                    return (
+                      <div
+                        key={field.id}
+                        className={`relative flex flex-col border p-2 transition-all ${
+                          isPrimary
+                            ? "border-[#3d0a20] bg-gray-50/60 ring-1 ring-[#3d0a20]"
+                            : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <div className="relative mb-2 aspect-square w-full overflow-hidden bg-gray-100">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imageUrl}
+                            alt="Product preview"
+                            className="h-full w-full object-cover"
+                          />
+                          {isPrimary && (
+                            <span className="absolute top-2 left-2 inline-flex items-center gap-1 bg-[#3d0a20] px-2 py-0.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-xs">
+                              <Star className="h-3 w-3 fill-white" />
+                              Cover
+                            </span>
+                          )}
+                        </div>
 
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          {...register(`images.${index}.altText`)}
-                          placeholder="Alt tag / description"
-                          className={`${inputCls} py-1 text-xs`}
-                        />
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            {...register(`images.${index}.altText`)}
+                            placeholder="Alt tag / description"
+                            className={`${inputCls} py-1 text-xs`}
+                          />
 
-                        <div className="flex items-center justify-between pt-1">
-                          <button
-                            type="button"
-                            onClick={() => setPrimaryImage(index)}
-                            className={`text-xs font-semibold ${
-                              isPrimary
-                                ? "text-[#3d0a20]"
-                                : "text-gray-500 hover:text-gray-900"
-                            }`}
-                          >
-                            {isPrimary ? "★ Primary Cover" : "Set as Cover"}
-                          </button>
+                          {colorOptions.length > 0 && (
+                            <select
+                              value={currentVariantId ?? ""}
+                              onChange={(e) =>
+                                setValue(
+                                  `images.${index}.variantId`,
+                                  e.target.value || null
+                                )
+                              }
+                              className={`${inputCls} py-1 text-xs`}
+                              title="Assign this image to a color"
+                            >
+                              <option value="">— All colors (shared) —</option>
+                              {colorOptions.map((co) => (
+                                <option key={co.variantId} value={co.variantId}>
+                                  {co.label}
+                                </option>
+                              ))}
+                            </select>
+                          )}
 
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="text-xs font-semibold text-red-600 transition-colors hover:text-red-800"
-                          >
-                            Remove
-                          </button>
+                          <div className="flex items-center justify-between pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setPrimaryImage(index)}
+                              className={`text-xs font-semibold ${
+                                isPrimary
+                                  ? "text-[#3d0a20]"
+                                  : "text-gray-500 hover:text-gray-900"
+                              }`}
+                            >
+                              {isPrimary ? "★ Primary Cover" : "Set as Cover"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="text-xs font-semibold text-red-600 transition-colors hover:text-red-800"
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
               </div>
             )}
           </div>
